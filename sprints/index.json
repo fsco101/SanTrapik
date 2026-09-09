@@ -5,18 +5,18 @@
   "total_sprints": 5,
   "total_issues": 23,
   "status": "in_progress",
-  "active_sprint_id": "sprint-1-data-and-database",
+  "active_sprint_id": "sprint-2-backend-services",
   "sprints": [
     {
       "id": "sprint-1-data-and-database",
       "number": 1,
       "title": "Geospatial Database Architecture & Metro Manila Road Telemetry",
       "file": "sprint-1-data-and-database.json",
-      "status": "planned",
+      "status": "completed",
       "dependencies": [],
       "issue_range": "#1 - #4",
       "total_issues": 4,
-      "completed_issues": 0,
+      "completed_issues": 4,
       "objective": "Establish PostgreSQL + PostGIS schema, spatial indexing, Metro Manila road segment geometries (EDSA, C-5, Commonwealth, Quezon Ave), traffic records, and road incidents."
     },
     {

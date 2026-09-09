@@ -3,7 +3,7 @@
   "number": 1,
   "title": "Geospatial Database Architecture & Metro Manila Road Telemetry",
   "goal": "Set up PostgreSQL + PostGIS database, schema migrations, Metro Manila arterial road segments, real-time/historical traffic telemetry records, and incident tracking.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
   "dependencies": [],
   "issues": [
@@ -12,6 +12,7 @@
       "github_issue_number": 1,
       "title": "[Sprint 1] PostgreSQL + PostGIS Containerization & Core Schema Migrations",
       "priority": "high",
+      "status": "completed",
       "labels": [
         "sprint-1",
         "database",
@@ -32,13 +33,14 @@
       "github_issue_number": 2,
       "title": "[Sprint 1] Metro Manila Major Arterials Road Network Ingestion",
       "priority": "high",
+      "status": "completed",
       "labels": [
         "sprint-1",
         "database",
         "geospatial",
         "osm"
       ],
-      "description": "Extract, normalize, and ingest GeoJSON LineString geometries for Metro Manila's critical transport corridors (EDSA, C-5 Road, Commonwealth Avenue, Quezon Avenue, Ortigas Avenue, Espa\u00f1a Boulevard, Roxas Boulevard, and Marcos Highway). Each segment must include direction, city, baseline speed (km/h), and spatial LineString.",
+      "description": "Extract, normalize, and ingest GeoJSON LineString geometries for Metro Manila's critical transport corridors (EDSA, C-5 Road, Commonwealth Avenue, Quezon Avenue, Ortigas Avenue, España Boulevard, Roxas Boulevard, and Marcos Highway). Each segment must include direction, city, baseline speed (km/h), and spatial LineString.",
       "acceptance_criteria": [
         "Ingestion script processes and stores at least 50 high-priority road segments across Metro Manila",
         "All coordinates strictly validated within Metro Manila bounding box [120.90, 14.35, 121.15, 14.80]",
@@ -52,6 +54,7 @@
       "github_issue_number": 3,
       "title": "[Sprint 1] Traffic Records Telemetry Ingestion Pipeline & Seed Dataset",
       "priority": "medium",
+      "status": "completed",
       "labels": [
         "sprint-1",
         "database",
@@ -71,6 +74,7 @@
       "github_issue_number": 4,
       "title": "[Sprint 1] Road Incident Tracking Schema & Seed Data Ingestion",
       "priority": "medium",
+      "status": "completed",
       "labels": [
         "sprint-1",
         "database",
