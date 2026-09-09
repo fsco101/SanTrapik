@@ -46,7 +46,7 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ### 🧠 [Sprint 4: AI/ML Congestion Relief Prediction Pipeline](./sprint-4-ai-ml-prediction.json)
 * **Goal:** Develop, train, evaluate, and deploy the machine learning regression model to forecast congestion relief time (minutes to free-flow recovery) and integrate inference into the FastAPI backend.
-* **Status:** ⏳ Planned (Blocked by Sprint 1 & 2)
+* **Status:** ✅ Completed
 * **Issues:**
   - [#16: Historical Traffic Feature Engineering & Dataset Preprocessing Pipeline](https://github.com/fsco101/SanTrapik/issues/16)
   - [#17: Relief Time Regression Model Training & Cross-Validation (MAE <= 8.5 min)](https://github.com/fsco101/SanTrapik/issues/17)

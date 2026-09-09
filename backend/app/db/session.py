@@ -6,7 +6,10 @@ Base = declarative_base()
 
 def get_engine(database_url: str = None):
     url = database_url or settings.get_database_url()
-    return create_engine(url, echo=False)
+    connect_args = {}
+    if "postgresql" in url:
+        connect_args["connect_timeout"] = 2
+    return create_engine(url, echo=False, connect_args=connect_args)
 
 def get_session_local(engine=None):
     eng = engine or get_engine()
