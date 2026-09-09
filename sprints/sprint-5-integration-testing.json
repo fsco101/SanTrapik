@@ -1,0 +1,94 @@
+{
+  "sprint_id": "sprint-5-integration-testing",
+  "number": 5,
+  "title": "System Integration, Route Comparison & Production Readiness",
+  "goal": "Perform end-to-end integration between Frontend, Backend, Database, and ML model; implement alternative route comparison, real-time telemetry refreshing, Docker Compose multi-container setup, and production deployment readiness.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-3-frontend-ui",
+    "sprint-4-ai-ml-prediction"
+  ],
+  "issues": [
+    {
+      "id": "SP5-001",
+      "github_issue_number": 20,
+      "title": "[Sprint 5] Alternative Route Comparison Logic & UI Recommendation Engine",
+      "priority": "high",
+      "labels": [
+        "sprint-5",
+        "fullstack",
+        "routing",
+        "comparison"
+      ],
+      "description": "Implement route comparison feature: backend queries secondary routes (e.g., EDSA vs C-5), analyzes delays and active incidents on each option, and flags the recommended route with actionable justification (e.g., 'Saves 16 mins with fewer active incidents'). Frontend renders selectable comparison cards with deltas in time and incidents.",
+      "acceptance_criteria": [
+        "Backend returns multiple evaluated routes with `is_recommended` and `recommendation_reason`",
+        "Frontend allows switching active route on map by clicking comparison cards",
+        "Visual indicators clearly display time savings and incident counts per route",
+        "Comparison cards strictly follow Obsidian Telemetry styling"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/20"
+    },
+    {
+      "id": "SP5-002",
+      "github_issue_number": 21,
+      "title": "[Sprint 5] Real-Time Telemetry Polling, Freshness Badges & Offline Handling",
+      "priority": "medium",
+      "labels": [
+        "sprint-5",
+        "frontend",
+        "telemetry",
+        "ux"
+      ],
+      "description": "Implement background polling hook (`useTrafficRefresh`) with configurable intervals (e.g., 60 seconds) to update traffic telemetry and active route statistics. Include smooth visual transitions without full map reloads, update freshness timestamps ('Updated 1m ago'), and display offline notification banner if connectivity drops.",
+      "acceptance_criteria": [
+        "Telemetry refreshes smoothly in background without losing user map viewport or selections",
+        "Header pulsing dot accurately reflects live socket/polling health",
+        "Timestamps dynamically format ('Updated 30s ago', 'Reported 12m ago')",
+        "Graceful fallback error banner displayed when backend API is unreachable"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/21"
+    },
+    {
+      "id": "SP5-003",
+      "github_issue_number": 22,
+      "title": "[Sprint 5] Docker Compose Full-Stack Environment & End-to-End Integration Verification",
+      "priority": "high",
+      "labels": [
+        "sprint-5",
+        "devops",
+        "docker",
+        "e2e"
+      ],
+      "description": "Create unified `docker-compose.yml` orchestrating PostgreSQL/PostGIS, FastAPI backend, and React/Vite frontend (with optional Redis cache). Write comprehensive end-to-end integration tests validating that a user route query successfully passes through frontend -> backend -> OSRM -> PostGIS -> ML model -> response.",
+      "acceptance_criteria": [
+        "`docker-compose up` launches all services cleanly with healthy status flags",
+        "End-to-end automated test verifies full query flow from start coordinate to relief prediction output",
+        "Database migrations run automatically on container startup",
+        "Zero port conflicts or environment variable leaks"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/22"
+    },
+    {
+      "id": "SP5-004",
+      "github_issue_number": 23,
+      "title": "[Sprint 5] Performance Optimization (< 1200ms Latency), Security Audit & Production Build",
+      "priority": "high",
+      "labels": [
+        "sprint-5",
+        "performance",
+        "security",
+        "production"
+      ],
+      "description": "Benchmark and optimize end-to-end latency: ensure route analysis returns in under 1200ms by optimizing PostGIS spatial queries, adding GIST indexes, and enabling Redis route caching. Conduct security audit (rate limiting, input sanitation, CORS restrictions) and generate optimized production builds.",
+      "acceptance_criteria": [
+        "95th percentile route analysis response time is < 1200ms under simulated load",
+        "Rate limiting enforces max 60 requests/minute per IP address on public endpoints",
+        "Frontend production bundle size is optimized (< 500kB gzip initial load)",
+        "Documentation updated with production deployment steps for Vercel and Render/Railway"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/23"
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "sprint_id": "sprint-2-backend-services",
+  "number": 2,
+  "title": "FastAPI REST Services & Routing Engine Integration",
+  "goal": "Build the FastAPI backend application, integrate with OSRM/ORS for route generation, build PostGIS spatial snapping & incident intersection, and expose public REST APIs for route intelligence.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-1-data-and-database"
+  ],
+  "issues": [
+    {
+      "id": "SP2-001",
+      "github_issue_number": 5,
+      "title": "[Sprint 2] FastAPI Core Architecture, CORS, Health Checks & Pydantic v2 Schemas",
+      "priority": "high",
+      "labels": [
+        "sprint-2",
+        "backend",
+        "fastapi",
+        "api"
+      ],
+      "description": "Initialize Python 3.11+ FastAPI application skeleton under `backend/app/`. Configure asynchronous database session management with SQLAlchemy 2.0 / asyncpg. Set up CORS middleware, environment configuration via pydantic-settings, and standard response envelopes with meta timestamps.",
+      "acceptance_criteria": [
+        "FastAPI app boots with `/api/v1/health` endpoint returning 200 OK and database connectivity status",
+        "CORS properly configured for local frontend origin (http://localhost:5173)",
+        "Pydantic v2 schemas defined for coordinates, route requests, segment summaries, and incidents",
+        "OpenAPI /docs swagger page cleanly renders all schemas and endpoints"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/5"
+    },
+    {
+      "id": "SP2-002",
+      "github_issue_number": 6,
+      "title": "[Sprint 2] Routing Engine Integration (OSRM / OpenRouteService)",
+      "priority": "high",
+      "labels": [
+        "sprint-2",
+        "backend",
+        "routing",
+        "osrm"
+      ],
+      "description": "Implement `RoutingService` in `backend/app/services/routing.py` that interfaces with OSRM or OpenRouteService API. Given start and destination coordinates, retrieve drivable GeoJSON LineString geometries, turn steps, distance in meters, and base duration.",
+      "acceptance_criteria": [
+        "Service queries OSRM/ORS and parses route geometry into valid GeoJSON LineStrings",
+        "Handles route alternatives when requested (`include_alternatives=True`)",
+        "Validates origin and destination to ensure coordinates lie within Metro Manila bounding box",
+        "Gracefully handles unreachable coordinates or external routing timeouts with clean HTTP 400/502 errors"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/6"
+    },
+    {
+      "id": "SP2-003",
+      "github_issue_number": 7,
+      "title": "[Sprint 2] Route Road-Segment Snapping & Spatial Intersect Service (PostGIS)",
+      "priority": "high",
+      "labels": [
+        "sprint-2",
+        "backend",
+        "postgis",
+        "geospatial"
+      ],
+      "description": "Build spatial analysis service in `backend/app/services/spatial.py`. Given a route LineString geometry, execute PostGIS queries (`ST_DWithin`, `ST_Intersects`, `ST_LineLocatePoint`) to identify the specific `road_segments` traversed, compute traversed length per segment, and identify any active `incidents` within a 50-meter buffer.",
+      "acceptance_criteria": [
+        "Identifies and orders road segments matching the route geometry from start to finish",
+        "Finds all active incidents within 50m buffer of the route line",
+        "Calculates baseline free-flow travel time versus observed traffic travel time per segment",
+        "Execution time for route spatial matching is < 80ms"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/7"
+    },
+    {
+      "id": "SP2-004",
+      "github_issue_number": 8,
+      "title": "[Sprint 2] Route Intelligence Analysis Endpoint (`POST /api/v1/route/analyze`)",
+      "priority": "high",
+      "labels": [
+        "sprint-2",
+        "backend",
+        "api"
+      ],
+      "description": "Implement the core endpoint `POST /api/v1/route/analyze` combining routing, spatial segment matching, real-time telemetry extraction, travel delay computation, and incident diagnostics into the standard response payload defined in SPEC.md Section 4.1.",
+      "acceptance_criteria": [
+        "Endpoint accepts start/dest names and coordinates and returns comprehensive route intelligence JSON",
+        "Computes estimated travel time, baseline travel time, and delay (+/- minutes)",
+        "Identifies the single 'most affected road segment' along the route",
+        "Returns constituent segments with individual speed, severity level, and attached incidents",
+        "API response time under 1200ms"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/8"
+    },
+    {
+      "id": "SP2-005",
+      "github_issue_number": 9,
+      "title": "[Sprint 2] Traffic Heatmap, Incidents & City Dashboard REST Endpoints",
+      "priority": "medium",
+      "labels": [
+        "sprint-2",
+        "backend",
+        "api"
+      ],
+      "description": "Implement auxiliary telemetry endpoints: `GET /api/v1/traffic/heatmap` (GeoJSON FeatureCollection of all road segments with current speeds), `GET /api/v1/incidents` (filtered list of active incidents with coordinates), and `GET /api/v1/dashboard/stats` (Metro Manila aggregate stats, active incident counts, most congested corridors).",
+      "acceptance_criteria": [
+        "`/api/v1/traffic/heatmap` returns valid GeoJSON ready for MapLibre layer consumption",
+        "`/api/v1/incidents` supports filtering by city, incident type, and status",
+        "`/api/v1/dashboard/stats` returns active incidents count, severe roads count, and top 4 congested roads",
+        "Pytest integration tests pass for all endpoints"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/9"
+    }
+  ]
+}

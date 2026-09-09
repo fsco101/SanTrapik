@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>SanTrapik — Metro Manila Traffic Intelligence</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary": "#1000a9",
+            "surface": "#0f131c",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-container": "#00885d",
+            "secondary-container": "#03b5d3",
+            "surface-container-lowest": "#0a0e16",
+            "on-primary-fixed": "#07006c",
+            "ai-cyan": "#06B6D4",
+            "inverse-primary": "#494bd6",
+            "secondary": "#4cd7f6",
+            "on-secondary-container": "#00424e",
+            "on-tertiary-container": "#000703",
+            "background": "#0f131c",
+            "surface-bright": "#353942",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed-dim": "#4cd7f6",
+            "surface-container-high": "#262a33",
+            "on-background": "#dfe2ee",
+            "traffic-severe": "#EF4444",
+            "outline-variant": "#464554",
+            "surface-card": "#1E293B",
+            "ai-primary": "#6366F1",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-bg": "#080C14",
+            "on-secondary-fixed": "#001f26",
+            "text-primary": "#F8FAFC",
+            "tertiary-fixed": "#6ffbbe",
+            "tertiary": "#4edea3",
+            "surface-tint": "#c0c1ff",
+            "ai-glow": "rgba(99, 102, 241, 0.25)",
+            "traffic-heavy": "#F97316",
+            "secondary-fixed": "#acedff",
+            "on-secondary-fixed-variant": "#004e5c",
+            "primary": "#c0c1ff",
+            "surface-elevated": "#334155",
+            "inverse-on-surface": "#2c3039",
+            "surface-variant": "#31353e",
+            "surface-container-low": "#181c24",
+            "traffic-normal": "#10B981",
+            "primary-fixed": "#e1e0ff",
+            "error-container": "#93000a",
+            "inverse-surface": "#dfe2ee",
+            "on-primary-container": "#0d0096",
+            "border-subtle": "rgba(255, 255, 255, 0.08)",
+            "surface-panel": "#0F172A",
+            "error": "#ffb4ab",
+            "primary-fixed-dim": "#c0c1ff",
+            "primary-container": "#8083ff",
+            "text-secondary": "#94A3B8",
+            "on-tertiary": "#003824",
+            "surface-container-highest": "#31353e",
+            "on-error": "#690005",
+            "surface-container": "#1c2028",
+            "on-surface-variant": "#c7c4d7",
+            "text-muted": "#64748B",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-dim": "#0f131c",
+            "on-tertiary-fixed-variant": "#005236",
+            "outline": "#908fa0",
+            "on-secondary": "#003640",
+            "traffic-moderate": "#F59E0B",
+            "on-surface": "#dfe2ee"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-3xl": "3rem",
+            "space-lg": "1.25rem",
+            "gutter": "1rem",
+            "space-md": "0.75rem",
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "sidebar-width": "26.25rem",
+            "space-2xs": "0.125rem",
+            "space-xs": "0.25rem",
+            "panel-gap": "0.75rem",
+            "sheet-collapsed-height": "4.5rem",
+            "space-2xl": "2rem",
+            "space-base": "1rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Outfit"],
+            "display-lg-mobile": ["Outfit"],
+            "telemetry-md": ["JetBrains Mono"],
+            "label-caps": ["Inter"],
+            "telemetry-sm": ["JetBrains Mono"],
+            "telemetry-display": ["JetBrains Mono"],
+            "display-lg": ["Outfit"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "telemetry-lg": ["JetBrains Mono"],
+            "headline-lg": ["Outfit"]
+          },
+          "fontSize": {
+            "headline-md": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display-lg-mobile": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "telemetry-md": ["0.938rem", { "lineHeight": "1.25rem", "fontWeight": "600" }],
+            "label-caps": ["0.688rem", { "lineHeight": "0.875rem", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "telemetry-sm": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "telemetry-display": ["1.75rem", { "lineHeight": "2rem", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "display-lg": ["2.25rem", { "lineHeight": "2.75rem", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "body-sm": ["0.813rem", { "lineHeight": "1.25rem", "fontWeight": "400" }],
+            "body-md": ["0.938rem", { "lineHeight": "1.375rem", "fontWeight": "400" }],
+            "body-lg": ["1rem", { "lineHeight": "1.5rem", "fontWeight": "400" }],
+            "telemetry-lg": ["1.25rem", { "lineHeight": "1.5rem", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Hardware accelerated pulsating radar */
+    @keyframes pulse-radar {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 0.15; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .radar-beacon {
+      animation: pulse-radar 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    /* Severe glow animation */
+    @keyframes arterial-glow {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.85)); }
+      50% { filter: drop-shadow(0 0 9px rgba(239, 68, 68, 1)); }
+    }
+    .glow-severe {
+      animation: arterial-glow 2.5s infinite ease-in-out;
+    }
+    /* Hide scrollbars for clean telemetry rail */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Light mode specific SVG Map color overrides */
+    html:not(.dark) .map-bg-fill { fill: #E2E8F0; }
+    html:not(.dark) .map-grid-pattern path { stroke: rgba(15, 23, 42, 0.06); }
+    html:not(.dark) .map-grid-pattern circle { fill: rgba(14, 165, 233, 0.3); }
+    html:not(.dark) .map-minor-road { stroke: #CBD5E1; }
+    html:not(.dark) .map-river { stroke: #BAE6FD; }
+    html:not(.dark) .map-arterial-base { stroke: #94A3B8; }
+    html:not(.dark) .map-label-subtle { fill: #475569; }
+    html:not(.dark) .map-river-text { fill: #0284C7; fill-opacity: 0.7; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-surface-bg text-slate-900 dark:text-text-primary antialiased selection:bg-ai-primary selection:text-white flex justify-center min-h-screen transition-colors duration-200">
+<!-- Mobile Container Mockup Shell (Constrained to standard mobile canvas) -->
+<div class="relative w-full max-w-md min-h-screen bg-slate-50 dark:bg-surface-bg flex flex-col overflow-x-hidden pb-24 select-none transition-colors duration-200">
+<!-- 1. SHARED TOP APP BAR COMPONENT -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-space-base py-space-sm max-w-full backdrop-blur-md bg-white/90 dark:bg-surface-panel/85 shadow-sm dark:shadow-none border-b border-slate-200 dark:border-border-subtle transition-colors duration-200">
+<!-- Leading & Wordmark -->
+<div class="flex items-center gap-space-sm">
+<div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-surface-card border border-slate-200 dark:border-border-subtle text-cyan-600 dark:text-ai-cyan">
+<span class="material-symbols-outlined text-[20px]">satellite_alt</span>
+<span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-ai-cyan"></span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-headline-md font-headline-md font-bold text-slate-900 dark:text-text-primary tracking-tight">SanTrapik</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-ai-cyan animate-pulse"></span>
+</div>
+</div>
+<!-- Trailing Actions: Live Telemetry Badge + Interactive Theme Toggle Button -->
+<div class="flex items-center gap-1.5">
+<!-- Live Telemetry Pill -->
+<div class="flex items-center gap-space-xs px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-surface-card/80 border border-slate-200 dark:border-border-subtle text-telemetry-sm font-telemetry-sm text-slate-600 dark:text-text-secondary">
+<span class="relative flex h-2 w-2">
+<span class="radar-beacon absolute inline-flex h-full w-full rounded-full bg-emerald-500 dark:bg-traffic-normal"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 dark:bg-traffic-normal"></span>
+</span>
+<span class="text-label-caps font-label-caps text-emerald-600 dark:text-traffic-normal tracking-wide">Live</span>
+<span class="text-slate-400 dark:text-text-muted text-[10px] pl-0.5 font-telemetry-sm">1m</span>
+</div>
+<!-- Theme Toggle Button -->
+<button aria-label="Toggle theme" class="relative flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-card border border-slate-200 dark:border-border-subtle text-slate-700 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary hover:bg-slate-200/80 dark:hover:bg-surface-elevated active:scale-95 transition-all shadow-sm" id="theme-toggle" title="Switch Theme (Dark / Light)">
+<!-- Sun Icon (shown in dark mode) -->
+<span class="material-symbols-outlined text-[17px] text-amber-400 hidden dark:inline-block" id="icon-sun">light_mode</span>
+<!-- Moon Icon (shown in light mode) -->
+<span class="material-symbols-outlined text-[17px] text-indigo-600 inline-block dark:hidden" id="icon-moon">dark_mode</span>
+</button>
+</div>
+</header>
+<!-- Floating Top Search & Quick Corridor Pills (Tactical Glassmorphism HUD) -->
+<section class="relative z-40 px-space-base pt-16 pb-space-xs space-y-space-sm">
+<!-- Terminal-inspired Waypoint Search Bar -->
+<div class="relative flex items-center bg-white/95 dark:bg-surface-panel/90 backdrop-blur-md border border-slate-200 dark:border-border-subtle rounded-xl px-space-md py-2.5 shadow-md dark:shadow-lg group focus-within:border-ai-primary transition-colors duration-150">
+<div class="flex flex-col items-center space-y-1">
+<span class="material-symbols-outlined text-cyan-600 dark:text-ai-cyan text-[18px]">near_me</span>
+</div>
+<div class="flex-1 ml-2">
+<input class="w-full bg-transparent border-none p-0 text-body-sm font-body-sm text-slate-900 dark:text-text-primary placeholder:text-slate-400 dark:placeholder:text-text-muted focus:ring-0 focus:outline-none" placeholder="Where to in Metro Manila?" type="text" value="Ayala Avenue, Makati"/>
+</div>
+<button class="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 dark:bg-surface-elevated text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary active:scale-95 transition-all border border-slate-200 dark:border-transparent">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+<!-- Quick Corridor Shortcut Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5 -mx-space-base px-space-base">
+<!-- Active Pill -->
+<button class="flex-shrink-0 flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white dark:bg-surface-panel border border-indigo-500 dark:border-ai-primary text-slate-900 dark:text-text-primary text-telemetry-sm font-telemetry-sm shadow-sm active:scale-95 transition-all">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-traffic-severe"></span>
+<span class="font-bold text-indigo-600 dark:text-ai-cyan">[EDSA]</span> QC → Makati
+        </button>
+<!-- Pill 2 -->
+<button class="flex-shrink-0 flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/80 dark:bg-surface-panel/70 border border-slate-200 dark:border-border-subtle text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary text-telemetry-sm font-telemetry-sm active:scale-95 transition-all shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-traffic-moderate"></span>
+<span class="text-slate-500 dark:text-text-muted">[C-5]</span> Manila → BGC
+        </button>
+<!-- Pill 3 -->
+<button class="flex-shrink-0 flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/80 dark:bg-surface-panel/70 border border-slate-200 dark:border-border-subtle text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary text-telemetry-sm font-telemetry-sm active:scale-95 transition-all shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-traffic-normal"></span>
+<span class="text-slate-500 dark:text-text-muted">[R-10]</span> Caloocan → Pasay
+        </button>
+<!-- Pill 4 -->
+<button class="flex-shrink-0 flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/80 dark:bg-surface-panel/70 border border-slate-200 dark:border-border-subtle text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary text-telemetry-sm font-telemetry-sm active:scale-95 transition-all shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500 dark:bg-traffic-heavy"></span>
+<span class="text-slate-500 dark:text-text-muted">[SLEX]</span> Alabang → Ortigas
+        </button>
+</div>
+</section>
+<!-- 2. LIVE DARK / LIGHT TELEMETRY MAP CANVAS (Obsidian MapLibre Simulation) -->
+<div class="relative w-full h-[410px] -mt-1 bg-slate-200 dark:bg-surface-bg overflow-hidden border-y border-slate-300 dark:border-border-subtle/40 transition-colors duration-200">
+<!-- Vector Map SVG Layer -->
+<svg class="absolute inset-0 w-full h-full" fill="none" viewbox="0 0 400 440" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Grid Pattern for Tactical GIS Look -->
+<pattern class="map-grid-pattern" height="32" id="tactical-grid" patternunits="userSpaceOnUse" width="32">
+<path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="0.75"></path>
+<circle cx="0" cy="0" fill="rgba(6, 182, 212, 0.25)" r="0.8"></circle>
+</pattern>
+<!-- Severe Congestion Glow Filter -->
+<filter height="140%" id="severe-neon" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Background Ground 0 Canvas -->
+<rect class="map-bg-fill transition-colors duration-200" fill="#080C14" height="440" width="400"></rect>
+<rect fill="url(#tactical-grid)" height="440" width="400"></rect>
+<!-- Secondary Urban Arterials (Manila Grid Roads) -->
+<path class="map-minor-road" d="M-20,110 L160,110 L280,70 L420,70" stroke="#1E293B" stroke-linecap="round" stroke-width="2.5"></path>
+<path class="map-minor-road" d="M40,30 L90,220 L70,410" stroke="#182130" stroke-width="1.8"></path>
+<path class="map-minor-road" d="M120,-10 L190,190 L240,430" stroke="#1E293B" stroke-dasharray="3 3" stroke-width="2"></path>
+<path class="map-minor-road" d="M-10,310 L140,290 L390,360" stroke="#182130" stroke-width="2"></path>
+<path class="map-minor-road" d="M220,180 L390,210" stroke="#1E293B" stroke-width="2"></path>
+<!-- Pasig River Geographic Curve -->
+<path class="map-river" d="M-10,255 C80,240 130,270 210,245 C270,225 340,250 420,230" stroke="#0e2338" stroke-linecap="round" stroke-width="12"></path>
+<path d="M-10,255 C80,240 130,270 210,245 C270,225 340,250 420,230" stroke="#06B6D4" stroke-opacity="0.2" stroke-width="1.5"></path>
+<text class="map-river-text" fill="#38BDF8" fill-opacity="0.35" font-family="JetBrains Mono" font-size="7" font-weight="600" letter-spacing="0.1em" x="28" y="266">PASIG RIVER</text>
+<!-- ================= PRIMARY EDSA CORRIDOR ARTERIAL ================= -->
+<!-- Background casing for arterial -->
+<path class="map-arterial-base" d="M290,20 Q245,110 210,180 T150,300 T120,430" stroke="#0F172A" stroke-linecap="round" stroke-width="9"></path>
+<!-- SECTOR 1: Cubao to Santolan (Moderate #F59E0B) -->
+<path d="M290,20 Q270,60 250,95" stroke="#F59E0B" stroke-linecap="round" stroke-width="5"></path>
+<!-- SECTOR 2: Ortigas Flyover SB (Severe Congestion #EF4444 with GLOW) -->
+<path class="glow-severe" d="M250,95 Q230,135 210,180" stroke="#EF4444" stroke-linecap="round" stroke-width="6"></path>
+<!-- SECTOR 3: Guadalupe Crossing (Heavy #F97316) -->
+<path d="M210,180 Q180,240 150,300" stroke="#F97316" stroke-linecap="round" stroke-width="5"></path>
+<!-- SECTOR 4: Buendia to Ayala (Normal / Free Flow #10B981) -->
+<path d="M150,300 Q135,365 120,430" stroke="#10B981" stroke-linecap="round" stroke-width="5"></path>
+<!-- Corridor Nodes / Landmark Labels -->
+<circle class="map-label-subtle" cx="282" cy="35" fill="#94A3B8" r="2.5"></circle>
+<text class="map-label-subtle" fill="#94A3B8" font-family="Inter" font-size="8" font-weight="600" x="292" y="38">CUBAO</text>
+<circle cx="210" cy="180" fill="#EF4444" r="3"></circle>
+<text fill="#EF4444" font-family="Outfit" font-size="9" font-weight="700" x="132" y="172">ORTIGAS FLYOVER</text>
+<circle class="map-label-subtle" cx="160" cy="275" fill="#94A3B8" r="2.5"></circle>
+<text class="map-label-subtle" fill="#94A3B8" font-family="Inter" font-size="8" font-weight="500" x="96" y="278">GUADALUPE</text>
+<circle class="map-label-subtle" cx="140" cy="335" fill="#94A3B8" r="2.5"></circle>
+<text class="map-label-subtle" fill="#94A3B8" font-family="Inter" font-size="8" font-weight="500" x="82" y="338">BUENDIA</text>
+<circle cx="120" cy="415" fill="#10B981" r="3"></circle>
+<text fill="#10B981" font-family="Outfit" font-size="9" font-weight="700" x="64" y="418">AYALA AVE</text>
+<!-- Diversion / C-5 Relief Suggestion Line (Dashed AI Cyan) -->
+<path d="M270,70 Q320,170 300,280 T200,380 L124,420" stroke="#6366F1" stroke-dasharray="4 4" stroke-opacity="0.85" stroke-width="2.5"></path>
+</svg>
+<!-- MAP ANCHORED TELEMETRY OVERLAYS -->
+<!-- 1. Collision Pin at Ortigas Flyover (Red Pulsing Alert) -->
+<div class="absolute top-[162px] left-[200px] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+<span class="absolute w-8 h-8 rounded-full bg-traffic-severe/30 animate-ping"></span>
+<div class="relative flex items-center justify-center w-6 h-6 rounded-full bg-traffic-severe text-white shadow-lg shadow-traffic-severe/50 ring-2 ring-white dark:ring-surface-bg">
+<span class="material-symbols-outlined text-[14px]">car_crash</span>
+</div>
+</div>
+<!-- 2. Roadwork Amber Diamond Pin at Santolan -->
+<div class="absolute top-[82px] left-[262px] -translate-x-1/2 -translate-y-1/2">
+<div class="flex items-center justify-center w-5 h-5 rounded bg-traffic-moderate text-surface-bg font-bold shadow-md shadow-traffic-moderate/40 rotate-45 ring-1 ring-white dark:ring-surface-bg">
+<span class="material-symbols-outlined text-[13px] -rotate-45 text-black">construction</span>
+</div>
+</div>
+<!-- 3. Flood Advisory Warning at C-5 Kalayaan ramp -->
+<div class="absolute top-[260px] left-[295px] -translate-x-1/2 -translate-y-1/2">
+<div class="flex items-center justify-center w-5 h-5 rounded-full bg-cyan-600 dark:bg-ai-cyan text-white dark:text-surface-bg shadow-md shadow-cyan-500/30 ring-1 ring-white dark:ring-surface-bg">
+<span class="material-symbols-outlined text-[13px]">flood</span>
+</div>
+</div>
+<!-- Real-time Speed Micro-Pill Anchored to Congestion Point -->
+<div class="absolute top-[125px] left-[175px] -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 dark:bg-surface-panel/95 backdrop-blur-md border border-red-400 dark:border-traffic-severe/40 text-slate-900 dark:text-text-primary shadow-xl">
+<span class="relative flex h-2 w-2">
+<span class="radar-beacon absolute inline-flex h-full w-full rounded-full bg-traffic-severe"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-traffic-severe"></span>
+</span>
+<span class="font-telemetry-sm text-telemetry-sm font-bold text-traffic-severe">11 km/h</span>
+<span class="text-slate-500 dark:text-text-muted text-[10px] font-telemetry-sm">• 9:54 PM</span>
+</div>
+<!-- Floating Map Control Utilities (Right Flank) -->
+<div class="absolute right-3 top-4 flex flex-col gap-2 z-20">
+<button class="w-8 h-8 rounded-lg bg-white/90 dark:bg-surface-panel/90 border border-slate-200 dark:border-border-subtle backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary shadow active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">layers</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-white/90 dark:bg-surface-panel/90 border border-slate-200 dark:border-border-subtle backdrop-blur-md flex items-center justify-center text-cyan-600 dark:text-ai-cyan hover:text-slate-900 dark:hover:text-text-primary shadow active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+</button>
+</div>
+<!-- Ground Reality Velocity Bar Strip (At bottom edge of Map) -->
+<div class="absolute bottom-2 left-4 right-4 bg-white/90 dark:bg-surface-panel/90 backdrop-blur-md border border-slate-200 dark:border-border-subtle rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] font-telemetry-sm shadow-sm transition-colors duration-200">
+<div class="flex items-center gap-2">
+<span class="text-slate-500 dark:text-text-muted uppercase text-[9px] font-label-caps">EDSA Velocity:</span>
+<div class="flex h-1.5 w-32 rounded-full overflow-hidden bg-slate-200 dark:bg-surface-card">
+<div class="bg-traffic-moderate w-1/4"></div>
+<div class="bg-traffic-severe w-2/5 animate-pulse"></div>
+<div class="bg-traffic-heavy w-1/5"></div>
+<div class="bg-traffic-normal w-1/5"></div>
+</div>
+</div>
+<span class="text-slate-700 dark:text-text-secondary font-semibold">Avg: <strong class="text-traffic-heavy">14 km/h</strong></span>
+</div>
+</div>
+<!-- 3. THE SIGNATURE ROUTE INTELLIGENCE BOTTOM CARD (Tactical Expandable Sheet) -->
+<section class="relative -mt-2 mx-space-sm px-space-base pt-space-md pb-space-lg bg-white dark:bg-surface-panel rounded-2xl border border-slate-200 dark:border-border-subtle shadow-xl dark:shadow-2xl z-30 space-y-space-md transition-colors duration-200">
+<!-- Drawer Drag Handle Indicator -->
+<div class="flex justify-center -mt-1 pb-1">
+<div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-border-subtle"></div>
+</div>
+<!-- Route Header & Status Ribbon -->
+<div class="flex items-center justify-between">
+<div class="space-y-0.5">
+<span class="text-label-caps font-label-caps text-slate-500 dark:text-text-muted tracking-wider">ACTIVE CORRIDOR TELEMETRY</span>
+<h2 class="text-headline-md font-headline-md font-bold text-slate-900 dark:text-text-primary tracking-tight">ROUTE VIA EDSA (SOUTHBOUND)</h2>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-red-100 dark:bg-traffic-severe/15 border border-red-300 dark:border-traffic-severe/40 text-red-600 dark:text-traffic-severe">
+<span class="w-1.5 h-1.5 rounded-full bg-traffic-severe animate-pulse"></span>
+<span class="text-label-caps font-label-caps font-bold">SEVERE</span>
+</div>
+</div>
+<!-- Journey Telemetry Matrix Grid (High Density Bento Layout) -->
+<div class="grid grid-cols-4 gap-2 bg-slate-50 dark:bg-surface-bg/70 p-2.5 rounded-xl border border-slate-200 dark:border-border-subtle transition-colors duration-200">
+<!-- Metric 1: Estimated Travel Time -->
+<div class="col-span-1 space-y-0.5">
+<p class="text-label-caps font-label-caps text-slate-500 dark:text-text-muted">ESTIMATED</p>
+<p class="text-telemetry-lg font-telemetry-lg text-slate-900 dark:text-text-primary leading-tight">1h 24m</p>
+<span class="text-[9px] font-telemetry-sm text-slate-500 dark:text-text-muted">Target: Ayala</span>
+</div>
+<!-- Metric 2: Normal Baseline -->
+<div class="col-span-1 space-y-0.5 border-l border-slate-200 dark:border-border-subtle/80 pl-2">
+<p class="text-label-caps font-label-caps text-slate-500 dark:text-text-muted">BASELINE</p>
+<p class="text-telemetry-lg font-telemetry-lg text-slate-600 dark:text-text-secondary leading-tight">52m</p>
+<span class="text-[9px] font-telemetry-sm text-slate-500 dark:text-text-muted">No friction</span>
+</div>
+<!-- Metric 3: Active Delay Differential -->
+<div class="col-span-1 space-y-0.5 border-l border-slate-200 dark:border-border-subtle/80 pl-2">
+<p class="text-label-caps font-label-caps text-red-600 dark:text-traffic-severe">NET DELAY</p>
+<p class="text-telemetry-lg font-telemetry-lg text-red-600 dark:text-traffic-severe font-bold leading-tight">+32m</p>
+<span class="text-[9px] font-telemetry-sm text-red-500 dark:text-traffic-severe/80">+61% surge</span>
+</div>
+<!-- Metric 4: Avg Corridor Speed -->
+<div class="col-span-1 space-y-0.5 border-l border-slate-200 dark:border-border-subtle/80 pl-2">
+<p class="text-label-caps font-label-caps text-slate-500 dark:text-text-muted">AVG SPEED</p>
+<p class="text-telemetry-lg font-telemetry-lg text-orange-600 dark:text-traffic-heavy leading-tight">14 <span class="text-[10px] text-slate-400 dark:text-text-muted">km/h</span></p>
+<span class="text-[9px] font-telemetry-sm text-orange-500 dark:text-traffic-heavy">Crawl state</span>
+</div>
+</div>
+<!-- "⚡ WHY IS IT DELAYED?" INCIDENT DIAGNOSTIC SUB-PANEL -->
+<div class="bg-slate-50 dark:bg-surface-card/70 rounded-xl p-3 border border-slate-200 dark:border-border-subtle space-y-2 transition-colors duration-200">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-amber-500 dark:text-traffic-moderate text-[18px]">bolt</span>
+<span class="text-label-caps font-label-caps text-slate-800 dark:text-text-primary tracking-wide">WHY IS IT DELAYED?</span>
+</div>
+<span class="px-2 py-0.5 text-[10px] font-telemetry-sm rounded bg-red-50 dark:bg-surface-panel border border-red-200 dark:border-traffic-severe/50 text-red-600 dark:text-traffic-severe font-semibold">
+            Accident
+          </span>
+</div>
+<div class="space-y-1">
+<h3 class="text-body-md font-semibold text-slate-900 dark:text-text-primary">
+            2-vehicle collision at Ortigas Flyover SB
+          </h3>
+<p class="text-body-sm text-slate-600 dark:text-text-secondary text-[12px] leading-relaxed">
+            Reported: <span class="font-telemetry-sm text-slate-900 dark:text-text-primary font-medium">9:42 PM</span> (18 mins ago) • Source: <span class="text-slate-900 dark:text-text-primary font-medium">MMDA Traffic Center</span> • Status: <span class="text-red-600 dark:text-traffic-severe font-medium">Active Obstruction (2 lanes blocked)</span>
+</p>
+</div>
+<!-- Clearance Progress Bar -->
+<div class="space-y-1 pt-1">
+<div class="flex justify-between text-[10px] font-telemetry-sm text-slate-500 dark:text-text-muted">
+<span>Towing Response Dispatch</span>
+<span class="text-amber-600 dark:text-traffic-moderate font-medium">Wrecker on scene (45% cleared)</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-surface-bg h-1 rounded-full overflow-hidden">
+<div class="bg-traffic-moderate h-full w-[45%]"></div>
+</div>
+</div>
+</div>
+<!-- "✦ AI CONGESTION RELIEF PREDICTION" (Luminescent Spectral Signature) -->
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50/80 via-white to-cyan-50/70 dark:from-ai-primary/15 dark:via-surface-card dark:to-ai-cyan/10 p-3.5 border border-indigo-200 dark:border-ai-primary/40 shadow-sm dark:shadow-[0_0_24px_rgba(99,102,241,0.15)] space-y-2.5 transition-colors duration-200">
+<!-- Subtle Top Glow Flare -->
+<div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-ai-primary via-ai-cyan to-ai-primary"></div>
+<!-- Prediction Banner Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-indigo-600 dark:text-ai-cyan">
+<span class="text-indigo-600 dark:text-ai-cyan text-[14px]">✦</span>
+<span class="text-label-caps font-label-caps font-bold tracking-wider text-indigo-600 dark:text-ai-cyan">AI CONGESTION RELIEF PREDICTION</span>
+</div>
+<span class="text-telemetry-sm font-telemetry-sm text-slate-500 dark:text-text-muted text-[10px]">Model v1.0.2</span>
+</div>
+<!-- Forecasted Relief Target -->
+<div class="flex items-baseline justify-between pt-0.5">
+<div>
+<div class="flex items-baseline gap-2">
+<span class="text-display-lg-mobile font-display-lg-mobile font-bold text-slate-900 dark:text-text-primary">10:20 PM</span>
+<span class="text-telemetry-sm font-telemetry-sm text-indigo-600 dark:text-ai-cyan font-semibold">~38 mins to normal flow</span>
+</div>
+</div>
+</div>
+<!-- Confidence Gauge Bar -->
+<div class="space-y-1">
+<div class="flex justify-between text-telemetry-sm font-telemetry-sm text-[11px]">
+<span class="text-slate-600 dark:text-text-secondary font-medium">Predictive Confidence</span>
+<span class="text-cyan-700 dark:text-ai-cyan font-bold">82% High Confidence</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-surface-bg/80 h-2 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-border-subtle flex gap-0.5">
+<!-- Confidence segmented bar -->
+<div class="bg-cyan-500 dark:bg-ai-cyan h-full rounded-sm w-[82%] shadow-[0_0_8px_rgba(6,182,212,0.6)]"></div>
+<div class="bg-slate-200 dark:bg-surface-elevated h-full rounded-sm w-[18%]"></div>
+</div>
+</div>
+<!-- Actionable Commuter Insight Box -->
+<div class="flex items-start gap-2 bg-white/90 dark:bg-surface-bg/60 p-2 rounded-lg border border-indigo-200 dark:border-ai-primary/20 shadow-xs">
+<span class="material-symbols-outlined text-indigo-600 dark:text-ai-cyan text-[18px] mt-0.5">alt_route</span>
+<div class="flex-1">
+<p class="text-body-sm font-medium text-slate-900 dark:text-text-primary text-[12px] leading-tight">
+              Actionable Commuter Divert Recommendation:
+            </p>
+<p class="text-body-sm text-indigo-700 dark:text-ai-cyan text-[11.5px] mt-0.5 font-normal">
+              Divert via C-5 / Kalayaan Flyover now to save <strong class="font-bold underline text-slate-900 dark:text-white">~21 mins</strong>.
+            </p>
+</div>
+<button class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 dark:bg-ai-primary dark:hover:bg-ai-primary/90 text-white text-label-caps font-label-caps rounded-md active:scale-95 transition-all shadow-sm">
+            REROUTE
+          </button>
+</div>
+</div>
+<!-- Quick Action Group Button -->
+<div class="flex items-center gap-2 pt-1">
+<button class="flex-1 flex items-center justify-center gap-2 py-2.5 px-space-base rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-ai-primary text-white font-label-caps text-label-caps tracking-wider dark:hover:bg-ai-primary/90 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 dark:shadow-ai-primary/20">
+<span class="material-symbols-outlined text-[18px]">navigation</span>
+          COMMENCE ASSISTED NAVIGATION
+        </button>
+<button class="flex items-center justify-center w-11 h-11 rounded-xl bg-white dark:bg-surface-card border border-slate-200 dark:border-border-subtle text-slate-600 dark:text-text-secondary hover:text-slate-900 dark:hover:text-text-primary active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</section>
+<!-- 4. SHARED BOTTOM NAVIGATION BAR COMPONENT -->
+<!-- Active tab logic: "Live Map" is active based on current mobile screen intent -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-base py-space-xs pb-safe bg-white/95 dark:bg-surface-panel backdrop-blur-md dark:bg-opacity-90 shadow-lg dark:shadow-none border-t border-slate-200 dark:border-border-subtle transition-colors duration-200">
+<!-- Destination 1: Live Map (ACTIVE STATE) -->
+<button class="flex flex-col items-center justify-center text-cyan-600 dark:text-ai-cyan font-label-caps text-label-caps py-space-xs px-space-md border-t-2 border-cyan-500 dark:border-ai-cyan bg-cyan-50/50 dark:bg-surface-card/40 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[22px] mb-0.5" style="font-variation-settings: 'FILL' 1;">map</span>
+<span>Live Map</span>
+</button>
+<!-- Destination 2: Corridors -->
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-text-muted font-label-caps text-label-caps py-space-xs px-space-md hover:text-slate-900 dark:hover:text-text-secondary hover:bg-slate-100/70 dark:hover:bg-surface-elevated/40 transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px] mb-0.5">traffic</span>
+<span>Corridors</span>
+</button>
+<!-- Destination 3: AI Relief -->
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-text-muted font-label-caps text-label-caps py-space-xs px-space-md hover:text-slate-900 dark:hover:text-text-secondary hover:bg-slate-100/70 dark:hover:bg-surface-elevated/40 transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px] mb-0.5">auto_awesome</span>
+<span>AI Relief</span>
+</button>
+<!-- Destination 4: Reports -->
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-text-muted font-label-caps text-label-caps py-space-xs px-space-md hover:text-slate-900 dark:hover:text-text-secondary hover:bg-slate-100/70 dark:hover:bg-surface-elevated/40 transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px] mb-0.5">flag</span>
+<span>Reports</span>
+</button>
+</nav>
+</div>
+<!-- Interactive Theme Toggle Script -->
+<script>
+  (function initThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+      const isDark = htmlElement.classList.contains('dark');
+      if (isDark) {
+        htmlElement.classList.remove('dark');
+        localStorage.setItem('santrapik-theme', 'light');
+      } else {
+        htmlElement.classList.add('dark');
+        localStorage.setItem('santrapik-theme', 'dark');
+      }
+    });
+
+    // Check system preference or saved preference
+    const savedTheme = localStorage.getItem('santrapik-theme');
+    if (savedTheme === 'light') {
+      htmlElement.classList.remove('dark');
+    } else if (savedTheme === 'dark') {
+      htmlElement.classList.add('dark');
+    }
+  })();
+</script>
+</body></html>

@@ -46,7 +46,7 @@ Every agent and human contributor must strictly adhere to these 7 tenets:
 | Layer | Technology | Primary Purpose & Agent Guidelines |
 | :--- | :--- | :--- |
 | **Frontend** | React 18+, Vite, TypeScript | Modern, high-performance SPA. Strict TypeScript types, no `any`. |
-| **Styling** | Tailwind CSS, Vanilla CSS | Responsive design, dark-mode first, traffic telemetry design system. |
+| **Styling** | Tailwind CSS, Custom Tokens | "Obsidian Telemetry" design system (see `DESIGN/` folder). |
 | **Mapping** | MapLibre GL JS | Vector tile & GeoJSON rendering, OSM-compatible road styling, route lines, incident markers. |
 | **Charts** | Recharts | Traffic velocity trends, congestion history, incident timelines. |
 | **Routing** | OSRM / OpenRouteService | Routing engine generating multi-coordinate GeoJSON geometries. |
@@ -59,27 +59,39 @@ Every agent and human contributor must strictly adhere to these 7 tenets:
 
 ## 4. Repository & Directory Structure Conventions
 
-When organizing or adding files, maintain this layout:
-
 ```text
 SanTrapik/
-├── AGENT.md                 # Agent instructions and operational rules (this file)
+├── AGENT.md                 # Agent instructions, sprint handling & operational rules
 ├── SPEC.md                  # Detailed technical specifications and data schemas
-├── BRAND.md                 # Design system, color tokens, and UI/UX identity
+├── BRAND.md                 # Brand story, identity & high-level design principles
 ├── CONTEXT.md               # Founding context and system vision
 │
-├── frontend/                # React + Vite + TypeScript web application
+├── DESIGN/                  # AUTHORITATIVE FRONTEND DESIGN SYSTEM & PROTOTYPE
+│   ├── DESIGN.md            # "Obsidian Telemetry" tokens, typography & component specs
+│   ├── code.html            # Working HTML/Tailwind reference UI implementation
+│   └── screen.png           # Visual design screenshot
+│
+├── sprints/                 # SPRINT MANAGEMENT (JSON FORMAT)
+│   ├── index.json           # Master sprint index & execution tracker
+│   ├── sprint-1-data-and-database.json
+│   ├── sprint-2-backend-services.json
+│   ├── sprint-3-frontend-ui.json
+│   ├── sprint-4-ai-ml-prediction.json
+│   └── sprint-5-integration-testing.json
+│
+├── frontend/                # React + Vite + TypeScript web application (implements DESIGN/)
 │   ├── src/
 │   │   ├── assets/          # Static assets, logos, map markers
-│   │   ├── components/      # UI components (atoms, molecules)
-│   │   │   ├── map/         # MapLibre container, layers, custom controls
-│   │   │   ├── route/       # Route input form, comparison cards, segment lists
-│   │   │   ├── dashboard/   # High-level Metro Manila traffic overview widgets
-│   │   │   ├── incidents/   # Incident timeline, badge indicators, drawer
-│   │   │   └── common/      # Badges, cards, alerts, modal dialogs
+│   │   ├── components/      # UI components matching DESIGN/code.html
+│   │   │   ├── map/         # MapLibre container, traffic layers, incident markers
+│   │   │   ├── route/       # Route query input, quick corridors, comparison cards
+│   │   │   ├── telemetry/   # Route Intelligence Card, Segment Velocity Bar
+│   │   │   ├── incidents/   # Incident timeline accordion, severity badges
+│   │   │   ├── prediction/  # AI Relief forecast footer, confidence meters
+│   │   │   └── layout/      # Split console (desktop) & bottom sheet (mobile)
 │   │   ├── hooks/           # Custom React hooks (useTraffic, useRoute, useIncidents)
 │   │   ├── services/        # API clients (axios or fetch wrapper)
-│   │   ├── types/           # Shared TypeScript interfaces (Route, Segment, Incident, Prediction)
+│   │   ├── types/           # Shared TypeScript interfaces matching SPEC.md
 │   │   └── styles/          # Tailwind setup and custom CSS utilities
 │   ├── package.json
 │   └── vite.config.ts
@@ -107,9 +119,57 @@ SanTrapik/
 
 ---
 
-## 5. Coding & Style Guidelines for Agents
+## 5. Frontend Design Source of Truth (`DESIGN/` Folder)
 
-### 5.1 Frontend (React + TypeScript)
+**CRITICAL DIRECTIVE:** The `DESIGN/` directory is the **absolute authority** for all frontend styling, component hierarchies, interaction states, and layouts.
+
+When implementing or modifying any frontend component in `frontend/`:
+1. **Consult `DESIGN/DESIGN.md`:** Reference color tokens (`surface-bg`, `surface-panel`, `surface-card`, semantic traffic colors, and AI prognostic glows), typography scales (`Outfit`, `Inter`, `JetBrains Mono`), corner radiuses, and elevation layers.
+2. **Replicate `DESIGN/code.html`:** The reference HTML implementation is already tuned with Tailwind CSS classes, responsive breakpoints (`< 768px` mobile bottom sheet vs `>= 1024px` split console), and component structure. Port these cleanly into idiomatic React TypeScript components.
+3. **Zero Design Regressions:** Do not replace custom styled telemetry components with default generic HTML elements or unstyled framework templates. Keep the tactical, avionics-inspired "Obsidian Telemetry" aesthetic intact.
+
+---
+
+## 6. Sprint Management & Execution Protocol for AI Agents
+
+All development work in SanTrapik is governed by structured **Sprints** stored in `sprints/*.json` and synchronized with **GitHub Issues**.
+
+### 6.1 Sprint Lifecycle
+```text
+[PLANNED] ───> [IN_PROGRESS] ───> [VERIFYING] ───> [COMPLETED]
+```
+1. **PLANNED:** Sprint is defined with explicit issue IDs, descriptions, and acceptance criteria.
+2. **IN_PROGRESS:** Active sprint being executed. Issues are worked sequentially or in parallel following dependency order.
+3. **VERIFYING:** Code is written; automated tests, linting, and build verification are running.
+4. **COMPLETED:** All acceptance criteria satisfied, tests pass, GitHub issues closed, sprint JSON updated.
+
+### 6.2 How AI Agents Must Execute Sprints
+When an agent is assigned to work on or advance a sprint, it must strictly follow this procedure:
+
+1. **Step 1: Check Active Sprint in `sprints/index.json`:**
+   Inspect `sprints/index.json` to identify the current active sprint or the next uncompleted sprint. Open the corresponding `sprints/sprint-<N>-<name>.json`.
+2. **Step 2: Read Issue Specifications:**
+   Read the issue details, dependencies, and `acceptance_criteria` in the sprint JSON file.
+3. **Step 3: Cross-Reference `SPEC.md` and `DESIGN/`:**
+   - Backend/Database issues: Validate schemas and endpoints against [SPEC.md](file:///c:/SanTrapik/SPEC.md).
+   - Frontend issues: Replicate components from [DESIGN/code.html](file:///c:/SanTrapik/DESIGN/code.html) and [DESIGN/DESIGN.md](file:///c:/SanTrapik/DESIGN/DESIGN.md).
+4. **Step 4: Execute with Strict Verification:**
+   - Write code adhering to project coding guidelines (Section 7).
+   - Execute verification commands (`pytest` for backend, `npm run build` / `npm test` for frontend).
+5. **Step 5: Synchronize GitHub Issues:**
+   - When completing an issue, link the git commit using `fixes #<issue_number>` or update the issue status via the GitHub CLI:
+     ```bash
+     gh issue close <issue_number> --comment "Completed as part of Sprint <N>."
+     ```
+6. **Step 6: Update Sprint JSON State:**
+   - In `sprints/sprint-<N>-<name>.json`, update the issue `status` from `"open"` to `"completed"`.
+   - Update `completed_issues_count` and sprint `status` in `sprints/index.json`.
+
+---
+
+## 7. Coding & Style Guidelines for Agents
+
+### 7.1 Frontend (React + TypeScript)
 - **TypeScript Strictness:** Always define complete interfaces for API responses in `src/types/`. Avoid `any`.
 - **Component Isolation:** Decouple MapLibre map rendering from business logic. Keep map hooks pure.
 - **Traffic Severity Semantic Color Usage:**
@@ -118,10 +178,10 @@ SanTrapik/
   - `Heavy` (Noticeable delays): Orange (`#F97316` / `orange-500`)
   - `Severe` (Stop-and-go / standstills): Red (`#EF4444` / `rose-500`)
 - **Observed vs. Predicted Badges:**
-  - Any AI predicted metric (e.g. "Expected Relief: 10:24 PM (~25 mins)") must carry an `[AI Prediction]` tag, confidence interval, and a distinct styling (e.g., violet/cyan accent).
+  - Any AI predicted metric (e.g. "Expected Relief: 10:24 PM (~25 mins)") must carry an `[AI Prediction]` tag, confidence interval, and a distinct styling (`#6366F1` / `#06B6D4`).
 - **Graceful Fallbacks:** Handle network latency, offline state, or missing incident reports without breaking UI layouts.
 
-### 5.2 Backend (FastAPI + Python)
+### 7.2 Backend (FastAPI + Python)
 - **Pydantic Validation:** Always validate incoming query parameters and payloads using Pydantic v2 schemas.
 - **Async Execution:** Use `async def` for I/O bound endpoints (database queries, external API calls).
 - **PostGIS Queries:** Leverage GeoAlchemy2 or parameterized SQL with `ST_DWithin`, `ST_Intersects`, `ST_LineLocatePoint`, and `ST_AsGeoJSON`.
@@ -138,7 +198,7 @@ SanTrapik/
   }
   ```
 
-### 5.3 Database & PostGIS
+### 7.3 Database & PostGIS
 - Coordinate Reference System (CRS) standard is **WGS 84 (EPSG:4326)** for storage and GeoJSON output.
 - All spatial columns must have spatial GIST indexes:
   ```sql
@@ -147,7 +207,7 @@ SanTrapik/
   ```
 - No user credentials or session tokens table. Public read access is prioritized.
 
-### 5.4 Machine Learning & Prediction
+### 7.4 Machine Learning & Prediction
 - **Target Variable:** Time-to-relief in minutes (`predicted_relief_minutes`) as a regression problem.
 - **Feature Pipeline:**
   - Temporal features (hour of day, day of week, holiday flag, peak hour indicator).
@@ -157,20 +217,22 @@ SanTrapik/
 
 ---
 
-## 6. Testing & Quality Verification Checklist
+## 8. Testing & Quality Verification Checklist
 
-Before considering any task complete, verify:
+Before considering any sprint or issue complete, verify:
 1. **Frontend Builds:** `npm run build` passes with zero TypeScript and lint errors.
 2. **Backend Tests:** `pytest` passes with all endpoints returning valid HTTP status codes and Pydantic schemas.
 3. **Spatial Queries:** Ensure no full table scans on large road segment tables; verify index usage (`EXPLAIN ANALYZE`).
-4. **Data Integrity Check:** Verify that no mocked data leaks into production configurations.
-5. **No Broken Links or Placeholder Elements:** Do not leave placeholder comments (`// TODO: implement later`) in code committed for reviews.
+4. **Design Fidelity:** Visually and structurally verify that frontend components conform to `DESIGN/code.html` and `DESIGN/DESIGN.md`.
+5. **Data Integrity Check:** Verify that no mocked data leaks into production configurations.
+6. **No Broken Links or Placeholder Elements:** Do not leave placeholder comments (`// TODO: implement later`) in code committed for reviews.
 
 ---
 
-## 7. Common Pitfalls to Avoid
+## 9. Common Pitfalls to Avoid
 
 - ❌ **Do NOT add user authentication / registration:** The scope explicitly calls for an open-access anonymous model.
 - ❌ **Do NOT confuse SanTrapik with Google Maps:** We are not building turn-by-turn voice navigation. We are building route intelligence, incident diagnostics, and congestion relief predictions.
+- ❌ **Do NOT deviate from the `DESIGN/` folder:** The UI design system is already defined. Implement the components based on `DESIGN/DESIGN.md` and `DESIGN/code.html`.
 - ❌ **Do NOT query third-party APIs without caching / throttling:** Metro Manila traffic data APIs or map tile providers have rate limits; protect them with caching where applicable.
 - ❌ **Do NOT guess coordinates:** Metro Manila bounds roughly span `14.35°N to 14.80°N`, `120.90°E to 121.15°E`. Validate that coordinates fall within Philippine territory.

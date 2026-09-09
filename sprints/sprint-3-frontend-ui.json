@@ -1,0 +1,133 @@
+{
+  "sprint_id": "sprint-3-frontend-ui",
+  "number": 3,
+  "title": "Frontend Implementation via Obsidian Telemetry Design",
+  "goal": "Build the React 18 + Vite + TypeScript web application strictly implementing the 'Obsidian Telemetry' design system from the DESIGN/ folder (DESIGN/DESIGN.md, DESIGN/code.html, and DESIGN/screen.png), integrating MapLibre GL JS, Route Intelligence Card, and responsive command console.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-2-backend-services"
+  ],
+  "issues": [
+    {
+      "id": "SP3-001",
+      "github_issue_number": 10,
+      "title": "[Sprint 3] React + Vite + TypeScript Project Scaffolding with Obsidian Telemetry Tokens",
+      "priority": "high",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "design-system",
+        "tailwind"
+      ],
+      "description": "Initialize React 18 SPA with Vite and strict TypeScript in `frontend/`. Configure Tailwind CSS with the exact design tokens, chromatic architecture (`surface-bg: #080C14`, `surface-panel: #0F172A`, `surface-card: #1E293B`, semantic traffic signals, AI prognostic palette), typography (`Outfit`, `Inter`, `JetBrains Mono`), and Google Material Symbols as specified in `DESIGN/DESIGN.md` and `DESIGN/code.html`.",
+      "acceptance_criteria": [
+        "Vite + React + TS project builds cleanly with zero errors (`npm run build`)",
+        "Tailwind config includes all custom colors, spacing, and font definitions from `DESIGN/DESIGN.md`",
+        "Fonts (Outfit, Inter, JetBrains Mono) and Material Symbols loaded via index.html",
+        "Base dark layout renders with the Obsidian `#080C14` infinite background"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/10"
+    },
+    {
+      "id": "SP3-002",
+      "github_issue_number": 11,
+      "title": "[Sprint 3] MapLibre GL JS Interactive Map & Traffic Vector Layer Component",
+      "priority": "high",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "maplibre",
+        "gis"
+      ],
+      "description": "Build `MapContainer.tsx` using MapLibre GL JS with dark-mode vector basemap (Carto Dark or OSM Dark). Render Metro Manila boundary, dynamically colored traffic route polylines (with traffic segments colored green, amber, orange, red according to speed), pulsating active incident markers, and map controls (zoom, compass, traffic heatmap layer toggle).",
+      "acceptance_criteria": [
+        "Interactive MapLibre canvas centers smoothly on Metro Manila coordinates [121.02, 14.58]",
+        "Route polylines render with segmented semantic traffic colors matching speed data",
+        "Pulsating SVG/HTML incident markers render at accident and roadwork coordinates",
+        "Clicking an incident pin or route segment highlights its details in the telemetry console"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/11"
+    },
+    {
+      "id": "SP3-003",
+      "github_issue_number": 12,
+      "title": "[Sprint 3] Route Search Bar, Waypoint Selector & Quick-Corridor Pills",
+      "priority": "high",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "ui",
+        "components"
+      ],
+      "description": "Build `RouteSearch.tsx` and `QuickCorridors.tsx` components matching the layout and styling in `DESIGN/code.html`. Provide starting point and destination inputs with terminal-style waypoint indicators, autocomplete geocoding, and one-tap shortcut pills for major commuter corridors (QC to Makati, Manila to BGC, Caloocan to Pasay, Alabang to Ortigas).",
+      "acceptance_criteria": [
+        "Inputs implement the focused glowing border `#6366F1` from `DESIGN/DESIGN.md`",
+        "One-tap corridor pills immediately populate origin and destination and trigger route analysis",
+        "Reverse points swap button smoothly interchanges origin and destination",
+        "Search form triggers backend `/api/v1/route/analyze` with loading telemetry states"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/12"
+    },
+    {
+      "id": "SP3-004",
+      "github_issue_number": 13,
+      "title": "[Sprint 3] Route Intelligence Card, Segment Velocity Bar & Incident Accordion",
+      "priority": "high",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "telemetry",
+        "components"
+      ],
+      "description": "Build the centerpiece `RouteIntelligenceCard.tsx` implementing the exact visual structure from `DESIGN/code.html`. Includes: route header with severity badge, time metric cluster (estimated time, normal time, delay +/- min in JetBrains Mono), interactive multi-segment Segment Velocity Bar, and collapsible Incident Diagnostics Accordion showing obstruction classification, landmark, agency source, and verified timestamp.",
+      "acceptance_criteria": [
+        "Visual appearance matches `DESIGN/code.html` lines 180-330",
+        "Time metrics and speeds use tabular numbers in `JetBrains Mono`",
+        "Segment Velocity Bar displays proportional road segment segments with hover velocity tooltips",
+        "Incident accordion expands to show incident details and timeline"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/13"
+    },
+    {
+      "id": "SP3-005",
+      "github_issue_number": 14,
+      "title": "[Sprint 3] AI Relief Forecast Card, Confidence Meter & Telemetry Badges",
+      "priority": "high",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "ai-prediction",
+        "components"
+      ],
+      "description": "Build `AIPredictionCard.tsx` and diagnostic badges. Implement the electric indigo/cyan spectral signature (`#6366F1` / `#06B6D4`) with `ai-glow` backdrops as specified in `DESIGN/DESIGN.md`. Display expected congestion relief timestamp, remaining minutes countdown, linear gradient confidence bar, and model version pill.",
+      "acceptance_criteria": [
+        "AI prediction component clearly distinguished from observed data via distinct indigo/cyan styling",
+        "Displays predicted relief time (e.g., '10:20 PM'), minutes remaining, and animated confidence bar",
+        "Includes telemetry status badges (`[\u2726 AI Prediction]`, `[\u25cf Observed 9:54 PM]`)",
+        "Displays the pulsing green 'Telemetry Live' connection indicator in header"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/14"
+    },
+    {
+      "id": "SP3-006",
+      "github_issue_number": 15,
+      "title": "[Sprint 3] Responsive Layout: Desktop Split Console & Mobile Bottom Telemetry Sheet",
+      "priority": "medium",
+      "labels": [
+        "sprint-3",
+        "frontend",
+        "responsive",
+        "ux"
+      ],
+      "description": "Implement responsive layout shell across viewports as defined in `DESIGN/DESIGN.md`: Fixed dual-tier command console on desktop (>=1024px) with a 420px persistent left sidebar and full 100vh MapLibre canvas on the right; gesture-friendly expandable bottom sheet on mobile (<768px) with compact collapsed state (4.5rem height) expanding to full telemetry review.",
+      "acceptance_criteria": [
+        "Desktop layout renders seamless split console with no horizontal scroll",
+        "Mobile layout renders full-screen map with draggable/touch-expandable bottom sheet",
+        "Smooth CSS transitions between collapsed, half-expanded, and full sheet states",
+        "Zero layout glitches when resizing across breakpoints"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/15"
+    }
+  ]
+}

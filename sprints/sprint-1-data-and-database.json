@@ -1,0 +1,89 @@
+{
+  "sprint_id": "sprint-1-data-and-database",
+  "number": 1,
+  "title": "Geospatial Database Architecture & Metro Manila Road Telemetry",
+  "goal": "Set up PostgreSQL + PostGIS database, schema migrations, Metro Manila arterial road segments, real-time/historical traffic telemetry records, and incident tracking.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [],
+  "issues": [
+    {
+      "id": "SP1-001",
+      "github_issue_number": 1,
+      "title": "[Sprint 1] PostgreSQL + PostGIS Containerization & Core Schema Migrations",
+      "priority": "high",
+      "labels": [
+        "sprint-1",
+        "database",
+        "backend",
+        "postgis"
+      ],
+      "description": "Configure PostgreSQL 15 with PostGIS 3 extension enabled in Docker. Set up Alembic migration environment and implement initial DDL schemas for `road_segments`, `traffic_records`, `incidents`, `predictions`, and `routes` using EPSG:4326 (WGS 84) coordinate reference system as specified in SPEC.md.",
+      "acceptance_criteria": [
+        "PostgreSQL 15 + PostGIS 3 runs reliably via Docker Compose",
+        "Alembic or SQL migration scripts cleanly apply and rollback all tables defined in SPEC.md",
+        "Spatial GIST indexes created on `road_segments.geometry`, `incidents.geometry`, and `routes.route_geom`",
+        "Automated health-check script connects and confirms PostGIS extension version"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/1"
+    },
+    {
+      "id": "SP1-002",
+      "github_issue_number": 2,
+      "title": "[Sprint 1] Metro Manila Major Arterials Road Network Ingestion",
+      "priority": "high",
+      "labels": [
+        "sprint-1",
+        "database",
+        "geospatial",
+        "osm"
+      ],
+      "description": "Extract, normalize, and ingest GeoJSON LineString geometries for Metro Manila's critical transport corridors (EDSA, C-5 Road, Commonwealth Avenue, Quezon Avenue, Ortigas Avenue, Espa\u00f1a Boulevard, Roxas Boulevard, and Marcos Highway). Each segment must include direction, city, baseline speed (km/h), and spatial LineString.",
+      "acceptance_criteria": [
+        "Ingestion script processes and stores at least 50 high-priority road segments across Metro Manila",
+        "All coordinates strictly validated within Metro Manila bounding box [120.90, 14.35, 121.15, 14.80]",
+        "LineString geometries stored with valid SRID 4326",
+        "Unit tests verify spatial querying by bounding box and road name"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/2"
+    },
+    {
+      "id": "SP1-003",
+      "github_issue_number": 3,
+      "title": "[Sprint 1] Traffic Records Telemetry Ingestion Pipeline & Seed Dataset",
+      "priority": "medium",
+      "labels": [
+        "sprint-1",
+        "database",
+        "telemetry"
+      ],
+      "description": "Implement data models and seed generation scripts for `traffic_records` capturing average speed, traffic severity classification (Normal, Moderate, Heavy, Severe), congestion percentage, and observation timestamps. Include historical 7-day pattern data for recurring rush-hour simulations.",
+      "acceptance_criteria": [
+        "`traffic_records` table populated with representative real-world Metro Manila traffic telemetry",
+        "Speed classifications strictly match defined thresholds (Normal >= 80%, Moderate 50-79%, Heavy 25-49%, Severe < 25% baseline speed)",
+        "Indexes on `(road_segment_id, observed_at DESC)` optimized for fast recent-state queries",
+        "Query execution time for current segment status is < 15ms"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/3"
+    },
+    {
+      "id": "SP1-004",
+      "github_issue_number": 4,
+      "title": "[Sprint 1] Road Incident Tracking Schema & Seed Data Ingestion",
+      "priority": "medium",
+      "labels": [
+        "sprint-1",
+        "database",
+        "incidents"
+      ],
+      "description": "Implement data models and ingestion for `incidents` table. Populate with realistic Metro Manila road incidents (vehicular accidents, stalled buses/trucks, gutter-deep flooding, road re-blocking/construction) with verified coordinates, reported timestamps, status (Active/Clearing/Resolved), and agency data source attribution.",
+      "acceptance_criteria": [
+        "Incident records store valid Point(lat, lng) geometries within Metro Manila",
+        "Includes diverse incident types: ACCIDENT, ROADWORK, FLOOD, STALLED_VEHICLE",
+        "Incident statuses accurately reflect lifecycle (REPORTED, ACTIVE, CLEARING, RESOLVED)",
+        "PostGIS spatial query test succeeds: finding all incidents within 100m of a given road segment"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/4"
+    }
+  ]
+}

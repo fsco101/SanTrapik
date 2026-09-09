@@ -1,0 +1,93 @@
+{
+  "sprint_id": "sprint-4-ai-ml-prediction",
+  "number": 4,
+  "title": "AI/ML Congestion Relief Prediction Pipeline",
+  "goal": "Develop, train, evaluate, and deploy the machine learning regression model to forecast congestion relief time (minutes to free-flow recovery) and integrate inference into the FastAPI backend.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-1-data-and-database",
+    "sprint-2-backend-services"
+  ],
+  "issues": [
+    {
+      "id": "SP4-001",
+      "github_issue_number": 16,
+      "title": "[Sprint 4] Historical Traffic Feature Engineering & Dataset Preprocessing Pipeline",
+      "priority": "high",
+      "labels": [
+        "sprint-4",
+        "ml",
+        "python",
+        "data-science"
+      ],
+      "description": "Develop automated feature engineering pipeline in `ml/pipelines/features.py`. Extract and encode temporal features (sin/cos cyclic hour, day of week, holiday flag, rush hour indicator), road segment features (baseline speed, lane count, segment length), active incident variables (incident type, active duration minutes, severity weight), and current speed ratios.",
+      "acceptance_criteria": [
+        "Feature pipeline processes raw traffic_records and incidents into normalized training tensors",
+        "Cyclic time encodings properly map 24-hour day periodicity",
+        "Handles missing incident data gracefully with explicit imputation or indicator flags",
+        "Generates versioned train/validation/test splits with zero data leakage across time windows"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/16"
+    },
+    {
+      "id": "SP4-002",
+      "github_issue_number": 17,
+      "title": "[Sprint 4] Relief Time Regression Model Training & Cross-Validation (MAE <= 8.5 min)",
+      "priority": "high",
+      "labels": [
+        "sprint-4",
+        "ml",
+        "training",
+        "scikit-learn"
+      ],
+      "description": "Implement model training scripts in `ml/pipelines/train.py` evaluating candidate algorithms (Random Forest Regressor, Gradient Boosting / LightGBM) to predict target variable `predicted_relief_minutes`. Perform time-series cross-validation and optimize hyperparameters to achieve target MAE <= 8.5 minutes.",
+      "acceptance_criteria": [
+        "Training pipeline runs end-to-end and outputs evaluation metrics (MAE, RMSE, R-squared)",
+        "Trained model achieves MAE <= 8.5 minutes on held-out test dataset",
+        "Feature importance report generated identifying top contributors to relief time",
+        "Model training artifacts, parameter configs, and evaluation logs saved under `ml/models/`"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/17"
+    },
+    {
+      "id": "SP4-003",
+      "github_issue_number": 18,
+      "title": "[Sprint 4] Model Serialization & FastAPI Inference Engine Integration",
+      "priority": "high",
+      "labels": [
+        "sprint-4",
+        "ml",
+        "backend",
+        "inference"
+      ],
+      "description": "Serialize trained model pipeline to joblib / ONNX format. Build `PredictionService` in `backend/app/ml/inference.py` to load model weights at application startup and perform fast (< 10ms) batch inference on requested route road segments during `/api/v1/route/analyze` requests.",
+      "acceptance_criteria": [
+        "Serialized model file packaged and loaded into memory on FastAPI startup",
+        "`PredictionService.predict_relief(segment_features)` returns predicted minutes and relief timestamp",
+        "Inference latency is < 15ms per route analysis query",
+        "Unit tests verify inference outputs across edge cases (e.g. free-flow traffic, severe multi-vehicle accidents)"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/18"
+    },
+    {
+      "id": "SP4-004",
+      "github_issue_number": 19,
+      "title": "[Sprint 4] Prediction Confidence Interval Estimator & Guardrail Bounding",
+      "priority": "medium",
+      "labels": [
+        "sprint-4",
+        "ml",
+        "guardrails"
+      ],
+      "description": "Implement prediction confidence scoring and guardrails in `backend/app/ml/guardrails.py`. Compute model confidence based on feature distance from training distribution and tree variance. Clamp predicted relief duration to realistic bounds (e.g., minimum 5 mins, maximum 180 mins) and generate lower/upper prediction intervals.",
+      "acceptance_criteria": [
+        "Confidence score calculated between 0.00 and 1.00 for every prediction",
+        "Returns formatted window (e.g. '10:05 PM \u2013 10:25 PM') when confidence is below 85%",
+        "Predicted relief times clamped to prevent nonsensical negative or multi-day forecasts",
+        "Explicitly outputs `is_predicted: true` flag in API responses"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/19"
+    }
+  ]
+}
