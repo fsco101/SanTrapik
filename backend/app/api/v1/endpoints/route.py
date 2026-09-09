@@ -33,7 +33,12 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
     temp_evaluated = []
     for r in raw_routes:
         coords = r["geometry"]["coordinates"]
-        summary, expected_relief, segments = spatial_service.analyze_route(coords, db=db)
+        summary, expected_relief, segments = spatial_service.analyze_route(
+            coords,
+            db=db,
+            duration_seconds=r.get("duration_seconds"),
+            distance_meters=r.get("distance_meters")
+        )
         temp_evaluated.append({
             "raw": r,
             "coords": coords,

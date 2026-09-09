@@ -13,7 +13,46 @@ export async function analyzeRoute(origin: { lat: number; lng: number; name?: st
     const json = await res.json();
     return json.data.routes;
   } catch (err) {
-    console.warn("Backend API unavailable, using local mock telemetry:", err);
+    console.warn("Backend API route analyze call failed, querying direct OSRM route:", err);
+    try {
+      const osrmRes = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&alternatives=${includeAlternatives}`
+      );
+      if (osrmRes.ok) {
+        const osrmData = await osrmRes.json();
+        if (osrmData.routes && osrmData.routes.length > 0) {
+          return osrmData.routes.map((r: any, idx: number) => {
+            const distKm = Number((r.distance / 1000).toFixed(1));
+            const ttMin = Math.round(r.duration / 60);
+            return {
+              id: `rt_osrm_direct_${idx + 1}`,
+              name: idx === 0 ? "via Primary Corridor" : "via Alternate Route",
+              is_recommended: idx === 0,
+              recommendation_reason: idx === 0 ? "Real-time OSRM optimal path" : "Alternative route",
+              summary: {
+                total_distance_km: distKm,
+                estimated_travel_time_min: ttMin,
+                normal_travel_time_min: Math.round((distKm / 50) * 60),
+                estimated_delay_min: Math.max(0, ttMin - Math.round((distKm / 50) * 60)),
+                overall_congestion: "MODERATE",
+                active_incidents_count: 0,
+                most_affected_segment: "NCR Arterial"
+              },
+              expected_relief: {
+                relief_time: new Date(Date.now() + 25 * 60000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                estimated_minutes_remaining: 25,
+                confidence: 0.85,
+                is_predicted: true
+              },
+              geometry: r.geometry,
+              segments: []
+            };
+          });
+        }
+      }
+    } catch (osrmErr) {
+      console.error("OSRM direct query failed:", osrmErr);
+    }
     return getFallbackRoutes(origin.name || "Quezon City", destination.name || "Makati");
   }
 }

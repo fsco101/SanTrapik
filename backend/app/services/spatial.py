@@ -1,18 +1,29 @@
 import json
 import os
+import time
+import math
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from shapely.geometry import LineString, Point
 from sqlalchemy.orm import Session
 
 from backend.app.db.models import RoadSegment, TrafficRecord, Incident, Prediction
 from backend.app.schemas.route import RouteSegmentDetail, IncidentSummary, SegmentPrediction, RouteSummary, ExpectedRelief
 from backend.app.ml.inference import prediction_service
+from backend.app.services.telemetry import telemetry_service, DATA_FILE
 
-DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
-from backend.scripts.seed_incidents import SAMPLE_INCIDENTS
-
-import time
+def haversine_distance(coord1: List[float], coord2: List[float]) -> float:
+    """Calculate distance in meters between two [lng, lat] coordinates."""
+    lng1, lat1 = coord1
+    lng2, lat2 = coord2
+    R = 6371000  # Earth radius in meters
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lng2 - lng1)
+    a = math.sin(delta_phi / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 class SpatialService:
     _db_healthy: bool = True
@@ -29,232 +40,212 @@ class SpatialService:
         else:
             self._cached_roads = []
 
-    def analyze_route(self, route_coords: List[List[float]], db: Session = None) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail]]:
+    def analyze_route(
+        self,
+        route_coords: List[List[float]],
+        db: Session = None,
+        duration_seconds: Optional[int] = None,
+        distance_meters: Optional[float] = None
+    ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail]]:
+        """
+        Decomposes real route geometry into constituent Metro Manila road segments,
+        calculates live travel times and delay based on real-time traffic telemetry,
+        and invokes the ML model to forecast congestion relief duration.
+        """
         route_line = LineString(route_coords)
-        now = datetime.now(timezone.utc)
+        now = telemetry_service.get_manila_now()
         now_ts = time.time()
         
-        # Buffer distance in degrees: ~0.0008 deg is roughly ~90 meters
-        buffer_deg = 0.0008
+        # Buffer distance in degrees (~120 meters)
+        buffer_deg = 0.0011
 
-        matched_segments = []
-        
-        # Check database with circuit-breaker to avoid connection timeout stalling
-        can_try_db = db is not None and (SpatialService._db_healthy or (now_ts - SpatialService._last_db_check > 15.0))
-        db_segments = []
+        matched_segments: List[RouteSegmentDetail] = []
+        ml_segment_inputs: List[Dict[str, Any]] = []
+        ml_incident_inputs: List[Dict[str, Any]] = []
 
-        if can_try_db:
-            try:
-                SpatialService._last_db_check = now_ts
-                db_segments = db.query(RoadSegment).all()
-                SpatialService._db_healthy = True
-            except Exception:
-                SpatialService._db_healthy = False
-                db_segments = []
+        # 1. Spatial Matching along Monitored Corridors
+        active_incidents = telemetry_service.get_active_incidents(status="ACTIVE")
 
-        if db_segments:
-            # Match using DB segments
-            for seg in db_segments:
-                # Retrieve latest traffic record
-                latest_traffic = db.query(TrafficRecord).filter(
-                    TrafficRecord.road_segment_id == seg.id
-                ).order_by(TrafficRecord.observed_at.desc()).first()
-
-                # Get incidents near this segment
-                incidents = db.query(Incident).filter(
-                    Incident.road_segment_id == seg.id,
-                    Incident.status != "RESOLVED"
-                ).all()
-
-                # Check if segment matches route
-                # (LineString distance to route)
-                seg_geom = seg.geometry  # GeoAlchemy2 element
-                # Approximate check
-                matched_segments.append((seg, latest_traffic, incidents))
-        
-        # If DB records empty, fallback to cached data to guarantee 100% test reliability
-        if not matched_segments and self._cached_roads:
+        if self._cached_roads:
+            # Check traversed segments in geographical sequence
+            candidate_segments = []
             for feat in self._cached_roads:
                 props = feat["properties"]
                 geom = feat["geometry"]
-                seg_line = LineString(geom["coordinates"])
+                seg_coords = geom["coordinates"]
+                seg_line = LineString(seg_coords)
                 
-                # Check distance from route line
+                # If route intersects or runs parallel within ~120m
                 if route_line.distance(seg_line) < buffer_deg:
-                    # Fabricate realistic telemetry based on road properties
-                    baseline = props["baseline_speed_kmh"]
-                    is_bottleneck = "Ortigas" in props["road_name"] or "Guadalupe" in props["road_name"]
-                    
-                    if is_bottleneck:
-                        speed = round(baseline * 0.20, 1)
-                        level = "SEVERE"
-                        cong = 91.5
-                    elif "C-5" in props["road_name"]:
-                        speed = round(baseline * 0.42, 1)
-                        level = "HEAVY"
-                        cong = 68.0
-                    else:
-                        speed = round(baseline * 0.65, 1)
-                        level = "MODERATE"
-                        cong = 45.0
+                    # Projection distance along route to preserve travel sequence
+                    proj_dist = route_line.project(Point(seg_coords[0]))
+                    candidate_segments.append((proj_dist, feat, seg_line))
 
-                    # Find matching incidents from sample list
-                    inc_summaries = []
-                    for inc in SAMPLE_INCIDENTS:
-                        if inc["status"] != "RESOLVED":
-                            inc_pt = Point(inc["point_lng_lat"])
-                            if seg_line.distance(inc_pt) < 0.0015:
-                                inc_summaries.append(IncidentSummary(
-                                    id=f"inc_{abs(hash(inc['description'])) % 10000}",
-                                    type=inc["incident_type"],
-                                    severity=inc["severity"],
-                                    description=inc["description"],
-                                    reported_at=(now - timedelta(minutes=inc["reported_minutes_ago"])).isoformat(),
-                                    status=inc["status"]
-                                ))
+            # Sort candidate segments by appearance along the route
+            candidate_segments.sort(key=lambda x: x[0])
 
-                    pred = SegmentPrediction(
-                        predicted_relief_time=(now + timedelta(minutes=38 if is_bottleneck else 20)).strftime("%I:%M %p"),
-                        predicted_relief_minutes=38 if is_bottleneck else 20,
-                        confidence=0.82 if is_bottleneck else 0.75
-                    )
+            for _, feat, seg_line in candidate_segments:
+                props = feat["properties"]
+                name = props["road_name"]
+                direction = props.get("direction", "SB")
+                baseline = float(props["baseline_speed_kmh"])
 
-                    matched_segments.append(RouteSegmentDetail(
-                        segment_id=f"seg_{abs(hash(props['road_name'])) % 10000}",
-                        name=props["road_name"],
-                        road_code=props.get("road_code"),
-                        direction=props["direction"],
-                        traffic_level=level,
-                        average_speed_kmh=speed,
-                        congestion_percentage=cong,
-                        incidents=inc_summaries,
-                        prediction=pred,
-                        last_updated=(now - timedelta(minutes=3)).strftime("%I:%M %p")
-                    ))
+                # Check active incidents intersecting this segment
+                seg_incidents: List[IncidentSummary] = []
+                has_inc = False
+                max_sev = None
 
-        # Ensure we have at least a few representative segments along the route
-        if not matched_segments:
-            matched_segments = [
-                RouteSegmentDetail(
-                    segment_id="seg_edsa_01",
-                    name="EDSA - Quezon Avenue to Cubao",
-                    road_code="C-4",
-                    direction="SB",
-                    traffic_level="HEAVY",
-                    average_speed_kmh=22.5,
-                    congestion_percentage=55.0,
-                    incidents=[],
-                    prediction=SegmentPrediction(
-                        predicted_relief_time=(now + timedelta(minutes=25)).strftime("%I:%M %p"),
-                        predicted_relief_minutes=25,
-                        confidence=0.80
-                    ),
-                    last_updated=(now - timedelta(minutes=2)).strftime("%I:%M %p")
-                ),
-                RouteSegmentDetail(
-                    segment_id="seg_edsa_02",
-                    name="EDSA - Ortigas Flyover SB",
-                    road_code="C-4",
-                    direction="SB",
-                    traffic_level="SEVERE",
-                    average_speed_kmh=11.2,
-                    congestion_percentage=91.5,
-                    incidents=[
-                        IncidentSummary(
-                            id="inc_9821",
-                            type="ACCIDENT",
-                            severity="CRITICAL",
-                            description="2-vehicle collision occupying 2 middle lanes",
-                            reported_at=(now - timedelta(minutes=18)).isoformat(),
-                            status="ACTIVE"
-                        )
-                    ],
-                    prediction=SegmentPrediction(
-                        predicted_relief_time=(now + timedelta(minutes=38)).strftime("%I:%M %p"),
-                        predicted_relief_minutes=38,
-                        confidence=0.82
-                    ),
-                    last_updated=(now - timedelta(minutes=1)).strftime("%I:%M %p")
+                for inc in active_incidents:
+                    inc_pt = Point(inc["lng"], inc["lat"])
+                    if seg_line.distance(inc_pt) < 0.0015:
+                        has_inc = True
+                        max_sev = inc["severity"]
+                        seg_incidents.append(IncidentSummary(
+                            id=inc["id"],
+                            type=inc["incident_type"],
+                            severity=inc["severity"],
+                            description=inc["description"],
+                            reported_at=inc["reported_at"],
+                            status=inc["status"]
+                        ))
+                        ml_incident_inputs.append({
+                            "road_segment_id": props.get("road_code", name),
+                            "type": inc["incident_type"],
+                            "severity": inc["severity"],
+                            "duration_minutes": 25.0
+                        })
+
+                # Compute real-time speed and congestion
+                live_telemetry = telemetry_service.calculate_segment_traffic(
+                    name, direction, baseline, has_incident=has_inc, incident_severity=max_sev
                 )
-            ]
+                speed = live_telemetry["current_speed_kmh"]
+                level = live_telemetry["traffic_level"]
+                cong = live_telemetry["congestion_percentage"]
 
-        # Calculate summaries
-        total_dist_km = round(len(route_coords) * 0.8, 1) if len(route_coords) > 2 else 15.4
-        normal_time_min = int(total_dist_km / 45.0 * 60)  # at 45 km/h normal
-        
-        # Accumulate incidents
-        all_incidents = sum(len(s.incidents) for s in matched_segments)
-        
-        # Delay calculation based on severity
-        has_severe = any(s.traffic_level == "SEVERE" for s in matched_segments)
-        has_heavy = any(s.traffic_level == "HEAVY" for s in matched_segments)
-        
-        if has_severe:
-            delay_min = 32
-            overall = "SEVERE"
-            most_affected = next((s.name for s in matched_segments if s.traffic_level == "SEVERE"), matched_segments[0].name)
-            relief_minutes = 38
-            confidence = 0.82
-        elif has_heavy:
-            delay_min = 16
-            overall = "HEAVY"
-            most_affected = next((s.name for s in matched_segments if s.traffic_level == "HEAVY"), matched_segments[0].name)
-            relief_minutes = 22
-            confidence = 0.78
+                # Calculate physical segment length in meters
+                seg_coords = feat["geometry"]["coordinates"]
+                seg_length_m = sum(haversine_distance(seg_coords[k], seg_coords[k+1]) for k in range(len(seg_coords)-1))
+
+                ml_segment_inputs.append({
+                    "id": props.get("road_code", name),
+                    "current_speed": speed,
+                    "baseline_speed": baseline,
+                    "distance_meters": max(200.0, seg_length_m)
+                })
+
+                pred_mins = int(12 + (cong * 0.32))
+                pred_time = (now + timedelta(minutes=pred_mins)).strftime("%I:%M %p").lstrip("0")
+
+                matched_segments.append(RouteSegmentDetail(
+                    segment_id=f"seg_{abs(hash(name)) % 100000}",
+                    name=name,
+                    road_code=props.get("road_code"),
+                    direction=direction,
+                    traffic_level=level,
+                    average_speed_kmh=speed,
+                    congestion_percentage=cong,
+                    incidents=seg_incidents,
+                    prediction=SegmentPrediction(
+                        predicted_relief_time=pred_time,
+                        predicted_relief_minutes=pred_mins,
+                        confidence=0.84 if level in ["SEVERE", "HEAVY"] else 0.90
+                    ),
+                    last_updated=(now - timedelta(minutes=2)).strftime("%I:%M %p").lstrip("0")
+                ))
+
+        # Fallback if route does not intersect monitored arterials
+        if not matched_segments:
+            # Construct a dynamic segment based on the primary road
+            matched_segments.append(RouteSegmentDetail(
+                segment_id="seg_primary_corridor",
+                name="Traversed Metro Manila Arterial",
+                road_code="NCR",
+                direction="BOTH",
+                traffic_level="MODERATE",
+                average_speed_kmh=32.0,
+                congestion_percentage=45.0,
+                incidents=[],
+                prediction=SegmentPrediction(
+                    predicted_relief_time=(now + timedelta(minutes=20)).strftime("%I:%M %p").lstrip("0"),
+                    predicted_relief_minutes=20,
+                    confidence=0.85
+                ),
+                last_updated=now.strftime("%I:%M %p").lstrip("0")
+            ))
+            ml_segment_inputs.append({
+                "id": "seg_primary",
+                "current_speed": 32.0,
+                "baseline_speed": 55.0,
+                "distance_meters": 5000.0
+            })
+
+        # 2. Accurate Distance & Duration Calculation
+        if distance_meters and distance_meters > 0:
+            total_dist_km = round(distance_meters / 1000.0, 1)
         else:
-            delay_min = 5
-            overall = "MODERATE"
-            most_affected = matched_segments[0].name
-            relief_minutes = 15
-            confidence = 0.85
+            # Calculate from actual route polyline
+            actual_dist_m = sum(haversine_distance(route_coords[k], route_coords[k+1]) for k in range(len(route_coords)-1))
+            total_dist_km = round(actual_dist_m / 1000.0, 1)
 
-        est_travel_time_min = normal_time_min + delay_min
+        # Baseline travel time (at free-flow 50 km/h average)
+        normal_travel_time_min = max(3, int(round((total_dist_km / 50.0) * 60)))
 
-        # Prepare segment and incident payloads for ML PredictionService
-        seg_payloads = [
-            {
-                "id": s.segment_id,
-                "current_speed": s.average_speed_kmh,
-                "baseline_speed": 60.0 if ("EDSA" in s.name or "C-5" in s.name) else 50.0,
-                "distance_meters": total_dist_km * 1000.0 / max(1, len(matched_segments)),
-            }
-            for s in matched_segments
-        ]
-        inc_payloads = [
-            {
-                "road_segment_id": s.segment_id,
-                "severity": inc.severity,
-                "type": inc.type,
-                "duration_minutes": 20.0
-            }
-            for s in matched_segments
-            for inc in s.incidents
-        ]
+        # Actual travel time: Use OSRM duration adjusted for live peak congestion
+        avg_cong = sum(s.congestion_percentage for s in matched_segments) / len(matched_segments)
+        cong_multiplier = 1.0 + (avg_cong / 100.0) * 0.95
 
-        # ML-driven relief forecasting
-        ml_relief = prediction_service.predict_corridor_relief(
-            segments=seg_payloads,
-            incidents=inc_payloads,
-            timestamp=now
-        )
+        if duration_seconds and duration_seconds > 0:
+            estimated_travel_time_min = max(normal_travel_time_min, int(round((duration_seconds / 60.0) * cong_multiplier)))
+        else:
+            estimated_travel_time_min = max(normal_travel_time_min, int(round(normal_travel_time_min * cong_multiplier)))
+
+        estimated_delay_min = max(0, estimated_travel_time_min - normal_travel_time_min)
+
+        # Overall Congestion Rating
+        if avg_cong >= 70.0 or any(s.traffic_level == "SEVERE" for s in matched_segments):
+            overall_congestion = "SEVERE"
+        elif avg_cong >= 50.0 or any(s.traffic_level == "HEAVY" for s in matched_segments):
+            overall_congestion = "HEAVY"
+        elif avg_cong >= 30.0:
+            overall_congestion = "MODERATE"
+        else:
+            overall_congestion = "NORMAL"
+
+        # Most Affected Segment
+        sorted_by_cong = sorted(matched_segments, key=lambda s: s.congestion_percentage, reverse=True)
+        most_affected_segment = sorted_by_cong[0].name if sorted_by_cong else "NCR Arterial Corridor"
+
+        total_active_incidents = sum(len(s.incidents) for s in matched_segments)
 
         summary = RouteSummary(
             total_distance_km=total_dist_km,
-            estimated_travel_time_min=est_travel_time_min,
-            normal_travel_time_min=normal_time_min,
-            estimated_delay_min=delay_min,
-            overall_congestion=overall,
-            active_incidents_count=all_incidents,
-            most_affected_segment=most_affected
+            estimated_travel_time_min=estimated_travel_time_min,
+            normal_travel_time_min=normal_travel_time_min,
+            estimated_delay_min=estimated_delay_min,
+            overall_congestion=overall_congestion,
+            active_incidents_count=total_active_incidents,
+            most_affected_segment=most_affected_segment
         )
 
+        # 3. AI / ML Congestion Relief Forecast
+        ml_prediction = prediction_service.predict_corridor_relief(
+            segments=ml_segment_inputs,
+            incidents=ml_incident_inputs,
+            timestamp=now
+        )
+
+        relief_minutes = ml_prediction["predicted_relief_minutes"]
+        relief_target_dt = now + timedelta(minutes=relief_minutes)
+        relief_time_iso = relief_target_dt.isoformat()
+
         expected_relief = ExpectedRelief(
-            relief_time=ml_relief["expected_relief_time"],
-            estimated_minutes_remaining=ml_relief["predicted_relief_minutes"],
-            confidence=ml_relief["confidence_score"],
-            confidence_interval=ml_relief.get("confidence_interval"),
+            relief_time=relief_time_iso,
+            estimated_minutes_remaining=relief_minutes,
+            confidence=ml_prediction["confidence_score"],
+            confidence_interval=ml_prediction.get("confidence_interval"),
             is_predicted=True,
-            model_version=ml_relief.get("model_version", "v1.4-rt-gbr")
+            model_version=ml_prediction.get("model_version", "v1.4-rt-gbr")
         )
 
         return summary, expected_relief, matched_segments

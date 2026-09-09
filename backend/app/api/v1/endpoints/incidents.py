@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Query, Depends
-from typing import Optional, List
+from fastapi import APIRouter, Query, Depends, Body
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from backend.app.schemas.telemetry import IncidentListResponse, IncidentItem
 from backend.app.db.session import get_db
-from backend.scripts.seed_incidents import SAMPLE_INCIDENTS
+from backend.app.services.telemetry import telemetry_service
 
 router = APIRouter()
 
@@ -16,30 +16,29 @@ async def list_incidents(
     db: Session = Depends(get_db)
 ):
     """
-    Returns verified incidents affecting Metro Manila arterials with exact coordinates,
+    Returns verified live incidents affecting Metro Manila arterials with exact coordinates,
     severity tiers, and agency source attribution.
     """
     now = datetime.now(timezone.utc)
-    items = []
+    raw_items = telemetry_service.get_active_incidents(status=status, severity=None)
 
-    for i, inc in enumerate(SAMPLE_INCIDENTS):
-        if status and inc["status"].upper() != status.upper():
-            continue
-        if incident_type and inc["incident_type"].upper() != incident_type.upper():
-            continue
+    if incident_type:
+        raw_items = [i for i in raw_items if i["incident_type"].upper() == incident_type.upper()]
 
-        lng, lat = inc["point_lng_lat"]
-        items.append(IncidentItem(
-            id=f"inc_{1000 + i}",
-            incident_type=inc["incident_type"],
-            description=inc["description"],
-            severity=inc["severity"],
-            status=inc["status"],
-            lat=lat,
-            lng=lng,
-            reported_at=(now).isoformat(),
-            data_source=inc["data_source"]
-        ))
+    items = [
+        IncidentItem(
+            id=item["id"],
+            incident_type=item["incident_type"],
+            description=item["description"],
+            severity=item["severity"],
+            status=item["status"],
+            lat=item["lat"],
+            lng=item["lng"],
+            reported_at=item["reported_at"],
+            data_source=item["data_source"]
+        )
+        for item in raw_items
+    ]
 
     return IncidentListResponse(
         status="success",
@@ -49,3 +48,15 @@ async def list_incidents(
             "timestamp": now.isoformat()
         }
     )
+
+@router.post("/incidents", summary="Report Live Road Incident")
+async def report_incident(payload: Dict[str, Any] = Body(...)):
+    """
+    Allows commuters, traffic enforcers, and telemetry sensors to report live incidents in real time.
+    """
+    created = telemetry_service.add_live_incident(payload)
+    return {
+        "status": "success",
+        "message": "Incident reported successfully and added to real-time monitoring",
+        "data": created
+    }
