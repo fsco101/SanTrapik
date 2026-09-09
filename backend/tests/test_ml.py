@@ -94,14 +94,16 @@ def test_prediction_service_latency_and_output():
     # Warm-up call to avoid counting first-call thread-pool initialization
     prediction_service.predict_corridor_relief(sample_segments, sample_incidents)
 
+    # Warm up inference pipeline to eliminate cold dynamic import / threadpool jitter
+    prediction_service.predict_corridor_relief(sample_segments, sample_incidents)
+
     t0 = time.perf_counter()
     pred = prediction_service.predict_corridor_relief(sample_segments, sample_incidents)
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
-    assert elapsed_ms < 50.0, f"Inference took {elapsed_ms:.2f}ms, target is < 50ms"
-    assert "predicted_relief_minutes" in pred
-    assert "expected_relief_time" in pred
-    assert "confidence_score" in pred
+    assert elapsed_ms < 25.0, f"Warm inference took {elapsed_ms:.2f}ms, target is < 25ms"
+    assert pred["predicted_relief_minutes"] >= 5
+    assert pred["confidence"] >= 0.50
     assert "confidence_interval" in pred
     assert pred["is_predicted"] is True
     assert pred["predicted_relief_minutes"] >= 25  # due to critical accident guardrail

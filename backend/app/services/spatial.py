@@ -12,7 +12,12 @@ from backend.app.ml.inference import prediction_service
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
 from backend.scripts.seed_incidents import SAMPLE_INCIDENTS
 
+import time
+
 class SpatialService:
+    _db_healthy: bool = True
+    _last_db_check: float = 0.0
+
     def __init__(self):
         self._cached_roads = None
         self._load_cached_roads()
@@ -27,20 +32,25 @@ class SpatialService:
     def analyze_route(self, route_coords: List[List[float]], db: Session = None) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail]]:
         route_line = LineString(route_coords)
         now = datetime.now(timezone.utc)
+        now_ts = time.time()
         
         # Buffer distance in degrees: ~0.0008 deg is roughly ~90 meters
         buffer_deg = 0.0008
 
         matched_segments = []
         
-        # If database session provided and has records, query DB; otherwise use cached roads & seed data
-        if db:
+        # Check database with circuit-breaker to avoid connection timeout stalling
+        can_try_db = db is not None and (SpatialService._db_healthy or (now_ts - SpatialService._last_db_check > 15.0))
+        db_segments = []
+
+        if can_try_db:
             try:
+                SpatialService._last_db_check = now_ts
                 db_segments = db.query(RoadSegment).all()
+                SpatialService._db_healthy = True
             except Exception:
+                SpatialService._db_healthy = False
                 db_segments = []
-        else:
-            db_segments = []
 
         if db_segments:
             # Match using DB segments

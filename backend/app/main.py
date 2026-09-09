@@ -29,6 +29,10 @@ origins = [
     "*"
 ]
 
+from backend.app.middleware.rate_limit import RateLimitMiddleware
+
+app.add_middleware(RateLimitMiddleware, max_requests_per_minute=60)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_cors_origins() or ["*"],
