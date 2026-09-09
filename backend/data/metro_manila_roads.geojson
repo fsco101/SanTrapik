@@ -1,0 +1,1087 @@
+{
+  "type": "FeatureCollection",
+  "name": "Metro Manila Major Arterials",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Balintawak to Muñoz",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9998, 14.6575],
+          [121.0112, 14.6582],
+          [121.0205, 14.6568]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Muñoz to North Avenue",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0205, 14.6568],
+          [121.0312, 14.6534],
+          [121.0335, 14.6521]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - North Avenue to Quezon Avenue",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0335, 14.6521],
+          [121.0385, 14.6472],
+          [121.0421, 14.6415]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Quezon Avenue to Kamuning",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0421, 14.6415],
+          [121.0450, 14.6360],
+          [121.0482, 14.6305]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Kamuning to Cubao",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0482, 14.6305],
+          [121.0515, 14.6235],
+          [121.0545, 14.6185]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Cubao to Santolan",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0545, 14.6185],
+          [121.0570, 14.6105],
+          [121.0575, 14.6065]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Santolan to Ortigas Flyover",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0575, 14.6065],
+          [121.0582, 14.5955],
+          [121.0580, 14.5885]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Ortigas Flyover to Shaw Boulevard",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0580, 14.5885],
+          [121.0560, 14.5820],
+          [121.0535, 14.5775]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Shaw Boulevard to Boni",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0535, 14.5775],
+          [121.0495, 14.5725],
+          [121.0465, 14.5695]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Boni to Guadalupe Bridge",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Makati",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0465, 14.5695],
+          [121.0430, 14.5665],
+          [121.0405, 14.5650]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Guadalupe to Buendia",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Makati",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0405, 14.5650],
+          [121.0345, 14.5585],
+          [121.0315, 14.5540]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Buendia to Ayala Avenue",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Makati",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0315, 14.5540],
+          [121.0285, 14.5505],
+          [121.0260, 14.5465]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Ayala Avenue to Magallanes",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Makati",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0260, 14.5465],
+          [121.0225, 14.5420],
+          [121.0180, 14.5375]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Magallanes to Pasay Rotonda",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Pasay",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0180, 14.5375],
+          [121.0090, 14.5350],
+          [121.0015, 14.5345]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Pasay Rotonda to MOA",
+        "road_code": "C-4",
+        "direction": "SB",
+        "city": "Pasay",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0015, 14.5345],
+          [120.9910, 14.5335],
+          [120.9835, 14.5330]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - MOA to Pasay Rotonda",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Pasay",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9835, 14.5335],
+          [120.9910, 14.5340],
+          [121.0015, 14.5350]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Pasay Rotonda to Magallanes",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Pasay",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0015, 14.5350],
+          [121.0090, 14.5355],
+          [121.0180, 14.5380]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Magallanes to Ayala Avenue",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Makati",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0180, 14.5380],
+          [121.0225, 14.5425],
+          [121.0260, 14.5470]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Ayala Avenue to Buendia",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Makati",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0260, 14.5470],
+          [121.0285, 14.5510],
+          [121.0315, 14.5545]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Buendia to Guadalupe",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Makati",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0315, 14.5545],
+          [121.0345, 14.5590],
+          [121.0405, 14.5655]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Guadalupe to Boni",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0405, 14.5655],
+          [121.0430, 14.5670],
+          [121.0465, 14.5700]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Boni to Shaw Boulevard",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0465, 14.5700],
+          [121.0495, 14.5730],
+          [121.0535, 14.5780]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Shaw Boulevard to Ortigas Flyover",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Mandaluyong",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0535, 14.5780],
+          [121.0560, 14.5825],
+          [121.0580, 14.5890]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Ortigas Flyover to Santolan",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0580, 14.5890],
+          [121.0582, 14.5960],
+          [121.0575, 14.6070]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Santolan to Cubao",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0575, 14.6070],
+          [121.0570, 14.6110],
+          [121.0545, 14.6190]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "EDSA - Cubao to Quezon Avenue",
+        "road_code": "C-4",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0545, 14.6190],
+          [121.0482, 14.6310],
+          [121.0421, 14.6420]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Commonwealth to Tandang Sora",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0825, 14.6720],
+          [121.0770, 14.6640],
+          [121.0745, 14.6560]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Tandang Sora to Katipunan Ateneo",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0745, 14.6560],
+          [121.0755, 14.6465],
+          [121.0760, 14.6385]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Katipunan to Eastwood Libis",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0760, 14.6385],
+          [121.0790, 14.6225],
+          [121.0815, 14.6110]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Eastwood Libis to Ortigas Avenue Junction",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0815, 14.6110],
+          [121.0785, 14.5980],
+          [121.0755, 14.5890]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Ortigas Junction to Bagong Ilog Flyover",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0755, 14.5890],
+          [121.0705, 14.5775],
+          [121.0665, 14.5685]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Bagong Ilog to Kalayaan BGC",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Taguig",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0665, 14.5685],
+          [121.0615, 14.5585],
+          [121.0585, 14.5510]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Kalayaan BGC to Market Market",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Taguig",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0585, 14.5510],
+          [121.0570, 14.5450],
+          [121.0560, 14.5385]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Market Market to Diego Silang SLEX",
+        "road_code": "C-5",
+        "direction": "SB",
+        "city": "Taguig",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0560, 14.5385],
+          [121.0545, 14.5260],
+          [121.0520, 14.5120]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Diego Silang to Market Market",
+        "road_code": "C-5",
+        "direction": "NB",
+        "city": "Taguig",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0520, 14.5120],
+          [121.0545, 14.5260],
+          [121.0560, 14.5385]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Market Market to Kalayaan BGC",
+        "road_code": "C-5",
+        "direction": "NB",
+        "city": "Taguig",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0560, 14.5385],
+          [121.0570, 14.5450],
+          [121.0585, 14.5510]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Kalayaan BGC to Bagong Ilog Flyover",
+        "road_code": "C-5",
+        "direction": "NB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0585, 14.5510],
+          [121.0615, 14.5585],
+          [121.0665, 14.5685]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Bagong Ilog to Ortigas Junction",
+        "road_code": "C-5",
+        "direction": "NB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0665, 14.5685],
+          [121.0705, 14.5775],
+          [121.0755, 14.5890]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "C-5 - Ortigas Junction to Eastwood Libis",
+        "road_code": "C-5",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0755, 14.5890],
+          [121.0785, 14.5980],
+          [121.0815, 14.6110]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Fairview Center to Batasan",
+        "road_code": "R-7",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0780, 14.7125],
+          [121.0855, 14.6980],
+          [121.0920, 14.6850]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Batasan to Tandang Sora",
+        "road_code": "R-7",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0920, 14.6850],
+          [121.0880, 14.6740],
+          [121.0785, 14.6650]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Tandang Sora to Philcoa",
+        "road_code": "R-7",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0785, 14.6650],
+          [121.0665, 14.6580],
+          [121.0550, 14.6535]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Philcoa to Quezon Memorial Circle",
+        "road_code": "R-7",
+        "direction": "SB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0550, 14.6535],
+          [121.0500, 14.6515],
+          [121.0494, 14.6515]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Quezon Memorial Circle to Philcoa",
+        "road_code": "R-7",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0494, 14.6515],
+          [121.0500, 14.6515],
+          [121.0550, 14.6535]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Commonwealth - Philcoa to Tandang Sora",
+        "road_code": "R-7",
+        "direction": "NB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0550, 14.6535],
+          [121.0665, 14.6580],
+          [121.0785, 14.6650]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Quezon Avenue - Elliptical Road to EDSA",
+        "road_code": "R-7",
+        "direction": "WB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0485, 14.6495],
+          [121.0450, 14.6455],
+          [121.0421, 14.6415]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Quezon Avenue - EDSA to Timog Avenue",
+        "road_code": "R-7",
+        "direction": "WB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0421, 14.6415],
+          [121.0345, 14.6360],
+          [121.0270, 14.6310]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Quezon Avenue - Timog Avenue to Welcome Rotonda",
+        "road_code": "R-7",
+        "direction": "WB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0270, 14.6310],
+          [121.0125, 14.6235],
+          [121.0010, 14.6190]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Quezon Avenue - Welcome Rotonda to Timog Avenue",
+        "road_code": "R-7",
+        "direction": "EB",
+        "city": "Quezon City",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0010, 14.6190],
+          [121.0125, 14.6235],
+          [121.0270, 14.6310]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "España Boulevard - Welcome Rotonda to UST",
+        "road_code": "R-7",
+        "direction": "WB",
+        "city": "Manila",
+        "baseline_speed_kmh": 45.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0010, 14.6190],
+          [120.9950, 14.6145],
+          [120.9890, 14.6095]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "España Boulevard - UST to Morayta Lerma",
+        "road_code": "R-7",
+        "direction": "WB",
+        "city": "Manila",
+        "baseline_speed_kmh": 40.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9890, 14.6095],
+          [120.9860, 14.6065],
+          [120.9835, 14.6030]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Ortigas Avenue - Greenhills to EDSA",
+        "road_code": "R-5",
+        "direction": "EB",
+        "city": "San Juan",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0480, 14.5985],
+          [121.0535, 14.5930],
+          [121.0580, 14.5885]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Ortigas Avenue - EDSA to Meralco Avenue",
+        "road_code": "R-5",
+        "direction": "EB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0580, 14.5885],
+          [121.0645, 14.5875],
+          [121.0705, 14.5880]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Ortigas Avenue - Meralco Avenue to C-5 Flyover",
+        "road_code": "R-5",
+        "direction": "EB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 50.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0705, 14.5880],
+          [121.0735, 14.5885],
+          [121.0755, 14.5890]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Roxas Boulevard - Luneta to CCP Complex",
+        "road_code": "R-1",
+        "direction": "SB",
+        "city": "Manila",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9785, 14.5820],
+          [120.9820, 14.5680],
+          [120.9855, 14.5560]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Roxas Boulevard - CCP Complex to EDSA Flyover",
+        "road_code": "R-1",
+        "direction": "SB",
+        "city": "Pasay",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9855, 14.5560],
+          [120.9900, 14.5420],
+          [120.9935, 14.5330]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Roxas Boulevard - EDSA Flyover to MIA Road",
+        "road_code": "R-1",
+        "direction": "SB",
+        "city": "Parañaque",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [120.9935, 14.5330],
+          [120.9915, 14.5190],
+          [120.9905, 14.5080]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Marcos Highway - Katipunan to Marikina Riverbanks",
+        "road_code": "R-6",
+        "direction": "EB",
+        "city": "Marikina",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0775, 14.6295],
+          [121.0880, 14.6280],
+          [121.0965, 14.6265]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Marcos Highway - Marikina Riverbanks to Santolan",
+        "road_code": "R-6",
+        "direction": "EB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 60.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.0965, 14.6265],
+          [121.1045, 14.6245],
+          [121.1120, 14.6225]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_name": "Marcos Highway - Santolan to Robinsons Metro East",
+        "road_code": "R-6",
+        "direction": "EB",
+        "city": "Pasig",
+        "baseline_speed_kmh": 55.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [121.1120, 14.6225],
+          [121.1190, 14.6210],
+          [121.1245, 14.6205]
+        ]
+      }
+    }
+  ]
+}

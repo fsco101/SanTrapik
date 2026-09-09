@@ -10,7 +10,7 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ### 🚀 [Sprint 1: Geospatial Database Architecture & Metro Manila Road Telemetry](./sprint-1-data-and-database.json)
 * **Goal:** Set up PostgreSQL + PostGIS database, schema migrations, Metro Manila arterial road segments, real-time/historical traffic telemetry records, and incident tracking.
-* **Status:** ⏳ Planned
+* **Status:** ✅ Completed
 * **Issues:**
   - [#1: PostgreSQL + PostGIS Containerization & Core Schema Migrations](https://github.com/fsco101/SanTrapik/issues/1)
   - [#2: Metro Manila Major Arterials Road Network Ingestion](https://github.com/fsco101/SanTrapik/issues/2)
