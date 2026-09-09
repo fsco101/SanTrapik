@@ -5,7 +5,7 @@
   "total_sprints": 5,
   "total_issues": 23,
   "status": "in_progress",
-  "active_sprint_id": "sprint-2-backend-services",
+  "active_sprint_id": "sprint-3-frontend-ui",
   "sprints": [
     {
       "id": "sprint-1-data-and-database",
@@ -24,11 +24,11 @@
       "number": 2,
       "title": "FastAPI REST Services & Routing Engine Integration",
       "file": "sprint-2-backend-services.json",
-      "status": "planned",
+      "status": "completed",
       "dependencies": ["sprint-1-data-and-database"],
       "issue_range": "#5 - #9",
       "total_issues": 5,
-      "completed_issues": 0,
+      "completed_issues": 5,
       "objective": "Build FastAPI backend with OSRM/ORS routing integration, PostGIS spatial snapping, /api/v1/route/analyze endpoint, heatmap, and incident queries."
     },
     {
@@ -36,7 +36,7 @@
       "number": 3,
       "title": "Frontend Implementation via Obsidian Telemetry Design",
       "file": "sprint-3-frontend-ui.json",
-      "status": "planned",
+      "status": "in_progress",
       "dependencies": ["sprint-2-backend-services"],
       "issue_range": "#10 - #15",
       "total_issues": 6,
