@@ -4,6 +4,7 @@ import math
 import httpx
 from typing import Dict, Any, List, Optional
 from shapely.geometry import Point, LineString
+from backend.app.core.config import settings
 
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
 
@@ -21,7 +22,12 @@ def haversine_distance(coord1: List[float], coord2: List[float]) -> float:
     return R * c
 
 class RoutingService:
-    OSRM_BASE_URL = "http://router.project-osrm.org/route/v1/driving"
+    @property
+    def OSRM_BASE_URL(self) -> str:
+        base = settings.OSRM_URL.rstrip("/")
+        if not base.endswith("/route/v1/driving"):
+            return f"{base}/route/v1/driving"
+        return base
 
     def __init__(self):
         self._cached_roads = None

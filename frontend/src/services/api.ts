@@ -1,6 +1,6 @@
 import type { RouteItem, DashboardStats, IncidentItem } from "../types/traffic";
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api/v1";
 
 export async function analyzeRoute(origin: { lat: number; lng: number; name?: string }, destination: { lat: number; lng: number; name?: string }, includeAlternatives: boolean = true): Promise<RouteItem[]> {
   try {

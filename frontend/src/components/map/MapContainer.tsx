@@ -26,7 +26,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+      style: (import.meta.env.VITE_MAP_STYLE as string) || "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
       center: [121.0405, 14.5855], // Centered around EDSA Ortigas / Metro Manila
       zoom: 12,
       pitch: 35,
