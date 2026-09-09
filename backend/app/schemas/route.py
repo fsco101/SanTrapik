@@ -45,7 +45,9 @@ class ExpectedRelief(BaseModel):
     relief_time: str
     estimated_minutes_remaining: int
     confidence: float
+    confidence_interval: Optional[str] = None
     is_predicted: bool = True
+    model_version: Optional[str] = "v1.4-rt-gbr"
 
 class GeoJSONLineString(BaseModel):
     type: str = "LineString"

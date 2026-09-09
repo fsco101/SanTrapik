@@ -3,7 +3,7 @@
   "number": 4,
   "title": "AI/ML Congestion Relief Prediction Pipeline",
   "goal": "Develop, train, evaluate, and deploy the machine learning regression model to forecast congestion relief time (minutes to free-flow recovery) and integrate inference into the FastAPI backend.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
   "dependencies": [
     "sprint-1-data-and-database",
@@ -15,6 +15,7 @@
       "github_issue_number": 16,
       "title": "[Sprint 4] Historical Traffic Feature Engineering & Dataset Preprocessing Pipeline",
       "priority": "high",
+      "status": "completed",
       "labels": [
         "sprint-4",
         "ml",
@@ -35,6 +36,7 @@
       "github_issue_number": 17,
       "title": "[Sprint 4] Relief Time Regression Model Training & Cross-Validation (MAE <= 8.5 min)",
       "priority": "high",
+      "status": "completed",
       "labels": [
         "sprint-4",
         "ml",
@@ -55,6 +57,7 @@
       "github_issue_number": 18,
       "title": "[Sprint 4] Model Serialization & FastAPI Inference Engine Integration",
       "priority": "high",
+      "status": "completed",
       "labels": [
         "sprint-4",
         "ml",
@@ -75,6 +78,7 @@
       "github_issue_number": 19,
       "title": "[Sprint 4] Prediction Confidence Interval Estimator & Guardrail Bounding",
       "priority": "medium",
+      "status": "completed",
       "labels": [
         "sprint-4",
         "ml",

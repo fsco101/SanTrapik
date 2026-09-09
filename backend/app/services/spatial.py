@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.db.models import RoadSegment, TrafficRecord, Incident, Prediction
 from backend.app.schemas.route import RouteSegmentDetail, IncidentSummary, SegmentPrediction, RouteSummary, ExpectedRelief
+from backend.app.ml.inference import prediction_service
 
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
 from backend.scripts.seed_incidents import SAMPLE_INCIDENTS
@@ -198,7 +199,34 @@ class SpatialService:
             confidence = 0.85
 
         est_travel_time_min = normal_time_min + delay_min
-        relief_timestamp = (now + timedelta(minutes=relief_minutes)).strftime("%I:%M %p")
+
+        # Prepare segment and incident payloads for ML PredictionService
+        seg_payloads = [
+            {
+                "id": s.segment_id,
+                "current_speed": s.average_speed_kmh,
+                "baseline_speed": 60.0 if ("EDSA" in s.name or "C-5" in s.name) else 50.0,
+                "distance_meters": total_dist_km * 1000.0 / max(1, len(matched_segments)),
+            }
+            for s in matched_segments
+        ]
+        inc_payloads = [
+            {
+                "road_segment_id": s.segment_id,
+                "severity": inc.severity,
+                "type": inc.type,
+                "duration_minutes": 20.0
+            }
+            for s in matched_segments
+            for inc in s.incidents
+        ]
+
+        # ML-driven relief forecasting
+        ml_relief = prediction_service.predict_corridor_relief(
+            segments=seg_payloads,
+            incidents=inc_payloads,
+            timestamp=now
+        )
 
         summary = RouteSummary(
             total_distance_km=total_dist_km,
@@ -211,10 +239,12 @@ class SpatialService:
         )
 
         expected_relief = ExpectedRelief(
-            relief_time=relief_timestamp,
-            estimated_minutes_remaining=relief_minutes,
-            confidence=confidence,
-            is_predicted=True
+            relief_time=ml_relief["expected_relief_time"],
+            estimated_minutes_remaining=ml_relief["predicted_relief_minutes"],
+            confidence=ml_relief["confidence_score"],
+            confidence_interval=ml_relief.get("confidence_interval"),
+            is_predicted=True,
+            model_version=ml_relief.get("model_version", "v1.4-rt-gbr")
         )
 
         return summary, expected_relief, matched_segments

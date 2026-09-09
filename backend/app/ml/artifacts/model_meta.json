@@ -1,0 +1,31 @@
+{
+  "model_type": "HistGradientBoostingRegressor",
+  "version": "v1.4-rt-gbr",
+  "trained_at": "2026-09-09T16:06:22.698448+00:00",
+  "mae_minutes": 2.18,
+  "rmse_minutes": 2.771,
+  "r2_score": 0.9847,
+  "target_mae_met": true,
+  "feature_columns": [
+    "hour_sin",
+    "hour_cos",
+    "day_sin",
+    "day_cos",
+    "is_rush_hour",
+    "is_weekend",
+    "baseline_speed_kmh",
+    "current_speed_kmh",
+    "speed_ratio",
+    "speed_deficit",
+    "congestion_pct",
+    "segment_length_m",
+    "has_incident",
+    "incident_severity_weight",
+    "incident_duration_mins",
+    "incident_type_collision",
+    "incident_type_roadwork",
+    "incident_type_flood",
+    "incident_type_stall"
+  ],
+  "n_samples": 5000
+}
