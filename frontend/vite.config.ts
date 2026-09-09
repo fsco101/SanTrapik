@@ -7,4 +7,19 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl'],
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('maplibre-gl')) {
+            return 'vendor-map';
+          }
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
+  },
 })

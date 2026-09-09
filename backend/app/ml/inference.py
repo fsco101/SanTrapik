@@ -98,6 +98,7 @@ class PredictionService:
 
         # Formatted Timestamps & Interval Window
         result = calculate_relief_timestamps(guarded_relief, confidence, timestamp)
+        result["confidence"] = confidence
         latency_ms = round((time.perf_counter() - start_t) * 1000.0, 2)
         result["inference_latency_ms"] = latency_ms
 

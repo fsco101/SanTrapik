@@ -9,6 +9,7 @@ import { MapContainer } from "./components/map/MapContainer";
 import { BottomTelemetrySheet } from "./components/layout/BottomTelemetrySheet";
 import type { Coordinate, RouteItem, DashboardStats, IncidentItem } from "./types/traffic";
 import { analyzeRoute, getDashboardStats, getIncidents } from "./services/api";
+import { useTrafficRefresh } from "./hooks/useTrafficRefresh";
 
 export function App() {
   const [origin, setOrigin] = useState<Coordinate>(CORRIDORS[0].origin);
@@ -22,6 +23,13 @@ export function App() {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [heatmapVisible, setHeatmapVisible] = useState<boolean>(false);
+
+  // Background telemetry polling every 60s
+  const { isOnline, freshnessText, refreshData } = useTrafficRefresh({
+    intervalMs: 60000,
+    onRefreshStats: setStats,
+    onRefreshIncidents: setIncidents,
+  });
 
   // Initial load
   useEffect(() => {
@@ -69,6 +77,7 @@ export function App() {
       if (fetchedRoutes.length > 0) {
         setSelectedRouteId(fetchedRoutes[0].id);
       }
+      refreshData();
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +92,25 @@ export function App() {
         stats={stats}
         isLoading={isLoading}
         onRefresh={() => triggerAnalyze()}
+        freshnessText={freshnessText}
+        isOnline={isOnline}
       />
+
+      {/* Offline Notice Banner */}
+      {!isOnline && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-xs px-4 py-1.5 flex items-center justify-between font-mono z-30">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            Backend API offline: Displaying pre-computed Metro Manila corridor telemetry.
+          </span>
+          <button
+            onClick={() => refreshData()}
+            className="text-[11px] underline hover:text-white"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
 
       {/* 2. Main Workspace Layout */}
       <div className="flex-1 flex relative overflow-hidden">

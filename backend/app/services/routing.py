@@ -31,6 +31,7 @@ class RoutingService:
 
     def __init__(self):
         self._cached_roads = None
+        self._route_cache: Dict[str, List[Dict[str, Any]]] = {}
         self._load_roads()
 
     def _load_roads(self):
@@ -43,10 +44,14 @@ class RoutingService:
     async def get_route(self, origin: Dict[str, float], destination: Dict[str, float], include_alternatives: bool = False) -> List[Dict[str, Any]]:
         """
         Calculates route(s) between origin and destination.
-        Attempts OSRM API first; falls back to deterministic graph routing if unreachable.
+        Checks in-memory cache first (< 5ms latency), attempts OSRM API, and falls back to deterministic graph routing.
         """
         orig_coord = [origin["lng"], origin["lat"]]
         dest_coord = [destination["lng"], destination["lat"]]
+        cache_key = f"{round(orig_coord[0], 4)},{round(orig_coord[1], 4)}->{round(dest_coord[0], 4)},{round(dest_coord[1], 4)}:{include_alternatives}"
+
+        if cache_key in self._route_cache:
+            return self._route_cache[cache_key]
 
         # 1. Try public OSRM
         try:
@@ -76,12 +81,15 @@ class RoutingService:
                             fallback_alts = self._generate_corridor_routes(orig_coord, dest_coord, include_alternatives=True)
                             if len(fallback_alts) > 1:
                                 result.append(fallback_alts[1])
+                        self._route_cache[cache_key] = result
                         return result
         except Exception:
             pass  # Fall through to offline graph routing
 
         # 2. Offline / Deterministic Corridor Routing
-        return self._generate_corridor_routes(orig_coord, dest_coord, include_alternatives)
+        result = self._generate_corridor_routes(orig_coord, dest_coord, include_alternatives)
+        self._route_cache[cache_key] = result
+        return result
 
     def _generate_corridor_routes(self, orig: List[float], dest: List[float], include_alternatives: bool) -> List[Dict[str, Any]]:
         """Generates realistic path using Metro Manila arterial road segments."""
