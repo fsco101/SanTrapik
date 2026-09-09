@@ -148,22 +148,69 @@ When an agent is assigned to work on or advance a sprint, it must strictly follo
 
 1. **Step 1: Check Active Sprint in `sprints/index.json`:**
    Inspect `sprints/index.json` to identify the current active sprint or the next uncompleted sprint. Open the corresponding `sprints/sprint-<N>-<name>.json`.
-2. **Step 2: Read Issue Specifications:**
+2. **Step 2: Checkout / Create Dedicated Sprint Branch:**
+   Ensure work is isolated in the sprint's dedicated git branch (`sprint-<N>-<name>`). Never commit unverified sprint code directly to `main`.
+3. **Step 3: Read Issue Specifications:**
    Read the issue details, dependencies, and `acceptance_criteria` in the sprint JSON file.
-3. **Step 3: Cross-Reference `SPEC.md` and `DESIGN/`:**
+4. **Step 4: Cross-Reference `SPEC.md` and `DESIGN/`:**
    - Backend/Database issues: Validate schemas and endpoints against [SPEC.md](file:///c:/SanTrapik/SPEC.md).
    - Frontend issues: Replicate components from [DESIGN/code.html](file:///c:/SanTrapik/DESIGN/code.html) and [DESIGN/DESIGN.md](file:///c:/SanTrapik/DESIGN/DESIGN.md).
-4. **Step 4: Execute with Strict Verification:**
+5. **Step 5: Execute with Strict Verification:**
    - Write code adhering to project coding guidelines (Section 7).
    - Execute verification commands (`pytest` for backend, `npm run build` / `npm test` for frontend).
-5. **Step 5: Synchronize GitHub Issues:**
+6. **Step 6: Synchronize GitHub Issues:**
    - When completing an issue, link the git commit using `fixes #<issue_number>` or update the issue status via the GitHub CLI:
      ```bash
      gh issue close <issue_number> --comment "Completed as part of Sprint <N>."
      ```
-6. **Step 6: Update Sprint JSON State:**
+7. **Step 7: Update Sprint JSON State:**
    - In `sprints/sprint-<N>-<name>.json`, update the issue `status` from `"open"` to `"completed"`.
    - Update `completed_issues_count` and sprint `status` in `sprints/index.json`.
+8. **Step 8: Sprint Completion & Regression Gate:**
+   - Run full regression verification across all previously completed modules.
+   - Merge the verified sprint branch into `main` and tag the release milestone.
+
+---
+
+### 6.3 Sprint Branching Strategy (Regression Protection & Isolation)
+
+**MANDATORY DIRECTIVE:** Every sprint implementation must have its own dedicated git branch to prevent regressions, preserve working milestones, and maintain clean rollback boundaries.
+
+#### 1. Branch Naming Convention
+Sprint branches must strictly follow the format:
+```text
+sprint-<number>-<short-description>
+```
+Examples:
+- `sprint-1-data-and-database`
+- `sprint-2-backend-services`
+- `sprint-3-frontend-ui`
+- `sprint-4-ai-ml-prediction`
+- `sprint-5-integration-testing`
+
+#### 2. Lifecycle & Regression Safeguard Protocol
+1. **Branch Initialization:** Before writing any code for a sprint, branch off the latest verified `main`:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b sprint-<number>-<short-description>
+   git push -u origin sprint-<number>-<short-description>
+   ```
+2. **Commit Isolation:** All feature work, migrations, tests, and issue fixes for that sprint are isolated in that branch.
+3. **Regression Testing Gate:** Before any sprint branch is merged into `main`, execute the full automated test suite (backend unit tests, database migrations, frontend typechecks, and build scripts) to prove that new additions do not break existing functionality.
+4. **Merge to Main:** Once all issues in the sprint are closed and acceptance criteria are satisfied, merge into `main` with a non-fast-forward merge commit preserving sprint history:
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge --no-ff sprint-<number>-<short-description> -m "Merge sprint-<number>-<short-description>: <Sprint Title>"
+   git push origin main
+   ```
+5. **Milestone Tagging:** Tag the verified milestone on `main`:
+   ```bash
+   git tag -a "sprint-<number>-complete" -m "Completed Sprint <number>: <Sprint Title>"
+   git push origin --tags
+   ```
+6. **Regression Recovery / Bisecting:** The dedicated sprint branches and tags remain preserved in git history. If a regression appears in later sprints, developers can immediately `git diff` or `git bisect` against the sprint branch boundary to isolate and fix the regression without blocking production code.
 
 ---
 
