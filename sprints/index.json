@@ -5,7 +5,7 @@
   "total_sprints": 5,
   "total_issues": 23,
   "status": "in_progress",
-  "active_sprint_id": "sprint-3-frontend-ui",
+  "active_sprint_id": "sprint-4-ai-ml-prediction",
   "sprints": [
     {
       "id": "sprint-1-data-and-database",
@@ -36,11 +36,11 @@
       "number": 3,
       "title": "Frontend Implementation via Obsidian Telemetry Design",
       "file": "sprint-3-frontend-ui.json",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": ["sprint-2-backend-services"],
       "issue_range": "#10 - #15",
       "total_issues": 6,
-      "completed_issues": 0,
+      "completed_issues": 6,
       "objective": "Implement React + Vite + TypeScript application strictly conforming to DESIGN/DESIGN.md and DESIGN/code.html with MapLibre GL JS, Route Intelligence Card, and responsive layouts."
     },
     {
