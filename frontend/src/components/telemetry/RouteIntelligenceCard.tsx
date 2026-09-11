@@ -34,6 +34,54 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
 
   const sevStyle = getSeverityStyle(summary.overall_congestion);
 
+  // Format reported time
+  const formatReportedTime = (timeStr: string) => {
+    if (!timeStr) return "";
+    if (timeStr.includes("T")) {
+      try {
+        return new Date(timeStr).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      } catch {
+        return timeStr;
+      }
+    }
+    return timeStr;
+  };
+
+  // Deduplicate incidents across all traversed segments by ID and aggregate affected road names
+  const uniqueIncidents = React.useMemo(() => {
+    const incidentMap = new Map<
+      string,
+      {
+        id: string;
+        type: string;
+        severity: string;
+        description?: string;
+        reported_at: string;
+        status: string;
+        affectedSegments: string[];
+      }
+    >();
+
+    segments.forEach((s) => {
+      (s.incidents || []).forEach((inc) => {
+        const key = inc.id || `${inc.type}-${inc.description}`;
+        if (!incidentMap.has(key)) {
+          incidentMap.set(key, {
+            ...inc,
+            affectedSegments: s.name ? [s.name] : [],
+          });
+        } else {
+          const existing = incidentMap.get(key)!;
+          if (s.name && !existing.affectedSegments.includes(s.name)) {
+            existing.affectedSegments.push(s.name);
+          }
+        }
+      });
+    });
+
+    return Array.from(incidentMap.values());
+  }, [segments]);
+
   return (
     <div className="bg-surface-panel rounded-lg border border-white/10 overflow-hidden shadow-lg space-y-3 p-4">
       {/* 1. Header with Destination & Severity Badge */}
@@ -83,7 +131,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
           </span>
         </div>
         <div className="h-3 w-full bg-slate-900 rounded overflow-hidden flex gap-0.5 p-0.5 border border-white/10">
-          {segments.map((seg) => {
+          {segments.map((seg, idx) => {
             let bgClass = "bg-traffic-normal";
             if (seg.traffic_level === "SEVERE") bgClass = "bg-traffic-severe";
             else if (seg.traffic_level === "HEAVY") bgClass = "bg-traffic-heavy";
@@ -91,7 +139,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
 
             return (
               <div
-                key={seg.segment_id}
+                key={seg.segment_id ? `${seg.segment_id}-${idx}` : `seg-${idx}`}
                 onMouseEnter={() => setHoveredSegment(`${seg.name}: ${seg.average_speed_kmh} km/h (${seg.traffic_level})`)}
                 onMouseLeave={() => setHoveredSegment(null)}
                 className={`h-full flex-1 rounded-sm transition-opacity hover:opacity-80 cursor-pointer ${bgClass}`}
@@ -102,7 +150,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
       </div>
 
-      {/* 4. Active Incident Accordion (Why is it red?) */}
+      {/* 4. Active Incident Accordion */}
       <div className="border border-white/5 rounded bg-surface-card overflow-hidden">
         <button
           onClick={() => setIncidentsOpen(!incidentsOpen)}
@@ -111,7 +159,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-amber-400 text-[16px]">warning</span>
             <span className="font-semibold text-text-primary">
-              Active Incidents Diagnostics ({summary.active_incidents_count})
+              Active Incidents Diagnostics ({uniqueIncidents.length})
             </span>
           </div>
           <span className="material-symbols-outlined text-text-muted text-[16px]">
@@ -121,24 +169,29 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
 
         {incidentsOpen && (
           <div className="p-3 space-y-2 border-t border-white/5">
-            {segments
-              .flatMap((s) => s.incidents.map((inc) => ({ ...inc, segmentName: s.name })))
-              .map((inc) => (
-                <div key={inc.id} className="text-xs space-y-1 bg-surface-panel p-2 rounded border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
-                      {inc.type}
-                    </span>
-                    <span className="text-[10px] text-text-muted font-mono">{inc.reported_at}</span>
-                  </div>
-                  <p className="text-text-primary text-xs font-sans">{inc.description}</p>
-                  <div className="flex items-center justify-between text-[10px] text-text-muted font-mono pt-1">
-                    <span>At: {inc.segmentName}</span>
-                    <span className="text-text-secondary font-bold">Source: MMDA</span>
-                  </div>
+            {uniqueIncidents.map((inc, idx) => (
+              <div
+                key={inc.id ? `${inc.id}-${idx}` : `inc-${idx}`}
+                className="text-xs space-y-1 bg-surface-panel p-2 rounded border border-white/5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
+                    {inc.type}
+                  </span>
+                  <span className="text-[10px] text-text-muted font-mono">
+                    {formatReportedTime(inc.reported_at)}
+                  </span>
                 </div>
-              ))}
-            {summary.active_incidents_count === 0 && (
+                <p className="text-text-primary text-xs font-sans">{inc.description}</p>
+                <div className="flex items-center justify-between text-[10px] text-text-muted font-mono pt-1">
+                  <span className="truncate max-w-[220px]" title={inc.affectedSegments.join(", ")}>
+                    At: {inc.affectedSegments.join(", ") || "Active Corridor"}
+                  </span>
+                  <span className="text-text-secondary font-bold">Source: MMDA</span>
+                </div>
+              </div>
+            ))}
+            {uniqueIncidents.length === 0 && (
               <p className="text-xs text-text-muted font-mono text-center py-1">
                 No active collision or construction blockages detected along this route.
               </p>

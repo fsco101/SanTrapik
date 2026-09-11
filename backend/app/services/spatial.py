@@ -108,12 +108,14 @@ class SpatialService:
                             reported_at=inc["reported_at"],
                             status=inc["status"]
                         ))
-                        ml_incident_inputs.append({
-                            "road_segment_id": props.get("road_code", name),
-                            "type": inc["incident_type"],
-                            "severity": inc["severity"],
-                            "duration_minutes": 25.0
-                        })
+                        if not any(item.get("id") == inc["id"] for item in ml_incident_inputs):
+                            ml_incident_inputs.append({
+                                "id": inc["id"],
+                                "road_segment_id": props.get("road_code", name),
+                                "type": inc["incident_type"],
+                                "severity": inc["severity"],
+                                "duration_minutes": 25.0
+                            })
 
                 # Compute real-time speed and congestion
                 live_telemetry = telemetry_service.calculate_segment_traffic(
@@ -216,7 +218,8 @@ class SpatialService:
         sorted_by_cong = sorted(matched_segments, key=lambda s: s.congestion_percentage, reverse=True)
         most_affected_segment = sorted_by_cong[0].name if sorted_by_cong else "NCR Arterial Corridor"
 
-        total_active_incidents = sum(len(s.incidents) for s in matched_segments)
+        unique_incident_ids = {inc.id for s in matched_segments for inc in s.incidents}
+        total_active_incidents = len(unique_incident_ids)
 
         summary = RouteSummary(
             total_distance_km=total_dist_km,

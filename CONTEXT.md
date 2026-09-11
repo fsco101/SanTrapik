@@ -1,4 +1,4 @@
-﻿# SanTrapik
+# SanTrapik
 
 ## Project Context
 
@@ -29,16 +29,16 @@ The system should focus on helping users **understand the current traffic situat
 
 The primary objective of SanTrapik is to develop a web-based traffic intelligence platform that analyzes a user's selected route and provides:
 
-* Current traffic conditions
-* Congestion severity
-* Active road incidents
-* Incident timestamps
-* Estimated travel delay
-* Historical traffic information
-* Traffic trends
-* Alternative route information
-* AI/ML-based congestion prediction
-* Estimated congestion relief time
+- Current traffic conditions
+- Congestion severity
+- Active road incidents
+- Incident timestamps
+- Estimated travel delay
+- Historical traffic information
+- Traffic trends
+- Alternative route information
+- AI/ML-based congestion prediction
+- Estimated congestion relief time
 
 The central feature of the system is:
 
@@ -50,15 +50,15 @@ The central feature of the system is:
 
 SanTrapik is designed for:
 
-* Daily commuters
-* Private vehicle drivers
-* Motorcycle riders
-* Public transportation users
-* Delivery riders and drivers
-* Fleet operators
-* Students and employees commuting within Metro Manila
-* Individuals planning trips during high-traffic periods
-* Traffic and transportation researchers
+- Daily commuters
+- Private vehicle drivers
+- Motorcycle riders
+- Public transportation users
+- Delivery riders and drivers
+- Fleet operators
+- Students and employees commuting within Metro Manila
+- Individuals planning trips during high-traffic periods
+- Traffic and transportation researchers
 
 The system should be accessible to the general public without requiring registration.
 
@@ -72,13 +72,13 @@ Users should be able to open the website and immediately use its main traffic-mo
 
 The public interface should not require:
 
-* User accounts
-* Passwords
-* JWT authentication
-* Firebase Authentication
-* OAuth
-* User profiles
-* Personal account information
+- User accounts
+- Passwords
+- JWT authentication
+- Firebase Authentication
+- OAuth
+- User profiles
+- Personal account information
 
 The system should therefore prioritize **anonymous public access**.
 
@@ -92,25 +92,25 @@ The basic user experience should follow this process:
 
 ```text
 User opens SanTrapik
-        â†“
+        ↓
 User enters starting point
-        â†“
+        ↓
 User enters destination
-        â†“
+        ↓
 System generates or retrieves route
-        â†“
+        ↓
 System divides/analyzes route road segments
-        â†“
+        ↓
 System retrieves available traffic information
-        â†“
+        ↓
 System identifies incidents affecting the route
-        â†“
+        ↓
 System calculates estimated delay
-        â†“
+        ↓
 AI/ML analyzes current and historical conditions
-        â†“
+        ↓
 System predicts congestion relief
-        â†“
+        ↓
 User receives traffic intelligence report
 ```
 
@@ -142,40 +142,40 @@ Example:
 
 ```text
 START
-  â†“
+  ↓
 Commonwealth Avenue
-  ðŸŸ  Heavy Traffic
-  â†“
+  🟠 Heavy Traffic
+  ↓
 Quezon Avenue
-  ðŸ”´ Severe Traffic
-  â†“
+  🔴 Severe Traffic
+  ↓
 EDSA
-  ðŸ”´ Severe Traffic + Accident
-  â†“
+  🔴 Severe Traffic + Accident
+  ↓
 Ortigas
-  ðŸŸ¡ Moderate Traffic
-  â†“
+  🟡 Moderate Traffic
+  ↓
 Makati
-  ðŸŸ¢ Normal Traffic
-  â†“
+  🟢 Normal Traffic
+  ↓
 DESTINATION
 ```
 
 Whenever data is available, each road segment should contain:
 
-* Road name
-* Traffic condition
-* Average speed
-* Congestion severity
-* Congestion percentage, if available
-* Incident status
-* Incident type
-* Incident timestamp
-* Estimated delay
-* Predicted congestion relief time
-* Historical traffic information
-* Data source
-* Last updated timestamp
+- Road name
+- Traffic condition
+- Average speed
+- Congestion severity
+- Congestion percentage, if available
+- Incident status
+- Incident type
+- Incident timestamp
+- Estimated delay
+- Predicted congestion relief time
+- Historical traffic information
+- Data source
+- Last updated timestamp
 
 ---
 
@@ -183,19 +183,19 @@ Whenever data is available, each road segment should contain:
 
 SanTrapik should use understandable traffic categories.
 
-## ðŸŸ¢ Normal
+## 🟢 Normal
 
 Traffic is flowing normally with little or no significant delay.
 
-## ðŸŸ¡ Moderate
+## 🟡 Moderate
 
 Traffic is slower than normal but remains generally moving.
 
-## ðŸŸ  Heavy
+## 🟠 Heavy
 
 Traffic is significantly slower and causes noticeable travel delays.
 
-## ðŸ”´ Severe
+## 🔴 Severe
 
 Traffic is highly congested, with very slow movement or stop-and-go conditions.
 
@@ -212,7 +212,7 @@ Example:
 ```text
 YOUR ROUTE
 
-ðŸ”´ SEVERE CONGESTION
+🔴 SEVERE CONGESTION
 
 Estimated Travel Time
 1 hr 24 min
@@ -227,7 +227,7 @@ Active Incidents
 2
 
 Most Affected Road
-EDSA â€“ Ortigas Segment
+EDSA – Ortigas Segment
 
 Expected Congestion Relief
 10:20 PM
@@ -243,15 +243,15 @@ SanTrapik should display road incidents that may cause or contribute to congesti
 
 Potential incident categories include:
 
-* Vehicular accidents
-* Road closures
-* Road construction
-* Flooding
-* Road obstructions
-* Traffic signal problems
-* Public events
-* Vehicle breakdowns
-* Other verified or available road incidents
+- Vehicular accidents
+- Road closures
+- Road construction
+- Flooding
+- Road obstructions
+- Traffic signal problems
+- Public events
+- Vehicle breakdowns
+- Other verified or available road incidents
 
 Each incident should contain, when available:
 
@@ -311,18 +311,18 @@ The primary machine-learning objective should be to estimate:
 
 Possible model inputs include:
 
-* Current traffic speed
-* Traffic density
-* Congestion severity
-* Road segment
-* Time of day
-* Day of week
-* Historical congestion patterns
-* Incident type
-* Incident duration
-* Historical incident resolution time
-* Weather conditions, if reliable data is available
-* Current congestion trend
+- Current traffic speed
+- Traffic density
+- Congestion severity
+- Road segment
+- Time of day
+- Day of week
+- Historical congestion patterns
+- Incident type
+- Incident duration
+- Historical incident resolution time
+- Weather conditions, if reliable data is available
+- Current congestion trend
 
 The system may produce:
 
@@ -334,7 +334,7 @@ Current Time
 9:15 PM
 
 Predicted Relief
-10:05 PM â€“ 10:25 PM
+10:05 PM – 10:25 PM
 
 Prediction Confidence
 82%
@@ -377,17 +377,17 @@ The initial machine-learning implementation should use Python-based tools.
 
 Recommended technologies:
 
-* Python
-* Pandas
-* NumPy
-* scikit-learn
+- Python
+- Pandas
+- NumPy
+- scikit-learn
 
 Potential algorithms include:
 
-* Random Forest
-* Random Forest Regressor
-* Gradient Boosting
-* Other suitable regression models
+- Random Forest
+- Random Forest Regressor
+- Gradient Boosting
+- Other suitable regression models
 
 XGBoost or LightGBM may be considered if appropriate for the available dataset and project requirements.
 
@@ -418,16 +418,16 @@ This can be formulated as a regression problem.
 
 Potential evaluation metrics include:
 
-* Mean Absolute Error (MAE)
-* Root Mean Squared Error (RMSE)
-* Mean Absolute Percentage Error (MAPE), where appropriate
+- Mean Absolute Error (MAE)
+- Root Mean Squared Error (RMSE)
+- Mean Absolute Percentage Error (MAPE), where appropriate
 
 If congestion classification is also implemented as an ML task, additional metrics may include:
 
-* Accuracy
-* Precision
-* Recall
-* F1-score
+- Accuracy
+- Precision
+- Recall
+- F1-score
 
 The selected evaluation metrics must correspond to the final ML formulation.
 
@@ -440,10 +440,10 @@ SanTrapik should provide a Metro Manila traffic heatmap that allows users to qui
 Legend:
 
 ```text
-ðŸŸ¢ Normal
-ðŸŸ¡ Moderate
-ðŸŸ  Heavy
-ðŸ”´ Severe
+🟢 Normal
+🟡 Moderate
+🟠 Heavy
+🔴 Severe
 ```
 
 Users should be able to select road segments to view detailed traffic information.
@@ -451,10 +451,10 @@ Users should be able to select road segments to view detailed traffic informatio
 Example:
 
 ```text
-EDSA â€“ Ortigas Segment
+EDSA – Ortigas Segment
 
 Traffic:
-ðŸ”´ Severe
+🔴 Severe
 
 Average Speed:
 11 km/h
@@ -501,10 +501,10 @@ Average Road Speed
 
 MOST CONGESTED ROADS
 
-1. EDSA          ðŸ”´ 91%
-2. C-5           ðŸ”´ 86%
-3. Commonwealth ðŸŸ  73%
-4. Ortigas       ðŸŸ  69%
+1. EDSA          🔴 91%
+2. C-5           🔴 86%
+3. Commonwealth 🟠 73%
+4. Ortigas       🟠 69%
 
 
 PREDICTED RELIEF
@@ -530,7 +530,7 @@ EDSA
 
 Travel Time: 1h 24m
 Delay: +32m
-Traffic: ðŸ”´ Severe
+Traffic: 🔴 Severe
 Incidents: 2
 
 
@@ -539,7 +539,7 @@ C-5
 
 Travel Time: 1h 08m
 Delay: +16m
-Traffic: ðŸŸ  Heavy
+Traffic: 🟠 Heavy
 Incidents: 1
 
 
@@ -557,14 +557,14 @@ SanTrapik should maintain historical traffic information where reliable data is 
 
 Historical data may be used to identify:
 
-* Typical congestion hours
-* Weekday vs. weekend traffic
-* Frequently congested roads
-* Average congestion duration
-* Typical incident duration
-* Roads with recurring congestion
-* Traffic patterns over time
-* Historical incident behavior
+- Typical congestion hours
+- Weekday vs. weekend traffic
+- Frequently congested roads
+- Average congestion duration
+- Typical incident duration
+- Roads with recurring congestion
+- Traffic patterns over time
+- Historical incident behavior
 
 Historical information should support both dashboard analytics and machine-learning model development.
 
@@ -580,16 +580,16 @@ React.js should be used to develop the main web application.
 
 Responsibilities include:
 
-* User interface
-* Route input
-* Interactive map
-* Traffic visualization
-* Incident markers
-* Traffic dashboard
-* Charts
-* Route comparison
-* Prediction display
-* Responsive design
+- User interface
+- Route input
+- Interactive map
+- Traffic visualization
+- Incident markers
+- Traffic dashboard
+- Charts
+- Route comparison
+- Prediction display
+- Responsive design
 
 ### Vite
 
@@ -613,13 +613,13 @@ MapLibre GL JS should be used as the primary interactive mapping library.
 
 It provides control over:
 
-* Map rendering
-* Road visualization
-* Route lines
-* Traffic colors
-* Incident markers
-* Map layers
-* Interactive geographic elements
+- Map rendering
+- Road visualization
+- Route lines
+- Traffic colors
+- Incident markers
+- Map layers
+- Interactive geographic elements
 
 SanTrapik should use map data compatible with OpenStreetMap or another legally permitted mapping provider.
 
@@ -645,18 +645,18 @@ SanTrapik requires a routing engine to determine routes between starting points 
 
 Potential routing technologies include:
 
-* OSRM
-* OpenRouteService
+- OSRM
+- OpenRouteService
 
 The final routing service should be selected based on:
 
-* Geographic coverage
-* API availability
-* Routing quality
-* Usage limits
-* Licensing
-* Cost
-* Project requirements
+- Geographic coverage
+- API availability
+- Routing quality
+- Usage limits
+- Licensing
+- Cost
+- Project requirements
 
 The routing system should provide the road geometry needed for subsequent traffic analysis.
 
@@ -670,16 +670,16 @@ FastAPI should be used as the main backend framework.
 
 The backend should handle:
 
-* REST API endpoints
-* Route processing
-* Traffic data processing
-* Incident processing
-* Data aggregation
-* Database communication
-* Machine-learning model inference
-* Prediction generation
-* Data validation
-* External API communication
+- REST API endpoints
+- Route processing
+- Traffic data processing
+- Incident processing
+- Data aggregation
+- Database communication
+- Machine-learning model inference
+- Prediction generation
+- Data validation
+- External API communication
 
 Suggested API structure:
 
@@ -707,15 +707,15 @@ PostGIS is recommended because SanTrapik is fundamentally a **geospatial system*
 
 The application will need to process:
 
-* Latitude and longitude
-* Road geometries
-* Routes
-* Road segments
-* Intersections
-* Geographic boundaries
-* Incident locations
-* Incidents near routes
-* Spatial relationships between roads and incidents
+- Latitude and longitude
+- Road geometries
+- Routes
+- Road segments
+- Intersections
+- Geographic boundaries
+- Incident locations
+- Incidents near routes
+- Spatial relationships between roads and incidents
 
 PostGIS is therefore preferred over a document-oriented database for the core spatial data.
 
@@ -801,24 +801,24 @@ A `users` table is not required for the current public version because SanTrapik
 
 PostGIS should be used for spatial operations such as:
 
-* Finding incidents near a route
-* Finding road segments intersecting a route
-* Determining the geographic location of incidents
-* Filtering roads within a geographic area
-* Calculating geographic distances
-* Associating traffic records with road segments
+- Finding incidents near a route
+- Finding road segments intersecting a route
+- Determining the geographic location of incidents
+- Filtering roads within a geographic area
+- Calculating geographic distances
+- Associating traffic records with road segments
 
 Example operation:
 
 ```text
 User Route
-    â†“
+    ↓
 Route Geometry
-    â†“
+    ↓
 PostGIS
-    â†“
+    ↓
 Find incidents near route
-    â†“
+    ↓
 Determine affected road segments
 ```
 
@@ -830,26 +830,26 @@ Redis is an **optional** component.
 
 It may be introduced to improve performance by temporarily caching frequently requested information such as:
 
-* Traffic conditions
-* Route results
-* Incident data
-* Prediction results
+- Traffic conditions
+- Route results
+- Incident data
+- Prediction results
 
 Example:
 
 ```text
 User Request
-     â†“
+     ↓
 Redis Cache
-     â†“
+     ↓
 Is data still fresh?
    /       \
  YES       NO
-  â†“         â†“
+  ↓         ↓
 Return    Request new data
-          â†“
+          ↓
        Process data
-          â†“
+          ↓
        Update cache
 ```
 
@@ -865,12 +865,12 @@ Recharts should be used for dashboard charts where appropriate.
 
 Possible visualizations include:
 
-* Traffic trends
-* Average speed
-* Congestion trends
-* Incident counts
-* Historical comparisons
-* Prediction results
+- Traffic trends
+- Average speed
+- Congestion trends
+- Incident counts
+- Historical comparisons
+- Prediction results
 
 Maps should remain the primary visualization for geographic traffic information.
 
@@ -882,26 +882,26 @@ Reliable data is the most important external dependency of SanTrapik.
 
 The system may use:
 
-* Traffic APIs
-* Mapping/routing services
-* Government traffic information
-* Official road incident reports
-* Public traffic datasets
-* Historical traffic datasets
-* Weather APIs, if relevant
-* Verified user-submitted reports, if implemented
+- Traffic APIs
+- Mapping/routing services
+- Government traffic information
+- Official road incident reports
+- Public traffic datasets
+- Historical traffic datasets
+- Weather APIs, if relevant
+- Verified user-submitted reports, if implemented
 
 Every external data source must be evaluated based on:
 
-* Reliability
-* Availability
-* Update frequency
-* Geographic coverage
-* API limitations
-* Licensing
-* Cost
-* Terms of use
-* Data completeness
+- Reliability
+- Availability
+- Update frequency
+- Geographic coverage
+- API limitations
+- Licensing
+- Cost
+- Terms of use
+- Data completeness
 
 ---
 
@@ -939,27 +939,27 @@ Development should follow this order:
 
 ```text
 1. Identify reliable Philippine traffic data sources
-                    â†“
+                    ↓
 2. Determine available traffic and incident fields
-                    â†“
+                    ↓
 3. Evaluate data quality and update frequency
-                    â†“
+                    ↓
 4. Verify licensing/API usage requirements
-                    â†“
+                    ↓
 5. Collect and prepare historical data
-                    â†“
+                    ↓
 6. Design database schema
-                    â†“
+                    ↓
 7. Build FastAPI data pipeline
-                    â†“
+                    ↓
 8. Build React/MapLibre interface
-                    â†“
+                    ↓
 9. Develop ML prediction model
-                    â†“
+                    ↓
 10. Integrate ML model
-                    â†“
+                    ↓
 11. Evaluate prediction performance
-                    â†“
+                    ↓
 12. Deploy SanTrapik
 ```
 
@@ -992,14 +992,14 @@ Stale information must not be presented as current real-time information.
 
 SanTrapik must not fabricate:
 
-* Traffic conditions
-* Accident reports
-* Incident timestamps
-* Road closures
-* Relief times
-* Traffic statistics
-* Prediction confidence
-* Historical records
+- Traffic conditions
+- Accident reports
+- Incident timestamps
+- Road closures
+- Relief times
+- Traffic statistics
+- Prediction confidence
+- Historical records
 
 When information is unavailable, the system should explicitly state that the information is unavailable or based on the latest known data.
 
@@ -1012,34 +1012,34 @@ This is the central concept of SanTrapik.
 Instead of simply showing:
 
 ```text
-EDSA = ðŸ”´
+EDSA = 🔴
 ```
 
 the system should explain:
 
 ```text
 WHY IS IT RED?
-        â†“
+        ↓
 Vehicular accident
 
 WHEN DID IT START?
-        â†“
+        ↓
 9:42 PM
 
 HOW BAD IS IT?
-        â†“
+        ↓
 Severe
 
 HOW MUCH WILL IT DELAY ME?
-        â†“
+        ↓
 +32 minutes
 
 WHEN IS IT EXPECTED TO IMPROVE?
-        â†“
+        ↓
 10:20 PM
 
 IS THERE AN ALTERNATIVE?
-        â†“
+        ↓
 C-5
 ```
 
@@ -1061,15 +1061,15 @@ SanTrapik focuses on explaining the traffic situation affecting that journey.
 
 ### SanTrapik focuses on:
 
-* Current congestion severity
-* Route-specific traffic conditions
-* Incident monitoring
-* Incident timestamps
-* Congestion duration
-* Estimated delay
-* Historical traffic patterns
-* AI-based congestion prediction
-* Expected congestion relief
+- Current congestion severity
+- Route-specific traffic conditions
+- Incident monitoring
+- Incident timestamps
+- Congestion duration
+- Estimated delay
+- Historical traffic patterns
+- AI-based congestion prediction
+- Expected congestion relief
 
 ---
 
@@ -1083,35 +1083,35 @@ This means the system should not only tell users that a route is congested, but 
 
 ```text
 WHERE?
-â†“
+↓
 Affected road
 
 WHAT?
-â†“
+↓
 Severe congestion
 
 WHY?
-â†“
+↓
 Incident
 
 WHEN DID IT START?
-â†“
+↓
 Timestamp
 
 HOW LONG HAS IT LASTED?
-â†“
+↓
 Duration
 
 HOW MUCH WILL IT DELAY THE USER?
-â†“
+↓
 Estimated delay
 
 WHEN MAY IT IMPROVE?
-â†“
+↓
 AI prediction
 
 IS THERE AN ALTERNATIVE?
-â†“
+↓
 Alternative route
 ```
 
@@ -1121,40 +1121,40 @@ Alternative route
 
 ```text
                          SANTRAPIK
-                            â”‚
-                â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                â”‚                       â”‚
+                            │
+                ┌───────────┴───────────┐
+                │                       │
            React.js                MapLibre GL JS
-                â”‚                       â”‚
-                â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚
+                │                       │
+                └───────────┬───────────┘
+                            │
                          REST API
-                            â”‚
+                            │
                          FastAPI
-                            â”‚
-       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-       â”‚                    â”‚                    â”‚
+                            │
+       ┌────────────────────┼────────────────────┐
+       │                    │                    │
 Traffic Service      Incident Service      Route Service
-       â”‚                    â”‚                    â”‚
-       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚
+       │                    │                    │
+       └────────────────────┼────────────────────┘
+                            │
                    Data Processing Layer
-                            â”‚
-                â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                â”‚                       â”‚
+                            │
+                ┌───────────┴───────────┐
+                │                       │
            PostgreSQL                PostGIS
-                â”‚                       â”‚
-                â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚
+                │                       │
+                └───────────┬───────────┘
+                            │
                      Historical Data
-                            â”‚
-                            â†“
+                            │
+                            ↓
                     Python ML Pipeline
-                            â”‚
-                            â†“
+                            │
+                            ↓
                   Congestion Prediction
-                            â”‚
-                            â†“
+                            │
+                            ↓
                   Relief-Time Prediction
 ```
 
@@ -1162,8 +1162,8 @@ Optional:
 
 ```text
 FastAPI
-   â”‚
-   â†“
+   │
+   ↓
 Redis Cache
 ```
 
@@ -1173,55 +1173,55 @@ Redis Cache
 
 ## Frontend
 
-* React.js
-* Vite
-* TypeScript
-* Tailwind CSS
+- React.js
+- Vite
+- TypeScript
+- Tailwind CSS
 
 ## Mapping
 
-* MapLibre GL JS
-* OpenStreetMap-compatible data
-* OSRM and/or OpenRouteService
+- MapLibre GL JS
+- OpenStreetMap-compatible data
+- OSRM and/or OpenRouteService
 
 ## Backend
 
-* Python
-* FastAPI
-* Pydantic
+- Python
+- FastAPI
+- Pydantic
 
 ## Database
 
-* PostgreSQL
-* PostGIS
+- PostgreSQL
+- PostGIS
 
 ## AI/ML
 
-* Python
-* Pandas
-* NumPy
-* scikit-learn
+- Python
+- Pandas
+- NumPy
+- scikit-learn
 
 ## Data Visualization
 
-* Recharts
+- Recharts
 
 ## Optional Performance Layer
 
-* Redis
+- Redis
 
 ## Development Tools
 
-* Git
-* GitHub
-* Visual Studio Code
-* Docker
+- Git
+- GitHub
+- Visual Studio Code
+- Docker
 
 ## Deployment
 
-* Vercel for the React frontend
-* Render or Railway for the FastAPI backend
-* PostgreSQL/PostGIS hosting compatible with the selected deployment provider
+- Vercel for the React frontend
+- Render or Railway for the FastAPI backend
+- PostgreSQL/PostGIS hosting compatible with the selected deployment provider
 
 The exact hosting provider may change depending on project requirements, cost, and available resources.
 
@@ -1229,59 +1229,59 @@ The exact hosting provider may change depending on project requirements, cost, a
 
 # Functional Requirements
 
-## FR-01 â€” Route Input
+## FR-01 — Route Input
 
 The system shall allow users to enter a starting point and destination.
 
-## FR-02 â€” Route Generation
+## FR-02 — Route Generation
 
 The system shall generate or retrieve a route between the selected locations.
 
-## FR-03 â€” Traffic Analysis
+## FR-03 — Traffic Analysis
 
 The system shall determine the available traffic condition of road segments along the selected route.
 
-## FR-04 â€” Congestion Classification
+## FR-04 — Congestion Classification
 
 The system shall classify traffic congestion into defined severity levels.
 
-## FR-05 â€” Incident Display
+## FR-05 — Incident Display
 
 The system shall display available incidents affecting the selected route.
 
-## FR-06 â€” Incident Timestamp
+## FR-06 — Incident Timestamp
 
 The system shall display the reported or recorded timestamp of incidents when available.
 
-## FR-07 â€” Travel Delay Estimation
+## FR-07 — Travel Delay Estimation
 
 The system shall calculate or retrieve the estimated delay caused by traffic conditions.
 
-## FR-08 â€” Congestion Relief Prediction
+## FR-08 — Congestion Relief Prediction
 
 The system shall use an AI/ML model to estimate when significant congestion relief may occur.
 
-## FR-09 â€” Traffic Heatmap
+## FR-09 — Traffic Heatmap
 
 The system shall display traffic conditions across supported Metro Manila roads using map-based visualization.
 
-## FR-10 â€” Historical Analysis
+## FR-10 — Historical Analysis
 
 The system shall provide historical traffic information where sufficient data is available.
 
-## FR-11 â€” Route Comparison
+## FR-11 — Route Comparison
 
 The system shall allow users to compare available routes based on traffic conditions.
 
-## FR-12 â€” Traffic Dashboard
+## FR-12 — Traffic Dashboard
 
 The system shall provide traffic and incident statistics.
 
-## FR-13 â€” Data Timestamping
+## FR-13 — Data Timestamping
 
 The system shall display the latest available timestamp for traffic and incident information.
 
-## FR-14 â€” Public Access
+## FR-14 — Public Access
 
 The system shall allow users to access the primary traffic-monitoring functionality without creating an account.
 
@@ -1313,24 +1313,24 @@ Traffic information should be understandable at a glance.
 
 Although the public system does not currently require accounts, the backend should still use appropriate security practices, including:
 
-* Input validation
-* API protection
-* Rate limiting where necessary
-* Secure API-key storage
-* HTTPS
-* CORS configuration
-* Protection against malicious requests
+- Input validation
+- API protection
+- Rate limiting where necessary
+- Secure API-key storage
+- HTTPS
+- CORS configuration
+- Protection against malicious requests
 
 ## Maintainability
 
 The codebase should use a modular architecture separating:
 
-* Frontend
-* Backend
-* Data processing
-* External data integration
-* Database
-* Machine learning
+- Frontend
+- Backend
+- Data processing
+- External data integration
+- Database
+- Machine learning
 
 ---
 
@@ -1338,20 +1338,20 @@ The codebase should use a modular architecture separating:
 
 Potential future features include:
 
-* User-submitted traffic incidents
-* Community traffic reports
-* Push notifications
-* Saved routes
-* Personalized commute monitoring
-* Congestion alerts
-* Accident severity estimation
-* Flood-related road monitoring
-* Public transportation congestion analysis
-* City-level traffic analytics
-* Traffic trend forecasting
-* Additional Philippine cities
-* Advanced AI models
-* Administrative dashboard
+- User-submitted traffic incidents
+- Community traffic reports
+- Push notifications
+- Saved routes
+- Personalized commute monitoring
+- Congestion alerts
+- Accident severity estimation
+- Flood-related road monitoring
+- Public transportation congestion analysis
+- City-level traffic analytics
+- Traffic trend forecasting
+- Additional Philippine cities
+- Advanced AI models
+- Administrative dashboard
 
 These features are not mandatory for the initial implementation.
 
@@ -1449,7 +1449,7 @@ The initial system should prioritize Philippine roads, particularly Metro Manila
 
 # Core Concept
 
-> **SanTrapik helps users understand what is happening on their routeâ€”not just where to go.**
+> **SanTrapik helps users understand what is happening on their route—not just where to go.**
 
 The system should provide a clear, timely, and data-driven view of Philippine road congestion, beginning with Metro Manila.
 
@@ -1467,6 +1467,6 @@ TRAFFIC HISTORY
 ESTIMATED DELAY
         +
 AI PREDICTION
-        â†“
+        ↓
 ACTIONABLE TRAFFIC INTELLIGENCE
 ```
