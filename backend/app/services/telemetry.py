@@ -9,92 +9,48 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from shapely.geometry import Point, LineString
+from shapely.ops import nearest_points
 from backend.app.services.live_traffic import live_traffic_service
 
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
 
 MANILA_TZ = timezone(timedelta(hours=8))
 
-# Verified Metro Manila Key Incident Locations (MMDA CCTV Monitored Corridors)
-BASE_INCIDENTS = [
-    {
-        "id": "inc_mmda_01",
-        "incident_type": "ACCIDENT",
-        "description": "Multi-vehicle collision occupying 2 middle lanes; MMDA wrecker and tow truck on scene",
-        "severity": "CRITICAL",
-        "status": "ACTIVE",
-        "point_lng_lat": [121.0575, 14.5855], # EDSA Ortigas Flyover SB
-        "corridor": "EDSA - Ortigas Flyover SB",
-        "minutes_ago": 28,
-        "data_source": "MMDA_METROBASE_CCTV"
-    },
-    {
-        "id": "inc_mmda_02",
-        "incident_type": "ROADWORK",
-        "description": "DPWH emergency concrete re-blocking; 1 inner lane closed to vehicular traffic",
-        "severity": "HIGH",
-        "status": "ACTIVE",
-        "point_lng_lat": [121.0690, 14.5740], # C-5 Bagong Ilog Flyover
-        "corridor": "C-5 - Bagong Ilog Flyover",
-        "minutes_ago": 54,
-        "data_source": "DPWH_NCR_EDD"
-    },
-    {
-        "id": "inc_mmda_03",
-        "incident_type": "STALLED_VEHICLE",
-        "description": "Stalled public utility bus with flat tire on lane 3; traffic enforcer directing flow",
-        "severity": "MEDIUM",
-        "status": "ACTIVE",
-        "point_lng_lat": [121.0465, 14.5685], # EDSA Guadalupe Bridge SB
-        "corridor": "EDSA - Guadalupe Bridge SB",
-        "minutes_ago": 19,
-        "data_source": "MMDA_TRAFFIC_OPERATIONS"
-    },
-    {
-        "id": "inc_mmda_04",
-        "incident_type": "FLOOD",
-        "description": "Gutter-deep gutter-to-half-tire rainwater accumulation near Philcoa",
-        "severity": "MEDIUM",
-        "status": "ACTIVE",
-        "point_lng_lat": [121.0580, 14.6540], # Commonwealth Philcoa
-        "corridor": "Commonwealth - Philcoa to Circle",
-        "minutes_ago": 75,
-        "data_source": "MMDA_FLOOD_CONTROL"
-    },
-    {
-        "id": "inc_mmda_05",
-        "incident_type": "ROADWORK",
-        "description": "Manila Water pipe maintenance excavation; lane barriers deployed",
-        "severity": "MEDIUM",
-        "status": "ACTIVE",
-        "point_lng_lat": [120.9920, 14.6080], # España Boulevard near UST
-        "corridor": "España Boulevard - Welcome to UST",
-        "minutes_ago": 90,
-        "data_source": "CITY_OF_MANILA_TPMO"
-    },
-    {
-        "id": "inc_mmda_06",
-        "incident_type": "STALLED_VEHICLE",
-        "description": "Overheating delivery truck awaiting mechanic assistance",
-        "severity": "LOW",
-        "status": "CLEARING",
-        "point_lng_lat": [121.0340, 14.6430], # Quezon Ave near EDSA
-        "corridor": "Quezon Avenue - EDSA to Circle",
-        "minutes_ago": 110,
-        "data_source": "MMDA_MOBILE_PATROL"
-    }
-]
-
 class RealTimeTelemetryService:
     def __init__(self):
         self._cached_roads: List[Dict[str, Any]] = []
-        self._live_incidents: List[Dict[str, Any]] = list(BASE_INCIDENTS)
+        # Dynamic, real-time verified incident store (no fake synthetic seeds)
+        self._live_incidents: List[Dict[str, Any]] = []
         self._load_roads()
 
     def _load_roads(self):
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 self._cached_roads = json.load(f).get("features", [])
+
+    def snap_to_nearest_road(self, lng: float, lat: float, corridor_hint: Optional[str] = None) -> tuple:
+        """
+        Mathematically snaps any coordinate to the exact centerline of the nearest
+        Metro Manila road segment, ensuring incident markers are never floating off-road.
+        """
+        pt = Point(lng, lat)
+        best_dist = float("inf")
+        best_point = (lng, lat)
+        best_name = corridor_hint or "Metro Manila Corridor"
+
+        for feat in self._cached_roads:
+            coords = feat["geometry"]["coordinates"]
+            if len(coords) < 2:
+                continue
+            line = LineString(coords)
+            dist = line.distance(pt)
+            if dist < best_dist:
+                best_dist = dist
+                snapped = nearest_points(line, pt)[0]
+                best_point = (round(snapped.x, 6), round(snapped.y, 6))
+                best_name = feat["properties"].get("road_name", best_name)
+
+        return best_point, best_name
 
     def get_manila_now(self) -> datetime:
         return datetime.now(MANILA_TZ)
@@ -197,7 +153,8 @@ class RealTimeTelemetryService:
             for inc in self._live_incidents:
                 if inc["status"] != "RESOLVED":
                     inc_pt = Point(inc["point_lng_lat"])
-                    if seg_line.distance(inc_pt) < 0.0035 or any(k in name for k in ["Ortigas Flyover", "Bagong Ilog", "Guadalupe Bridge"] if k in inc["corridor"]):
+                    corridor_val = inc.get("corridor", "")
+                    if seg_line.distance(inc_pt) < 0.0035 or (corridor_val and corridor_val.lower() in name.lower()):
                         has_inc = True
                         inc_sev = inc["severity"]
                         break
@@ -286,15 +243,28 @@ class RealTimeTelemetryService:
     def get_active_incidents(self, status: Optional[str] = None, severity: Optional[str] = None) -> List[Dict[str, Any]]:
         """Returns live incidents with dynamic timestamps relative to real time."""
         now = self.get_manila_now()
-        results = []
 
+        # If live external API provider is configured, synchronize live external incidents
+        if live_traffic_service.has_live_provider():
+            external_incs = live_traffic_service.fetch_tomtom_incidents() or live_traffic_service.fetch_here_incidents()
+            for ext in external_incs:
+                if not any(i["id"] == ext["id"] for i in self._live_incidents):
+                    snapped_pt, snapped_road = self.snap_to_nearest_road(
+                        ext["point_lng_lat"][0], ext["point_lng_lat"][1], ext.get("corridor")
+                    )
+                    ext["point_lng_lat"] = [snapped_pt[0], snapped_pt[1]]
+                    if not ext.get("corridor") or ext["corridor"] == "Metro Manila Corridor":
+                        ext["corridor"] = snapped_road
+                    self._live_incidents.append(ext)
+
+        results = []
         for inc in self._live_incidents:
             if status and inc["status"].upper() != status.upper():
                 continue
             if severity and inc["severity"].upper() != severity.upper():
                 continue
 
-            reported_dt = now - timedelta(minutes=inc["minutes_ago"])
+            reported_dt = now - timedelta(minutes=inc.get("minutes_ago", 2))
             results.append({
                 "id": inc["id"],
                 "incident_type": inc["incident_type"],
@@ -304,32 +274,48 @@ class RealTimeTelemetryService:
                 "lat": inc["point_lng_lat"][1],
                 "lng": inc["point_lng_lat"][0],
                 "reported_at": reported_dt.isoformat(),
-                "data_source": inc["data_source"]
+                "data_source": inc.get("data_source", "COMMUTER_LIVE_REPORT"),
+                "corridor": inc.get("corridor", "Metro Manila Corridor")
             })
 
         return results
 
     def add_live_incident(self, incident_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Allows dynamic incident reporting in real-time."""
+        """Allows dynamic incident reporting in real-time with road centerline snapping."""
         now = self.get_manila_now()
         lng = incident_data.get("lng")
         lat = incident_data.get("lat")
         if lng is None or lat is None:
-            coords = incident_data.get("point_lng_lat", [121.0, 14.58])
+            coords = incident_data.get("point_lng_lat", [121.05, 14.58])
             lng, lat = coords[0], coords[1]
 
+        # Snap to nearest road segment centerline!
+        corridor_hint = incident_data.get("road_name") or incident_data.get("corridor")
+        snapped_coords, road_name = self.snap_to_nearest_road(float(lng), float(lat), corridor_hint)
+
         new_inc = {
-            "id": incident_data.get("id") or f"inc_user_{int(now.timestamp()) % 100000}",
+            "id": incident_data.get("id") or f"inc_live_{int(now.timestamp() * 1000) % 1000000}",
             "incident_type": incident_data.get("incident_type", "ACCIDENT"),
-            "description": incident_data.get("description", "Reported traffic incident"),
-            "severity": incident_data.get("severity", "MEDIUM"),
+            "description": incident_data.get("description", "Live traffic incident reported by commuter"),
+            "severity": incident_data.get("severity", "HIGH"),
             "status": incident_data.get("status", "ACTIVE"),
-            "point_lng_lat": [float(lng), float(lat)],
-            "corridor": incident_data.get("road_name") or incident_data.get("corridor", "Metro Manila Corridor"),
+            "point_lng_lat": [snapped_coords[0], snapped_coords[1]],
+            "lat": snapped_coords[1],
+            "lng": snapped_coords[0],
+            "corridor": road_name,
             "minutes_ago": incident_data.get("minutes_ago", 1),
+            "reported_at": now.isoformat(),
             "data_source": incident_data.get("data_source", "COMMUTER_LIVE_REPORT")
         }
         self._live_incidents.insert(0, new_inc)
         return new_inc
+
+    def resolve_live_incident(self, incident_id: str) -> Optional[Dict[str, Any]]:
+        """Marks a reported live incident as resolved/cleared."""
+        for inc in self._live_incidents:
+            if str(inc["id"]) == str(incident_id):
+                inc["status"] = "RESOLVED"
+                return inc
+        return None
 
 telemetry_service = RealTimeTelemetryService()

@@ -144,19 +144,19 @@ Example:
 START
   ↓
 Commonwealth Avenue
-  🟠 Heavy Traffic
+  [HEAVY] Heavy Traffic
   ↓
 Quezon Avenue
-  🔴 Severe Traffic
+  [SEVERE] Severe Traffic
   ↓
 EDSA
-  🔴 Severe Traffic + Accident
+  [SEVERE] Severe Traffic + Accident
   ↓
 Ortigas
-  🟡 Moderate Traffic
+  [MODERATE] Moderate Traffic
   ↓
 Makati
-  🟢 Normal Traffic
+  [NORMAL] Normal Traffic
   ↓
 DESTINATION
 ```
@@ -183,19 +183,19 @@ Whenever data is available, each road segment should contain:
 
 SanTrapik should use understandable traffic categories.
 
-## 🟢 Normal
+## Normal
 
 Traffic is flowing normally with little or no significant delay.
 
-## 🟡 Moderate
+## Moderate
 
 Traffic is slower than normal but remains generally moving.
 
-## 🟠 Heavy
+## Heavy
 
 Traffic is significantly slower and causes noticeable travel delays.
 
-## 🔴 Severe
+## Severe
 
 Traffic is highly congested, with very slow movement or stop-and-go conditions.
 
@@ -212,7 +212,7 @@ Example:
 ```text
 YOUR ROUTE
 
-🔴 SEVERE CONGESTION
+[SEVERE] SEVERE CONGESTION
 
 Estimated Travel Time
 1 hr 24 min
@@ -440,10 +440,10 @@ SanTrapik should provide a Metro Manila traffic heatmap that allows users to qui
 Legend:
 
 ```text
-🟢 Normal
-🟡 Moderate
-🟠 Heavy
-🔴 Severe
+[NORMAL] Normal
+[MODERATE] Moderate
+[HEAVY] Heavy
+[SEVERE] Severe
 ```
 
 Users should be able to select road segments to view detailed traffic information.
@@ -454,7 +454,7 @@ Example:
 EDSA – Ortigas Segment
 
 Traffic:
-🔴 Severe
+[SEVERE] Severe
 
 Average Speed:
 11 km/h
@@ -501,10 +501,10 @@ Average Road Speed
 
 MOST CONGESTED ROADS
 
-1. EDSA          🔴 91%
-2. C-5           🔴 86%
-3. Commonwealth 🟠 73%
-4. Ortigas       🟠 69%
+1. EDSA          [SEVERE] 91%
+2. C-5           [SEVERE] 86%
+3. Commonwealth [HEAVY] 73%
+4. Ortigas       [HEAVY] 69%
 
 
 PREDICTED RELIEF
@@ -530,7 +530,7 @@ EDSA
 
 Travel Time: 1h 24m
 Delay: +32m
-Traffic: 🔴 Severe
+Traffic: [SEVERE] Severe
 Incidents: 2
 
 
@@ -539,7 +539,7 @@ C-5
 
 Travel Time: 1h 08m
 Delay: +16m
-Traffic: 🟠 Heavy
+Traffic: [HEAVY] Heavy
 Incidents: 1
 
 
@@ -1012,7 +1012,7 @@ This is the central concept of SanTrapik.
 Instead of simply showing:
 
 ```text
-EDSA = 🔴
+EDSA = [SEVERE]
 ```
 
 the system should explain:

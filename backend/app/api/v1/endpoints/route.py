@@ -50,43 +50,60 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
             "segments": segments,
         })
 
-    # Find the best route (lowest estimated travel time; tie-breaker: fewer incidents)
+    # Determine Least Traffic (minimum travel time) and Shortest Path (minimum distance)
+    min_time = min(it["summary"].estimated_travel_time_min for it in temp_evaluated)
+    min_dist = min(it["summary"].total_distance_km for it in temp_evaluated)
+    max_time = max(it["summary"].estimated_travel_time_min for it in temp_evaluated)
+    max_dist = max(it["summary"].total_distance_km for it in temp_evaluated)
+
+    # Find primary recommended route index (least travel time, tie-breaker: fewer incidents, then shorter distance)
     best_idx = 0
     if len(temp_evaluated) > 1:
-        best_time = float("inf")
-        best_inc = float("inf")
+        best_score = (float("inf"), float("inf"), float("inf"))
         for idx, item in enumerate(temp_evaluated):
             t = item["summary"].estimated_travel_time_min
             inc = item["summary"].active_incidents_count
-            if t < best_time or (t == best_time and inc < best_inc):
-                best_time = t
-                best_inc = inc
+            d = item["summary"].total_distance_km
+            score = (t, inc, d)
+            if score < best_score:
+                best_score = score
                 best_idx = idx
 
     evaluated_routes = []
-    base_best_time = temp_evaluated[best_idx]["summary"].estimated_travel_time_min
-
     for i, item in enumerate(temp_evaluated):
         r = item["raw"]
         summary = item["summary"]
         is_rec = (i == best_idx)
 
+        is_fastest = (summary.estimated_travel_time_min == min_time)
+        is_shortest = (summary.total_distance_km == min_dist)
+
+        dist_diff = round(summary.total_distance_km - min_dist, 1)
+        time_diff = summary.estimated_travel_time_min - min_time
+
         if len(temp_evaluated) > 1:
-            if is_rec:
-                # Find worst time to calculate savings
-                other_times = [it["summary"].estimated_travel_time_min for j, it in enumerate(temp_evaluated) if j != i]
-                max_other = max(other_times) if other_times else summary.estimated_travel_time_min
-                savings = max(0, max_other - summary.estimated_travel_time_min)
-                pct = int(round((savings / max_other) * 100)) if max_other > 0 else 0
-                inc_count = summary.active_incidents_count
-                if savings > 0:
-                    recommendation_reason = f"Recommended: Saves {savings} mins ({pct}% faster) with {inc_count} active incidents"
+            if is_fastest and is_shortest:
+                badge = "LEAST_TRAFFIC_AND_SHORTEST"
+                dist_savings = round(max_dist - summary.total_distance_km, 1)
+                time_savings = max_time - summary.estimated_travel_time_min
+                if dist_savings > 0 and time_savings > 0:
+                    recommendation_reason = f"Optimal: Shortest route ({summary.total_distance_km} km) and least traffic ({time_savings} mins faster)"
                 else:
-                    recommendation_reason = f"Recommended: Optimal corridor with fewer congestion bottlenecks"
+                    recommendation_reason = "Optimal: Shortest mileage and fastest free-flow corridor"
+            elif is_fastest:
+                badge = "LEAST_TRAFFIC"
+                savings = max_time - summary.estimated_travel_time_min
+                pct = int(round((savings / max_time) * 100)) if max_time > 0 else 0
+                recommendation_reason = f"Least Traffic: Saves {savings} mins ({pct}% faster) with rolling average speed {item['segments'][0].average_speed_kmh if item['segments'] else 30} km/h"
+            elif is_shortest:
+                badge = "SHORTEST_PATH"
+                dist_saved = round(max_dist - summary.total_distance_km, 1)
+                recommendation_reason = f"Shortest Path: Saves {dist_saved} km in distance (+{time_diff} mins slower due to surface traffic)"
             else:
-                delay_delta = summary.estimated_travel_time_min - base_best_time
-                recommendation_reason = f"+{delay_delta} mins slower due to heavy congestion along corridor"
+                badge = "ALTERNATIVE"
+                recommendation_reason = f"Alternative Corridor: +{time_diff} mins slower along secondary arterial"
         else:
+            badge = "LEAST_TRAFFIC_AND_SHORTEST"
             recommendation_reason = "Optimal route"
 
         route_item = RouteItem(
@@ -94,6 +111,9 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
             name=r["name"],
             is_recommended=is_rec,
             recommendation_reason=recommendation_reason,
+            badge=badge,
+            distance_diff_km=dist_diff,
+            time_diff_min=time_diff,
             summary=summary,
             expected_relief=item["expected_relief"],
             geometry=GeoJSONLineString(type="LineString", coordinates=item["coords"]),

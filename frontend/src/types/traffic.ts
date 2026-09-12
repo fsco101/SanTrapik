@@ -72,6 +72,9 @@ export interface RouteItem {
   name: string;
   is_recommended: boolean;
   recommendation_reason?: string;
+  badge?: "LEAST_TRAFFIC" | "SHORTEST_PATH" | "LEAST_TRAFFIC_AND_SHORTEST" | "ALTERNATIVE" | string;
+  distance_diff_km?: number;
+  time_diff_min?: number;
   summary: RouteSummary;
   expected_relief: ExpectedRelief;
   geometry: RouteGeometry;
@@ -88,6 +91,7 @@ export interface IncidentItem {
   lng: number;
   reported_at: string;
   data_source: string;
+  corridor?: string;
 }
 
 export interface CorridorCongestion {

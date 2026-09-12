@@ -245,7 +245,7 @@ The design system implements a **Soft-Precision geometry** (`roundedness: 1` / `
 
 ### Badges & Diagnostic Chips
 - **Observed Telemetry Badge**: Surface `#1E293B`, border `1px solid rgba(255, 255, 255, 0.1)`. Features a solid colored dot corresponding to semantic condition (`#10B981`, `#F59E0B`, `#F97316`, or `#EF4444`) followed by monospaced speed and observation time.
-- **AI Prognosis Badge**: Surface `rgba(99, 102, 241, 0.12)`, border `1px solid rgba(99, 102, 241, 0.4)`, text `#C7D2FE`. Prefixed with the distinctive electric sparkle glyph (`✦`).
+- **AI Prognosis Badge**: Surface `rgba(99, 102, 241, 0.12)`, border `1px solid rgba(99, 102, 241, 0.4)`, text `#C7D2FE`. Prefixed with the distinctive electric sparkle icon (`auto_awesome`).
 - **Telemetry Live Pulsar**: Micro-badge featuring an emerald indicator dot paired with an oscillating ripple animation (`ping` utility) showing real-time socket connection.
 
 ### Route Intelligence Card

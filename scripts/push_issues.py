@@ -73,21 +73,21 @@ def main():
             criteria = issue.get("acceptance_criteria", [])
             
             body_lines = [
-                f"### 🎯 Sprint Association",
+                f"### Sprint Association",
                 f"**Sprint:** {sprint_title} (`{sprint_id}`)",
                 f"**Priority:** `{priority.upper()}`",
                 "",
-                f"### 📋 Objective & Description",
+                f"### Objective & Description",
                 desc,
                 "",
-                f"### ✅ Acceptance Criteria",
+                f"### Acceptance Criteria",
             ]
             for ac in criteria:
                 body_lines.append(f"- [ ] {ac}")
             
             body_lines.extend([
                 "",
-                f"### 📚 Reference Specifications",
+                f"### Reference Specifications",
                 "- [SPEC.md](https://github.com/fsco101/SanTrapik/blob/main/SPEC.md)",
                 "- [DESIGN/DESIGN.md](https://github.com/fsco101/SanTrapik/blob/main/DESIGN/DESIGN.md)",
                 "- [AGENT.md](https://github.com/fsco101/SanTrapik/blob/main/AGENT.md)"

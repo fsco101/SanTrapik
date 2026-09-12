@@ -22,6 +22,7 @@ class IncidentItem(BaseModel):
     cleared_at: Optional[str] = None
     data_source: str
     road_segment_id: Optional[str] = None
+    corridor: Optional[str] = None
 
 class IncidentListResponse(BaseModel):
     status: str = "success"

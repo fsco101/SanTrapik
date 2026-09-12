@@ -7,6 +7,7 @@ interface HeaderProps {
   isLoading?: boolean;
   freshnessText?: string;
   isOnline?: boolean;
+  onOpenReportModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
   freshnessText = "Updated just now",
   isOnline = true,
+  onOpenReportModal,
 }) => {
   return (
     <header className="h-14 border-b border-white/10 bg-surface-panel/90 backdrop-blur-md px-4 flex items-center justify-between z-30 select-none">
@@ -66,6 +68,17 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-text-muted">Avg Speed:</span>
             <span className="text-traffic-normal font-bold">{stats.average_road_speed_kmh} km/h</span>
           </div>
+        )}
+
+        {onOpenReportModal && (
+          <button
+            onClick={onOpenReportModal}
+            className="px-2.5 py-1 rounded bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 hover:text-white font-mono text-xs font-bold flex items-center gap-1.5 transition"
+            title="Report live traffic incident or road hazard"
+          >
+            <span className="material-symbols-outlined text-[15px]">crisis_alert</span>
+            <span className="hidden sm:inline">Report Incident</span>
+          </button>
         )}
 
         <button

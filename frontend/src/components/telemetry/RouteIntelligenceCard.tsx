@@ -58,6 +58,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         description?: string;
         reported_at: string;
         status: string;
+        data_source?: string;
         affectedSegments: string[];
       }
     >();
@@ -68,6 +69,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         if (!incidentMap.has(key)) {
           incidentMap.set(key, {
             ...inc,
+            data_source: (inc as any).data_source || "LIVE_TELEMETRY",
             affectedSegments: s.name ? [s.name] : [],
           });
         } else {
@@ -184,17 +186,25 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
                 </div>
                 <p className="text-text-primary text-xs font-sans">{inc.description}</p>
                 <div className="flex items-center justify-between text-[10px] text-text-muted font-mono pt-1">
-                  <span className="truncate max-w-[220px]" title={inc.affectedSegments.join(", ")}>
+                  <span className="truncate max-w-[200px]" title={inc.affectedSegments.join(", ")}>
                     At: {inc.affectedSegments.join(", ") || "Active Corridor"}
                   </span>
-                  <span className="text-text-secondary font-bold">Source: MMDA</span>
+                  <span className="text-text-secondary font-bold">
+                    Source: {inc.data_source || "LIVE_FEED"}
+                  </span>
                 </div>
               </div>
             ))}
             {uniqueIncidents.length === 0 && (
-              <p className="text-xs text-text-muted font-mono text-center py-1">
-                No active collision or construction blockages detected along this route.
-              </p>
+              <div className="py-2.5 px-3 bg-emerald-950/20 border border-emerald-500/20 rounded text-center space-y-1">
+                <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-mono text-xs font-bold">
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  <span>All Corridors Clear</span>
+                </div>
+                <p className="text-[11px] text-text-muted font-mono">
+                  Zero active accidents, closures, or flood hazards detected along this route. Real-time verified.
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -204,7 +214,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
       <div className="pt-2 border-t border-indigo-500/30 bg-indigo-950/20 -mx-4 -mb-4 p-4 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="text-ai-cyan text-[14px]">✦</span>
+            <span className="material-symbols-outlined text-[16px] text-ai-cyan">auto_awesome</span>
             <span className="text-xs font-bold font-outfit text-white tracking-wide">
               AI Congestion Relief Prediction
             </span>

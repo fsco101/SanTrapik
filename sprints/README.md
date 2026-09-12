@@ -8,9 +8,9 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ## Sprint Roadmap & Issue Matrix
 
-### 🚀 [Sprint 1: Geospatial Database Architecture & Metro Manila Road Telemetry](./sprint-1-data-and-database.json)
+### [Sprint 1: Geospatial Database Architecture & Metro Manila Road Telemetry](./sprint-1-data-and-database.json)
 * **Goal:** Set up PostgreSQL + PostGIS database, schema migrations, Metro Manila arterial road segments, real-time/historical traffic telemetry records, and incident tracking.
-* **Status:** ✅ Completed
+* **Status:** Completed
 * **Issues:**
   - [#1: PostgreSQL + PostGIS Containerization & Core Schema Migrations](https://github.com/fsco101/SanTrapik/issues/1)
   - [#2: Metro Manila Major Arterials Road Network Ingestion](https://github.com/fsco101/SanTrapik/issues/2)
@@ -19,9 +19,9 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ---
 
-### ⚡ [Sprint 2: FastAPI REST Services & Routing Engine Integration](./sprint-2-backend-services.json)
+### [Sprint 2: FastAPI REST Services & Routing Engine Integration](./sprint-2-backend-services.json)
 * **Goal:** Build the FastAPI backend, integrate OSRM/ORS for route generation, build PostGIS spatial snapping & incident intersection, and expose public REST APIs for route intelligence.
-* **Status:** ✅ Completed
+* **Status:** Completed
 * **Issues:**
   - [#5: FastAPI Core Architecture, CORS, Health Checks & Pydantic v2 Schemas](https://github.com/fsco101/SanTrapik/issues/5)
   - [#6: Routing Engine Integration (OSRM / OpenRouteService)](https://github.com/fsco101/SanTrapik/issues/6)
@@ -31,9 +31,9 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ---
 
-### 🎨 [Sprint 3: Frontend Implementation via Obsidian Telemetry Design](./sprint-3-frontend-ui.json)
+### [Sprint 3: Frontend Implementation via Obsidian Telemetry Design](./sprint-3-frontend-ui.json)
 * **Goal:** Build the React 18 + Vite + TypeScript web application strictly implementing the "Obsidian Telemetry" design system from the `DESIGN/` folder ([`DESIGN.md`](../DESIGN/DESIGN.md) and [`code.html`](../DESIGN/code.html)), MapLibre GL JS, Route Intelligence Card, and responsive layouts.
-* **Status:** ✅ Completed
+* **Status:** Completed
 * **Issues:**
   - [#10: React + Vite + TypeScript Project Scaffolding with Obsidian Telemetry Tokens](https://github.com/fsco101/SanTrapik/issues/10)
   - [#11: MapLibre GL JS Interactive Map & Traffic Vector Layer Component](https://github.com/fsco101/SanTrapik/issues/11)
@@ -44,9 +44,9 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ---
 
-### 🧠 [Sprint 4: AI/ML Congestion Relief Prediction Pipeline](./sprint-4-ai-ml-prediction.json)
+### [Sprint 4: AI/ML Congestion Relief Prediction Pipeline](./sprint-4-ai-ml-prediction.json)
 * **Goal:** Develop, train, evaluate, and deploy the machine learning regression model to forecast congestion relief time (minutes to free-flow recovery) and integrate inference into the FastAPI backend.
-* **Status:** ✅ Completed
+* **Status:** Completed
 * **Issues:**
   - [#16: Historical Traffic Feature Engineering & Dataset Preprocessing Pipeline](https://github.com/fsco101/SanTrapik/issues/16)
   - [#17: Relief Time Regression Model Training & Cross-Validation (MAE <= 8.5 min)](https://github.com/fsco101/SanTrapik/issues/17)
@@ -55,9 +55,9 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ---
 
-### 🌐 [Sprint 5: System Integration, Route Comparison & Production Readiness](./sprint-5-integration-testing.json)
+### [Sprint 5: System Integration, Route Comparison & Production Readiness](./sprint-5-integration-testing.json)
 * **Goal:** Perform end-to-end integration between Frontend, Backend, Database, and ML model; implement alternative route comparison, real-time telemetry refreshing, Docker Compose multi-container setup, and production deployment readiness.
-* **Status:** ✅ Completed
+* **Status:** Completed
 * **Issues:**
   - [#20: Alternative Route Comparison Logic & UI Recommendation Engine](https://github.com/fsco101/SanTrapik/issues/20)
   - [#21: Real-Time Telemetry Polling, Freshness Badges & Offline Handling](https://github.com/fsco101/SanTrapik/issues/21)

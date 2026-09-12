@@ -7,8 +7,9 @@ import { RouteIntelligenceCard } from "./components/telemetry/RouteIntelligenceC
 import { RouteComparison } from "./components/route/RouteComparison";
 import { MapContainer } from "./components/map/MapContainer";
 import { BottomTelemetrySheet } from "./components/layout/BottomTelemetrySheet";
+import { IncidentReportModal } from "./components/incident/IncidentReportModal";
 import type { Coordinate, RouteItem, DashboardStats, IncidentItem, TransportMode } from "./types/traffic";
-import { analyzeRoute, getDashboardStats, getIncidents } from "./services/api";
+import { analyzeRoute, getDashboardStats, getIncidents, resolveLiveIncident } from "./services/api";
 import { useTrafficRefresh } from "./hooks/useTrafficRefresh";
 
 export function App() {
@@ -25,6 +26,7 @@ export function App() {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [heatmapVisible, setHeatmapVisible] = useState<boolean>(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
 
   // Background telemetry polling every 60s
   const { isOnline, freshnessText, refreshData } = useTrafficRefresh({
@@ -120,6 +122,19 @@ export function App() {
     }
   };
 
+  const handleResolveIncident = async (incidentId: string) => {
+    const success = await resolveLiveIncident(incidentId);
+    if (success) {
+      setIncidents((prev) => prev.filter((inc) => inc.id !== incidentId));
+      triggerAnalyze();
+    }
+  };
+
+  const handleIncidentReported = (newInc: IncidentItem) => {
+    setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== newInc.id)]);
+    triggerAnalyze();
+  };
+
   const selectedRoute = routes.find((r) => r.id === selectedRouteId) || routes[0] || null;
 
   return (
@@ -131,6 +146,7 @@ export function App() {
         onRefresh={() => triggerAnalyze()}
         freshnessText={freshnessText}
         isOnline={isOnline}
+        onOpenReportModal={() => setIsReportModalOpen(true)}
       />
 
       {/* Offline Notice Banner */}
@@ -187,11 +203,15 @@ export function App() {
         <main className="flex-1 h-full relative">
           <MapContainer
             selectedRoute={selectedRoute}
+            routes={routes}
+            onSelectRoute={setSelectedRouteId}
             origin={origin}
             destination={destination}
             incidents={incidents}
             heatmapVisible={heatmapVisible}
             onToggleHeatmap={() => setHeatmapVisible(!heatmapVisible)}
+            onResolveIncident={handleResolveIncident}
+            onOpenReportModal={() => setIsReportModalOpen(true)}
           />
         </main>
 
@@ -227,6 +247,14 @@ export function App() {
           {selectedRoute && <RouteIntelligenceCard route={selectedRoute} />}
         </BottomTelemetrySheet>
       </div>
+
+      {/* Real-Time Live Incident Reporting Modal */}
+      <IncidentReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        onIncidentReported={handleIncidentReported}
+        defaultLocation={origin}
+      />
     </div>
   );
 }

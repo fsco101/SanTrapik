@@ -1,11 +1,11 @@
-# SanTrapik 🚦
+# SanTrapik
 > **AI-Powered Metro Manila Traffic Intelligence & Road Incident Monitoring System**
 
 SanTrapik is an intelligent traffic monitoring and congestion relief forecasting platform tailored specifically for the arterial corridors and bottleneck choke-points of Metro Manila (EDSA, C-5, Commonwealth, Quezon Ave, España, Roxas Blvd, and SLEX).
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 - **Frontend**: React 19 + TypeScript + Vite + MapLibre GL + TailwindCSS (Obsidian Telemetry theme `#080C14`, `#0F172A`, `#1E293B`, `#6366F1`)
 - **Backend API**: FastAPI + Uvicorn + Pydantic v2 + SQLAlchemy 2.0 (Psycopg 3)
@@ -15,7 +15,7 @@ SanTrapik is an intelligent traffic monitoring and congestion relief forecasting
 
 ---
 
-## 🚀 Quick Start with Docker Compose
+## Quick Start with Docker Compose
 
 To spin up the entire multi-container stack (Database, FastAPI Gateway, and Nginx Frontend):
 
@@ -31,7 +31,7 @@ Services will be accessible at:
 
 ---
 
-## 💻 Local Development Setup
+## Local Development Setup
 
 ### 1. Backend
 
@@ -67,7 +67,7 @@ npm run dev
 
 ---
 
-## 🧪 Automated Testing
+## Automated Testing
 
 ### Backend & ML Tests
 ```bash
@@ -88,7 +88,7 @@ Builds an optimized production bundle with manual code-splitting (entry chunk gz
 
 ---
 
-## 🌐 Production Deployment Guide
+## Production Deployment Guide
 
 ### A. Frontend Deployment on Vercel
 
@@ -123,7 +123,7 @@ Builds an optimized production bundle with manual code-splitting (entry chunk gz
 
 ---
 
-## 🔒 Security & Performance Features
+## Security & Performance Features
 
 - **Rate Limiting**: Custom sliding-window middleware enforcing a strict 60 requests/minute limit per client IP with `X-RateLimit-*` and `Retry-After` headers.
 - **Route Caching**: In-memory deterministic corridor cache achieving p95 latency under 25ms.

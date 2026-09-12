@@ -35,7 +35,8 @@ async def list_incidents(
             lat=item["lat"],
             lng=item["lng"],
             reported_at=item["reported_at"],
-            data_source=item["data_source"]
+            data_source=item["data_source"],
+            corridor=item.get("corridor")
         )
         for item in raw_items
     ]
@@ -53,10 +54,29 @@ async def list_incidents(
 async def report_incident(payload: Dict[str, Any] = Body(...)):
     """
     Allows commuters, traffic enforcers, and telemetry sensors to report live incidents in real time.
+    Coordinates are automatically snapped to the nearest road centerline.
     """
     created = telemetry_service.add_live_incident(payload)
     return {
         "status": "success",
-        "message": "Incident reported successfully and added to real-time monitoring",
+        "message": "Incident reported successfully and snapped to road geometry",
         "data": created
     }
+
+@router.patch("/incidents/{incident_id}/resolve", summary="Resolve / Clear Road Incident")
+async def resolve_incident(incident_id: str):
+    """
+    Allows commuters or traffic enforcers to mark an incident as resolved/cleared in real-time.
+    """
+    resolved = telemetry_service.resolve_live_incident(incident_id)
+    if not resolved:
+        return {
+            "status": "error",
+            "message": f"Incident '{incident_id}' not found in active incidents"
+        }
+    return {
+        "status": "success",
+        "message": f"Incident '{incident_id}' marked as RESOLVED and cleared from active corridors",
+        "data": resolved
+    }
+

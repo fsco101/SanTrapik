@@ -4,26 +4,40 @@ import type { RouteItem, IncidentItem, Coordinate } from "../../types/traffic";
 
 interface MapContainerProps {
   selectedRoute: RouteItem | null;
+  routes?: RouteItem[];
+  onSelectRoute?: (id: string) => void;
   origin: Coordinate;
   destination: Coordinate;
   incidents: IncidentItem[];
   heatmapVisible: boolean;
   onToggleHeatmap: () => void;
+  onResolveIncident?: (id: string) => void;
+  onOpenReportModal?: () => void;
 }
 
 export const MapContainer: React.FC<MapContainerProps> = ({
   selectedRoute,
+  routes = [],
+  onSelectRoute,
   origin,
   destination,
   incidents,
   heatmapVisible,
   onToggleHeatmap,
+  onResolveIncident,
+  onOpenReportModal,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const endpointMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const routePillMarkersRef = useRef<maplibregl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  const onSelectRouteRef = useRef(onSelectRoute);
+  useEffect(() => {
+    onSelectRouteRef.current = onSelectRoute;
+  }, [onSelectRoute]);
 
   // Initialize MapLibre GL JS
   useEffect(() => {
@@ -44,7 +58,48 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     map.on("load", () => {
       setMapLoaded(true);
 
-      // Route Source & Layer
+      // 1. Alternate Routes Source & Layer (Rendered below the active route)
+      map.addSource("alternate-routes-source", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+
+      map.addLayer({
+        id: "alternate-routes-line",
+        type: "line",
+        source: "alternate-routes-source",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#64748B",
+          "line-width": 5,
+          "line-opacity": 0.65,
+          "line-dasharray": [2, 1.5]
+        }
+      });
+
+      // Hover and Click on Alternate Routes
+      map.on("mouseenter", "alternate-routes-line", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "alternate-routes-line", () => {
+        map.getCanvas().style.cursor = "";
+      });
+      map.on("click", "alternate-routes-line", (e) => {
+        if (e.features && e.features[0] && onSelectRouteRef.current) {
+          const clickedId = e.features[0].properties?.id;
+          if (clickedId) {
+            onSelectRouteRef.current(clickedId);
+          }
+        }
+      });
+
+      // 2. Primary Route Source & Layers
       map.addSource("route-source", {
         type: "geojson",
         data: {
@@ -100,19 +155,27 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     };
   }, []);
 
-  // Update Route Polyline
+  // Update Route Polylines & Midpoint Comparison Pills
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoaded || !selectedRoute) return;
+    if (!map || !mapLoaded) return;
 
-    const source = map.getSource("route-source") as maplibregl.GeoJSONSource;
-    if (source) {
-      source.setData({
+    // Clear old route midpoint pills
+    routePillMarkersRef.current.forEach((m) => m.remove());
+    routePillMarkersRef.current = [];
+
+    const activeSource = map.getSource("route-source") as maplibregl.GeoJSONSource;
+    const altSource = map.getSource("alternate-routes-source") as maplibregl.GeoJSONSource;
+
+    // 1. Update Active Route
+    if (activeSource && selectedRoute) {
+      activeSource.setData({
         type: "FeatureCollection",
         features: [
           {
             type: "Feature",
             properties: {
+              id: selectedRoute.id,
               congestion: selectedRoute.summary.overall_congestion,
               name: selectedRoute.name
             },
@@ -123,18 +186,92 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           }
         ]
       });
-
-      // Fit map bounds to route coordinates
-      const coords = selectedRoute.geometry.coordinates;
-      if (coords.length > 0) {
-        const bounds = coords.reduce(
-          (b, coord) => b.extend(coord as [number, number]),
-          new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number])
-        );
-        map.fitBounds(bounds, { padding: 60, duration: 1000 });
-      }
+    } else if (activeSource) {
+      activeSource.setData({ type: "FeatureCollection", features: [] });
     }
-  }, [selectedRoute, mapLoaded]);
+
+    // 2. Update Alternate Routes
+    if (altSource) {
+      const alternates = (routes || []).filter((r) => !selectedRoute || r.id !== selectedRoute.id);
+      altSource.setData({
+        type: "FeatureCollection",
+        features: alternates.map((r) => ({
+          type: "Feature",
+          properties: {
+            id: r.id,
+            name: r.name,
+            travel_time: r.summary.estimated_travel_time_min,
+            distance: r.summary.total_distance_km
+          },
+          geometry: {
+            type: "LineString",
+            coordinates: r.geometry.coordinates
+          }
+        }))
+      });
+    }
+
+    // 3. Add Midpoint Information Pills for All Candidate Routes
+    const candidateRoutes = routes && routes.length > 0 ? routes : (selectedRoute ? [selectedRoute] : []);
+    candidateRoutes.forEach((r) => {
+      const coords = r.geometry.coordinates;
+      if (!coords || coords.length < 2) return;
+      const midIdx = Math.floor(coords.length / 2);
+      const midPoint = coords[midIdx];
+      const isSelected = selectedRoute && r.id === selectedRoute.id;
+
+      const pillEl = document.createElement("div");
+      pillEl.className = "cursor-pointer select-none transition-transform hover:scale-105";
+
+      if (isSelected) {
+        const badgeLabel = r.badge === "LEAST_TRAFFIC"
+          ? "Least Traffic"
+          : r.badge === "SHORTEST_PATH"
+          ? "Shortest"
+          : r.badge === "LEAST_TRAFFIC_AND_SHORTEST"
+          ? "Optimal"
+          : "Active";
+
+        pillEl.innerHTML = `
+          <div class="px-2.5 py-1 rounded-full bg-indigo-950/95 border border-ai-primary text-white font-mono text-[11px] font-bold shadow-ai-aura flex items-center gap-1.5 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>${r.summary.estimated_travel_time_min}m</span>
+            <span class="text-ai-cyan font-sans text-[10px] font-normal">• [${badgeLabel}]</span>
+          </div>
+        `;
+      } else {
+        pillEl.innerHTML = `
+          <div class="px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-white/20 text-slate-300 font-mono text-[10px] shadow-lg flex items-center gap-1.5 backdrop-blur-md">
+            <span>${r.summary.estimated_travel_time_min}m</span>
+            <span class="text-slate-400 font-sans">• ${r.summary.total_distance_km} km</span>
+          </div>
+        `;
+      }
+
+      pillEl.onclick = (e) => {
+        e.stopPropagation();
+        if (onSelectRouteRef.current) {
+          onSelectRouteRef.current(r.id);
+        }
+      };
+
+      const marker = new maplibregl.Marker({ element: pillEl, anchor: "center" })
+        .setLngLat(midPoint as [number, number])
+        .addTo(map);
+
+      routePillMarkersRef.current.push(marker);
+    });
+
+    // 4. Fit map bounds to candidate routes
+    if (selectedRoute && selectedRoute.geometry.coordinates.length > 0) {
+      const coords = selectedRoute.geometry.coordinates;
+      const bounds = coords.reduce(
+        (b, coord) => b.extend(coord as [number, number]),
+        new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number])
+      );
+      map.fitBounds(bounds, { padding: 60, duration: 1000 });
+    }
+  }, [selectedRoute, routes, mapLoaded]);
 
   // Update Incident Markers
   useEffect(() => {
@@ -145,44 +282,123 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    // Add new incident markers
+    // Add precision road-anchored incident markers
     incidents.forEach((inc) => {
-      const el = document.createElement("div");
-      el.className = "group relative cursor-pointer";
+      if (inc.lat == null || inc.lng == null || isNaN(inc.lat) || isNaN(inc.lng)) return;
 
-      // Pulsating marker HTML
+      // Determine severity styling
+      let pinBg = "bg-rose-600";
+      let needleBorder = "border-t-rose-600";
+      let pulseColor = "bg-rose-500";
+      let badgeBg = "bg-rose-950/90";
+      let badgeBorder = "border-rose-500/80";
+      let badgeText = "text-rose-300";
+
+      if (inc.severity === "HIGH") {
+        pinBg = "bg-amber-600";
+        needleBorder = "border-t-amber-600";
+        pulseColor = "bg-amber-500";
+        badgeBg = "bg-amber-950/90";
+        badgeBorder = "border-amber-500/80";
+        badgeText = "text-amber-300";
+      } else if (inc.severity === "MEDIUM") {
+        pinBg = "bg-yellow-600";
+        needleBorder = "border-t-yellow-600";
+        pulseColor = "bg-yellow-500";
+        badgeBg = "bg-yellow-950/90";
+        badgeBorder = "border-yellow-500/80";
+        badgeText = "text-yellow-300";
+      } else if (inc.severity === "LOW") {
+        pinBg = "bg-blue-600";
+        needleBorder = "border-t-blue-600";
+        pulseColor = "bg-blue-500";
+        badgeBg = "bg-blue-950/90";
+        badgeBorder = "border-blue-500/80";
+        badgeText = "text-blue-300";
+      }
+
+      // Determine incident icon
+      let iconName = "warning";
+      if (inc.incident_type === "ACCIDENT") iconName = "car_crash";
+      else if (inc.incident_type === "ROADWORK") iconName = "construction";
+      else if (inc.incident_type === "FLOOD") iconName = "flood";
+      else if (inc.incident_type === "STALLED_VEHICLE") iconName = "car_repair";
+
+      const roadLabel = inc.corridor || "NCR Corridor";
+
+      const el = document.createElement("div");
+      el.className = "group relative flex flex-col items-center cursor-pointer select-none z-20";
+
+      // HTML Structure: Road Info Pill -> Pin Head -> Sharp Needle -> Pavement Contact Dot
       el.innerHTML = `
-        <div class="relative flex items-center justify-center w-8 h-8">
-          <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full ${
-            inc.severity === "CRITICAL" ? "bg-rose-500" : "bg-amber-500"
-          } opacity-60"></span>
-          <div class="relative w-6 h-6 rounded-full ${
-            inc.severity === "CRITICAL" ? "bg-rose-600" : "bg-amber-600"
-          } border-2 border-white shadow-lg flex items-center justify-center text-white">
-            <span class="material-symbols-outlined text-[13px]">${
-              inc.incident_type === "ACCIDENT" ? "car_crash" : inc.incident_type === "FLOOD" ? "flood" : "construction"
-            }</span>
-          </div>
+        <div class="px-2 py-0.5 mb-1 ${badgeBg} ${badgeBorder} ${badgeText} border rounded font-mono text-[9px] font-bold shadow-lg whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 transition group-hover:scale-105">
+          <span class="w-1.5 h-1.5 rounded-full ${pulseColor} animate-pulse"></span>
+          <span>${inc.incident_type}</span>
+          <span class="opacity-40">•</span>
+          <span class="font-sans font-medium text-slate-200 max-w-[120px] truncate">${roadLabel}</span>
         </div>
+
+        <div class="relative flex items-center justify-center w-7 h-7 rounded-full ${pinBg} border-2 border-white shadow-xl text-white">
+          <span class="material-symbols-outlined text-[15px] font-bold">${iconName}</span>
+        </div>
+
+        <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[7px] ${needleBorder} -mt-[1px]"></div>
+
+        <div class="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-black shadow-lg -mt-1"></div>
       `;
 
-      // Popup
-      const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
-        <div class="p-2 bg-slate-900 text-white rounded text-xs font-mono border border-white/10 max-w-[200px]">
-          <div class="text-[10px] uppercase font-bold text-rose-400 mb-0.5">${inc.incident_type} (${inc.severity})</div>
-          <div class="text-[11px] text-slate-200">${inc.description}</div>
-          <div class="text-[9px] text-slate-400 mt-1">Source: ${inc.data_source}</div>
+      // Interactive Popup
+      const popup = new maplibregl.Popup({
+        offset: [0, -38],
+        closeButton: true,
+        maxWidth: "280px"
+      }).setHTML(`
+        <div class="p-3 bg-slate-900/95 text-white rounded-xl text-xs font-sans border border-white/15 shadow-2xl backdrop-blur-md">
+          <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-white/10">
+            <span class="text-[10px] uppercase font-bold ${badgeText} tracking-wider flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full ${pulseColor}"></span>
+              ${inc.incident_type} (${inc.severity})
+            </span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300">LIVE REPORT</span>
+          </div>
+          <div class="font-bold text-slate-100 text-[12px] mb-1">${roadLabel}</div>
+          <div class="text-[11px] text-slate-300 leading-relaxed mb-2">${inc.description || "Active traffic incident affecting travel flow"}</div>
+          <div class="text-[10px] text-slate-400 font-mono flex items-center justify-between pt-1 border-t border-white/10 mb-2.5">
+            <span>Source: <strong class="text-slate-200">${inc.data_source}</strong></span>
+            <span>Coords: ${inc.lat.toFixed(4)}, ${inc.lng.toFixed(4)}</span>
+          </div>
+          <button id="btn-resolve-${inc.id}" class="w-full py-1.5 px-2.5 rounded bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-200 hover:text-white font-mono text-[10px] font-bold flex items-center justify-center gap-1 transition">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span>
+            <span>Mark Cleared / Resolved</span>
+          </button>
         </div>
       `);
 
-      const marker = new maplibregl.Marker({ element: el })
+      popup.on("open", () => {
+        const btn = document.getElementById(`btn-resolve-${inc.id}`);
+        if (btn) {
+          btn.onclick = () => {
+            if (onResolveIncident) {
+              onResolveIncident(inc.id);
+            }
+            popup.remove();
+          };
+        }
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([inc.lng, inc.lat])
         .setPopup(popup)
         .addTo(map);
 
+      el.onclick = (e) => {
+        e.stopPropagation();
+        marker.togglePopup();
+      };
+
       markersRef.current.push(marker);
     });
-  }, [incidents, mapLoaded]);
+  }, [incidents, mapLoaded, onResolveIncident]);
 
   // Update Start Point & End Point Markers on Map
   useEffect(() => {
@@ -279,6 +495,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <span className="material-symbols-outlined text-[15px]">layers</span>
           <span>Heatmap {heatmapVisible ? "ON" : "OFF"}</span>
         </button>
+
+        {onOpenReportModal && (
+          <button
+            onClick={onOpenReportModal}
+            title="Report Live Incident on Road"
+            className="bg-rose-950/90 hover:bg-rose-900 border border-rose-500/50 text-rose-200 hover:text-white px-3 py-1.5 rounded text-xs font-mono shadow-md flex items-center gap-1.5 transition backdrop-blur-md"
+          >
+            <span className="material-symbols-outlined text-[15px]">crisis_alert</span>
+            <span>+ Report Incident</span>
+          </button>
+        )}
       </div>
 
       {/* Legend Badge */}

@@ -49,6 +49,8 @@ Every agent and human contributor must strictly adhere to these 7 tenets:
    Prioritize Metro Manila arterial roads (EDSA, C-5, Commonwealth, Quezon Ave, Ortigas Ave, España, Roxas Blvd, etc.), local road naming conventions, MMDA terminology, and Philippine commuting realities.
 7. **Modular & Clean Architecture:**
    Maintain strict decoupling between the FastAPI backend, PostGIS database, ML model inference pipeline, and React frontend.
+8. **Professional UI & Typography (Zero Emojis):**
+   Do not use unicode emojis anywhere in the user interface, badges, labels, logs, documentation, or responses. Rely exclusively on clean text tags (e.g., `[LEAST TRAFFIC]`, `[SHORTEST PATH]`, `[RECOMMENDED]`), high-contrast typography, and Google Material Symbols.
 
 ---
 
@@ -289,8 +291,8 @@ Before considering any sprint or issue complete, verify:
 
 ## 9. Common Pitfalls to Avoid
 
-- ❌ **Do NOT add user authentication / registration:** The scope explicitly calls for an open-access anonymous model.
-- ❌ **Do NOT confuse SanTrapik with Google Maps:** We are not building turn-by-turn voice navigation. We are building route intelligence, incident diagnostics, and congestion relief predictions.
-- ❌ **Do NOT deviate from the `DESIGN/` folder:** The UI design system is already defined. Implement the components based on `DESIGN/DESIGN.md` and `DESIGN/code.html`.
-- ❌ **Do NOT query third-party APIs without caching / throttling:** Metro Manila traffic data APIs or map tile providers have rate limits; protect them with caching where applicable.
-- ❌ **Do NOT guess coordinates:** Metro Manila bounds roughly span `14.35°N to 14.80°N`, `120.90°E to 121.15°E`. Validate that coordinates fall within Philippine territory.
+- **Do NOT add user authentication / registration:** The scope explicitly calls for an open-access anonymous model.
+- **Do NOT confuse SanTrapik with Google Maps:** We are not building turn-by-turn voice navigation. We are building route intelligence, incident diagnostics, and congestion relief predictions.
+- **Do NOT deviate from the `DESIGN/` folder:** The UI design system is already defined. Implement the components based on `DESIGN/DESIGN.md` and `DESIGN/code.html`.
+- **Do NOT query third-party APIs without caching / throttling:** Metro Manila traffic data APIs or map tile providers have rate limits; protect them with caching where applicable.
+- **Do NOT guess coordinates:** Metro Manila bounds roughly span `14.35°N to 14.80°N`, `120.90°E to 121.15°E`. Validate that coordinates fall within Philippine territory.

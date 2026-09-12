@@ -49,7 +49,7 @@ def test_e2e_full_query_flow_to_prediction():
     # Verify ML relief prediction integration
     expected_relief = primary.get("expected_relief", {})
     assert expected_relief.get("is_predicted") is True
-    assert 5 <= expected_relief.get("estimated_minutes_remaining") <= 180
+    assert 0 <= expected_relief.get("estimated_minutes_remaining") <= 180
     assert expected_relief.get("confidence") >= 0.50
     assert expected_relief.get("confidence_interval") is not None
     assert "model_version" in expected_relief

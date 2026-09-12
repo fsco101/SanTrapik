@@ -49,10 +49,10 @@ These colors are strictly reserved for traffic conditions on maps, badges, and p
 
 | Traffic State | Hex Code | Tailwind Token | Meaning & Speed Threshold |
 | :--- | :--- | :--- | :--- |
-| **Normal** 🟢 | `#10B981` | `emerald-500` | Free-flowing, $\ge 80\%$ baseline speed |
-| **Moderate** 🟡 | `#F59E0B` | `amber-500` | Moving with slight friction, $50\% - 79\%$ speed |
-| **Heavy** 🟠 | `#F97316` | `orange-500` | Significant slowdowns, $25\% - 49\%$ speed |
-| **Severe** 🔴 | `#EF4444` | `rose-500` | Crawl / standstill, $< 25\%$ speed, active obstruction |
+| **Normal** | `#10B981` | `emerald-500` | Free-flowing, $\ge 80\%$ baseline speed |
+| **Moderate** | `#F59E0B` | `amber-500` | Moving with slight friction, $50\% - 79\%$ speed |
+| **Heavy** | `#F97316` | `orange-500` | Significant slowdowns, $25\% - 49\%$ speed |
+| **Severe** | `#EF4444` | `rose-500` | Crawl / standstill, $< 25\%$ speed, active obstruction |
 
 ### 2.3 AI & Predictive Accent Palette
 To maintain strict visual separation between **observed reality** and **model predictions**, all AI-generated predictions use a distinct electric palette:
@@ -93,14 +93,14 @@ The centerpiece of SanTrapik. It does not just display time; it diagnoses the jo
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  ROUTE VIA EDSA                                [ 🔴 SEVERE ]│
+│  ROUTE VIA EDSA                                [ SEVERE ]   │
 │  Estimated: 1h 24m   •   Normal: 52m   •   Delay: +32m      │
 ├─────────────────────────────────────────────────────────────┤
-│  ⚡ WHY IS IT DELAYED?                                      │
+│  WHY IS IT DELAYED?                                         │
 │  [ Accident ] 2-vehicle collision at Ortigas Flyover SB     │
 │  Reported: 9:42 PM (18 mins ago)  •  Status: Active         │
 ├─────────────────────────────────────────────────────────────┤
-│  ✦ AI CONGESTION RELIEF PREDICTION                          │
+│  AI CONGESTION RELIEF PREDICTION                            │
 │  Expected Relief: 10:20 PM (~38 mins remaining)             │
 │  Confidence: 82% [========--]  •  Model v1.0.2              │
 └─────────────────────────────────────────────────────────────┘
@@ -110,9 +110,9 @@ The centerpiece of SanTrapik. It does not just display time; it diagnoses the jo
 Every data card must make clear whether the information is an **Observed Fact** or an **AI Estimate**:
 
 - **Observed Badge:**
-  `[ 🔴 11 km/h · Observed 9:54 PM ]` (Solid Slate background, dot indicator)
+  `[ 11 km/h · Observed 9:54 PM ]` (Solid Slate background, dot indicator)
 - **AI Prediction Badge:**
-  `[ ✦ Expected Relief: 10:20 PM (82% conf) ]` (Electric Indigo pill, sparkle icon)
+  `[ Expected Relief: 10:20 PM (82% conf) ]` (Electric Indigo pill, auto_awesome icon)
 
 ### 4.3 Interactive Map Aesthetics (MapLibre GL JS)
 - **Base Tile:** Dark monochrome or muted slate vector tiles (Carto Dark or OSM Dark-styled).
@@ -140,4 +140,4 @@ Over 70% of traffic checks happen while on the go. SanTrapik must provide:
    - **Desktop / Tablet:** Split-screen layout — 420px telemetry intelligence panel on the left, full interactive map with heatmap toggle on the right.
 4. **Data Freshness Indicator:**
    A discrete pulsing radar dot in the header:
-   `🟢 Telemetry Live (Updated 1m ago)`
+   `Telemetry Live (Updated 1m ago)`

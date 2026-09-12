@@ -132,32 +132,55 @@ export async function getIncidents(): Promise<IncidentItem[]> {
     const res = await fetch(`${API_BASE}/incidents?status=ACTIVE`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();
-    return json.data;
+    return json.data || [];
   } catch (err) {
-    return [
-      {
-        id: "inc_9821",
-        incident_type: "ACCIDENT",
-        description: "2-vehicle collision occupying 2 middle lanes",
-        severity: "CRITICAL",
-        status: "ACTIVE",
-        lat: 14.5855,
-        lng: 121.0575,
-        reported_at: new Date().toISOString(),
-        data_source: "MMDA_METROBASE"
-      },
-      {
-        id: "inc_9822",
-        incident_type: "ROADWORK",
-        description: "DPWH asphalt re-blocking; 1 lane passable",
-        severity: "HIGH",
-        status: "ACTIVE",
-        lat: 14.5740,
-        lng: 121.0690,
-        reported_at: new Date().toISOString(),
-        data_source: "DPWH_NCR"
-      }
-    ];
+    console.warn("Failed to fetch live incidents from backend:", err);
+    // Return empty array - never return synthetic mock incidents to prevent misinformation
+    return [];
+  }
+}
+
+export async function reportLiveIncident(incidentData: {
+  incident_type: string;
+  description: string;
+  severity: string;
+  road_name?: string;
+  corridor?: string;
+  lat: number;
+  lng: number;
+  data_source?: string;
+}): Promise<IncidentItem> {
+  const res = await fetch(`${API_BASE}/incidents`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(incidentData),
+  });
+  if (!res.ok) throw new Error(`Failed to report incident: ${res.status}`);
+  const json = await res.json();
+  const d = json.data;
+  return {
+    id: d.id,
+    incident_type: d.incident_type,
+    description: d.description,
+    severity: d.severity,
+    status: d.status,
+    lat: d.lat ?? (d.point_lng_lat ? d.point_lng_lat[1] : incidentData.lat),
+    lng: d.lng ?? (d.point_lng_lat ? d.point_lng_lat[0] : incidentData.lng),
+    reported_at: d.reported_at || new Date().toISOString(),
+    data_source: d.data_source || "COMMUTER_LIVE_REPORT",
+    corridor: d.corridor || incidentData.road_name,
+  };
+}
+
+export async function resolveLiveIncident(incidentId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/resolve`, {
+      method: "PATCH",
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to resolve incident:", err);
+    return false;
   }
 }
 

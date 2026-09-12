@@ -152,20 +152,22 @@ class RoutingService:
                         "geometry": r["geometry"]
                     })
 
-                if len(result) == 1 and include_alternatives:
-                    # OSRM only returned 1 route: compute real alternative via complementary arterial corridor
+                # If alternatives requested and fewer than 3 routes returned, discover shortest path & alternative corridor
+                if include_alternatives and len(result) < 3:
                     r0 = osrm_routes[0]
-                    alt_result = self._get_alternative_via_point(orig_coord, dest_coord, r0["geometry"]["coordinates"])
-                    if alt_result:
-                        alt_via, corridor_label = alt_result
+                    alt_candidates = self._get_alternative_via_points(orig_coord, dest_coord, r0["geometry"]["coordinates"])
+                    for alt_via, corridor_label in alt_candidates:
+                        if len(result) >= 3:
+                            break
+                        # Check if this via point already has a route with identical name
+                        if any(corridor_label in existing["name"] for existing in result):
+                            continue
                         alt_routes = await self._fetch_osrm_route([orig_coord, alt_via, dest_coord], alternatives=False, profile=profile)
                         if alt_routes:
                             r_alt = alt_routes[0]
                             alt_name = self._extract_corridor_name(r_alt, corridor_label)
-                            if alt_name == result[0]["name"]:
-                                alt_name = corridor_label
                             result.append({
-                                "id": "rt_osrm_alt_corridor",
+                                "id": f"rt_osrm_alt_{len(result) + 1}",
                                 "name": alt_name,
                                 "distance_meters": round(r_alt["distance"], 1),
                                 "duration_seconds": int(r_alt["duration"]),
@@ -183,33 +185,39 @@ class RoutingService:
         self._route_cache[cache_key] = result
         return result
 
-    def _get_alternative_via_point(self, orig: List[float], dest: List[float], primary_coords: List[List[float]]) -> Optional[Tuple[List[float], str]]:
-        """Calculates a sensible via-point along an alternative arterial corridor in Metro Manila."""
+    def _get_alternative_via_points(self, orig: List[float], dest: List[float], primary_coords: List[List[float]]) -> List[Tuple[List[float], str]]:
+        """Calculates sensible via-points for both shortest distance and alternate traffic corridors."""
         if not primary_coords or len(primary_coords) < 2:
-            return None
+            return []
 
-        # Check if journey is North-South or East-West
         dy = abs(orig[1] - dest[1])
         dx = abs(orig[0] - dest[0])
+        candidates: List[Tuple[List[float], str]] = []
 
         if dy >= dx:
-            # North-South: choose between EDSA and C-5
+            # North-South: choose between EDSA, C-5, and Central Arterial (Shortest)
             avg_lng = sum(pt[0] for pt in primary_coords) / len(primary_coords)
             if avg_lng < 121.062:
-                # Primary is on EDSA/West; route alternative via C-5 (Libis / Bagong Ilog)
-                return [121.0720, 14.5950], "via C-5 Road Corridor"
+                # Primary is on EDSA/West; alternative via C-5
+                candidates.append(([121.0720, 14.5950], "via C-5 Road Corridor"))
             else:
-                # Primary is on C-5/East; route alternative via EDSA (Ortigas / Shaw)
-                return [121.0560, 14.5860], "via EDSA Corridor"
+                # Primary is on C-5/East; alternative via EDSA
+                candidates.append(([121.0560, 14.5860], "via EDSA Corridor"))
+
+            # Shortest geometric diagonal / direct arterial
+            mid_lng = (orig[0] + dest[0]) / 2.0
+            mid_lat = (orig[1] + dest[1]) / 2.0
+            candidates.append(([mid_lng, mid_lat], "via Direct Central Arterial"))
         else:
-            # East-West: choose between Quezon Ave/España vs Aurora Blvd/Ramon Magsaysay
+            # East-West: choose between Quezon Ave/España, Aurora Blvd, and Shaw Blvd
             avg_lat = sum(pt[1] for pt in primary_coords) / len(primary_coords)
             if avg_lat > 14.615:
-                # Route alternative via Aurora Blvd
-                return [121.0180, 14.6110], "via Aurora Blvd Corridor"
+                candidates.append(([121.0180, 14.6110], "via Aurora Blvd Corridor"))
             else:
-                # Route alternative via Quezon Ave
-                return [121.0310, 14.6360], "via Quezon Ave Corridor"
+                candidates.append(([121.0310, 14.6360], "via Quezon Ave Corridor"))
+            mid_lng = (orig[0] + dest[0]) / 2.0
+            mid_lat = (orig[1] + dest[1]) / 2.0
+        return candidates
 
     def _generate_topological_routes(self, orig: List[float], dest: List[float], include_alternatives: bool) -> List[Dict[str, Any]]:
         """

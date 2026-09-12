@@ -60,6 +60,9 @@ class RouteItem(BaseModel):
     name: str
     is_recommended: bool = True
     recommendation_reason: Optional[str] = None
+    badge: Optional[str] = None  # 'LEAST_TRAFFIC', 'SHORTEST_PATH', 'LEAST_TRAFFIC_AND_SHORTEST', 'ALTERNATIVE'
+    distance_diff_km: Optional[float] = None
+    time_diff_min: Optional[int] = None
     summary: RouteSummary
     expected_relief: ExpectedRelief
     geometry: GeoJSONLineString
