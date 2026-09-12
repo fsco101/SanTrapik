@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     # External Routing Engine URL
     OSRM_URL: str = "https://router.project-osrm.org"
     
+    # Live External Traffic & Map Providers
+    TOMTOM_API_KEY: Optional[str] = None
+    HERE_API_KEY: Optional[str] = None
+    OVERPASS_API_URL: str = "https://overpass-api.de/api/interpreter"
+    
     model_config = {
         "env_file": (str(BACKEND_DIR / ".env"), ".env"),
         "case_sensitive": True,

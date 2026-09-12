@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from shapely.geometry import Point, LineString
+from backend.app.services.live_traffic import live_traffic_service
 
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/metro_manila_roads.geojson"))
 
@@ -201,7 +202,16 @@ class RealTimeTelemetryService:
                         inc_sev = inc["severity"]
                         break
 
-            telemetry = self.calculate_segment_traffic(name, direction, baseline, has_inc, inc_sev)
+            # Check if live external traffic API has real-time speed data for this segment
+            live_probe = None
+            if live_traffic_service.has_live_provider() and seg_coords:
+                mid_pt = seg_coords[len(seg_coords) // 2]
+                live_probe = live_traffic_service.fetch_tomtom_flow_segment(mid_pt)
+
+            if live_probe:
+                telemetry = live_probe
+            else:
+                telemetry = self.calculate_segment_traffic(name, direction, baseline, has_inc, inc_sev)
 
             features.append({
                 "type": "Feature",
@@ -302,16 +312,22 @@ class RealTimeTelemetryService:
     def add_live_incident(self, incident_data: Dict[str, Any]) -> Dict[str, Any]:
         """Allows dynamic incident reporting in real-time."""
         now = self.get_manila_now()
+        lng = incident_data.get("lng")
+        lat = incident_data.get("lat")
+        if lng is None or lat is None:
+            coords = incident_data.get("point_lng_lat", [121.0, 14.58])
+            lng, lat = coords[0], coords[1]
+
         new_inc = {
-            "id": f"inc_user_{int(now.timestamp()) % 100000}",
+            "id": incident_data.get("id") or f"inc_user_{int(now.timestamp()) % 100000}",
             "incident_type": incident_data.get("incident_type", "ACCIDENT"),
             "description": incident_data.get("description", "Reported traffic incident"),
             "severity": incident_data.get("severity", "MEDIUM"),
-            "status": "ACTIVE",
-            "point_lng_lat": [incident_data["lng"], incident_data["lat"]],
-            "corridor": incident_data.get("road_name", "Metro Manila Corridor"),
-            "minutes_ago": 1,
-            "data_source": "COMMUTER_LIVE_REPORT"
+            "status": incident_data.get("status", "ACTIVE"),
+            "point_lng_lat": [float(lng), float(lat)],
+            "corridor": incident_data.get("road_name") or incident_data.get("corridor", "Metro Manila Corridor"),
+            "minutes_ago": incident_data.get("minutes_ago", 1),
+            "data_source": incident_data.get("data_source", "COMMUTER_LIVE_REPORT")
         }
         self._live_incidents.insert(0, new_inc)
         return new_inc

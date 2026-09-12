@@ -44,11 +44,11 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run migrations & seed data
+# Run migrations & ingest road network geometry
 alembic upgrade head
 python scripts/ingest_roads.py
-python scripts/seed_traffic.py
-python scripts/seed_incidents.py
+# Or optionally ingest live from OpenStreetMap Overpass:
+# python scripts/ingest_osm_roads.py
 
 # Start FastAPI server
 uvicorn app.main:app --reload --port 8000
