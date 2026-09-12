@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Literal
 from backend.app.schemas.coordinates import Coordinate
 
 class RouteRequest(BaseModel):
     origin: Coordinate
     destination: Coordinate
     include_alternatives: bool = Field(False, description="Whether to compute alternative routes")
+    transport_mode: Literal["car", "motorcycle", "jeepney", "walking"] = Field("car", description="Commute mode: car, motorcycle, jeepney, walking")
+    use_expressway: bool = Field(True, description="Whether to utilize expressways / tollways (e.g. Skyway)")
 
 class IncidentSummary(BaseModel):
     id: str

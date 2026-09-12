@@ -1,9 +1,18 @@
 export type TrafficLevel = "NORMAL" | "MODERATE" | "HEAVY" | "SEVERE";
+export type TransportMode = "car" | "motorcycle" | "jeepney" | "walking";
 
 export interface Coordinate {
   lat: float;
   lng: float;
   name?: string;
+}
+
+export interface PlaceSuggestion {
+  name: string;
+  display_name: string;
+  city?: string;
+  lat: number;
+  lng: number;
 }
 
 export type float = number;

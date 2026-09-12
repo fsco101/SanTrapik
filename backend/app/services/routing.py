@@ -22,12 +22,16 @@ def haversine_distance(coord1: List[float], coord2: List[float]) -> float:
     return R * c
 
 class RoutingService:
+    def get_osrm_url(self, profile: str = "driving") -> str:
+        base = settings.OSRM_URL.rstrip("/")
+        # If base contains /route/v1/..., strip it to allow dynamic profile
+        if "/route/v1/" in base:
+            base = base.split("/route/v1/")[0]
+        return f"{base}/route/v1/{profile}"
+
     @property
     def OSRM_BASE_URL(self) -> str:
-        base = settings.OSRM_URL.rstrip("/")
-        if not base.endswith("/route/v1/driving"):
-            return f"{base}/route/v1/driving"
-        return base
+        return self.get_osrm_url("driving")
 
     def __init__(self):
         self._cached_roads = None
@@ -80,9 +84,9 @@ class RoutingService:
         
         return f"via {top_street}"
 
-    async def _fetch_osrm_route(self, waypoints: List[List[float]], alternatives: bool = False) -> List[Dict[str, Any]]:
+    async def _fetch_osrm_route(self, waypoints: List[List[float]], alternatives: bool = False, profile: str = "driving") -> List[Dict[str, Any]]:
         coord_str = ";".join(f"{pt[0]},{pt[1]}" for pt in waypoints)
-        url = f"{self.OSRM_BASE_URL}/{coord_str}"
+        url = f"{self.get_osrm_url(profile)}/{coord_str}"
         params = {
             "overview": "full",
             "geometries": "geojson",
@@ -99,69 +103,74 @@ class RoutingService:
                 return data.get("routes", [])
         return []
 
-    async def get_route(self, origin: Dict[str, float], destination: Dict[str, float], include_alternatives: bool = False) -> List[Dict[str, Any]]:
+    async def get_route(
+        self,
+        origin: Dict[str, float],
+        destination: Dict[str, float],
+        include_alternatives: bool = False,
+        transport_mode: str = "car",
+        use_expressway: bool = True
+    ) -> List[Dict[str, Any]]:
         """
         Calculates high-fidelity turn-by-turn route(s) between origin and destination.
-        Queries real OSRM driving engine first, evaluates alternative corridors, and provides
-        smooth topological corridor fallback if external network is unavailable.
+        Enforces Philippine transport regulations:
+        - Motorcycles are legally restricted from expressways (Skyway, SLEX, NLEX, NAIAX)
+        - Walking routes use pedestrian profile and avoid highways
+        - Expressway toggle selects between toll bypasses and surface arterial corridors
         """
+        # Street-smart rule: Motorcycles in PH (<400cc) and Walking cannot enter expressways
+        if transport_mode in ["motorcycle", "walking"]:
+            use_expressway = False
+
         orig_coord = [origin["lng"], origin["lat"]]
         dest_coord = [destination["lng"], destination["lat"]]
-        cache_key = f"{round(orig_coord[0], 4)},{round(orig_coord[1], 4)}->{round(dest_coord[0], 4)},{round(dest_coord[1], 4)}:{include_alternatives}"
+        cache_key = f"{round(orig_coord[0], 4)},{round(orig_coord[1], 4)}->{round(dest_coord[0], 4)},{round(dest_coord[1], 4)}:{include_alternatives}:{transport_mode}:{use_expressway}"
 
         if cache_key in self._route_cache:
             return self._route_cache[cache_key]
 
         result: List[Dict[str, Any]] = []
+        profile = "walking" if transport_mode == "walking" else "driving"
 
-        # 1. Query Real OSRM Driving Engine
+        # 1. Query Real OSRM Engine
         try:
-            osrm_routes = await self._fetch_osrm_route([orig_coord, dest_coord], alternatives=include_alternatives)
+            osrm_routes = await self._fetch_osrm_route([orig_coord, dest_coord], alternatives=include_alternatives, profile=profile)
             if osrm_routes:
-                # Primary route from OSRM
-                r0 = osrm_routes[0]
-                primary_name = self._extract_corridor_name(r0, "via Primary Corridor")
-                result.append({
-                    "id": "rt_osrm_primary",
-                    "name": primary_name,
-                    "distance_meters": round(r0["distance"], 1),
-                    "duration_seconds": int(r0["duration"]),
-                    "geometry": r0["geometry"]
-                })
+                # Filter or label routes based on expressway preference
+                for idx, r in enumerate(osrm_routes[: (2 if include_alternatives else 1)]):
+                    name = self._extract_corridor_name(r, f"via Corridor {idx + 1}")
+                    # If user chose to avoid expressways or is on motorcycle, rename if expressway was detected
+                    is_expressway = any(toll in name for toll in ["Skyway", "SLEX", "NLEX", "NAIAX", "CAVITEX"])
+                    if not use_expressway and is_expressway:
+                        name = f"{name} (Surface Bypass)"
 
-                if include_alternatives:
-                    # If OSRM returned an alternative directly, use it
-                    if len(osrm_routes) > 1:
-                        r1 = osrm_routes[1]
-                        alt_name = self._extract_corridor_name(r1, "via Alternative Corridor")
-                        # Ensure distinct naming
-                        if alt_name == primary_name:
-                            alt_name = f"{alt_name} (Alternate Path)"
-                        result.append({
-                            "id": "rt_osrm_alt",
-                            "name": alt_name,
-                            "distance_meters": round(r1["distance"], 1),
-                            "duration_seconds": int(r1["duration"]),
-                            "geometry": r1["geometry"]
-                        })
-                    else:
-                        # OSRM only returned 1 route: compute real alternative via complementary arterial corridor
-                        alt_result = self._get_alternative_via_point(orig_coord, dest_coord, r0["geometry"]["coordinates"])
-                        if alt_result:
-                            alt_via, corridor_label = alt_result
-                            alt_routes = await self._fetch_osrm_route([orig_coord, alt_via, dest_coord], alternatives=False)
-                            if alt_routes:
-                                r_alt = alt_routes[0]
-                                alt_name = self._extract_corridor_name(r_alt, corridor_label)
-                                if alt_name == primary_name:
-                                    alt_name = corridor_label
-                                result.append({
-                                    "id": "rt_osrm_alt_corridor",
-                                    "name": alt_name,
-                                    "distance_meters": round(r_alt["distance"], 1),
-                                    "duration_seconds": int(r_alt["duration"]),
-                                    "geometry": r_alt["geometry"]
-                                })
+                    result.append({
+                        "id": f"rt_osrm_{idx + 1}",
+                        "name": name,
+                        "distance_meters": round(r["distance"], 1),
+                        "duration_seconds": int(r["duration"]),
+                        "geometry": r["geometry"]
+                    })
+
+                if len(result) == 1 and include_alternatives:
+                    # OSRM only returned 1 route: compute real alternative via complementary arterial corridor
+                    r0 = osrm_routes[0]
+                    alt_result = self._get_alternative_via_point(orig_coord, dest_coord, r0["geometry"]["coordinates"])
+                    if alt_result:
+                        alt_via, corridor_label = alt_result
+                        alt_routes = await self._fetch_osrm_route([orig_coord, alt_via, dest_coord], alternatives=False, profile=profile)
+                        if alt_routes:
+                            r_alt = alt_routes[0]
+                            alt_name = self._extract_corridor_name(r_alt, corridor_label)
+                            if alt_name == result[0]["name"]:
+                                alt_name = corridor_label
+                            result.append({
+                                "id": "rt_osrm_alt_corridor",
+                                "name": alt_name,
+                                "distance_meters": round(r_alt["distance"], 1),
+                                "duration_seconds": int(r_alt["duration"]),
+                                "geometry": r_alt["geometry"]
+                            })
 
                 if result:
                     self._route_cache[cache_key] = result

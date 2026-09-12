@@ -7,7 +7,7 @@ import { RouteIntelligenceCard } from "./components/telemetry/RouteIntelligenceC
 import { RouteComparison } from "./components/route/RouteComparison";
 import { MapContainer } from "./components/map/MapContainer";
 import { BottomTelemetrySheet } from "./components/layout/BottomTelemetrySheet";
-import type { Coordinate, RouteItem, DashboardStats, IncidentItem } from "./types/traffic";
+import type { Coordinate, RouteItem, DashboardStats, IncidentItem, TransportMode } from "./types/traffic";
 import { analyzeRoute, getDashboardStats, getIncidents } from "./services/api";
 import { useTrafficRefresh } from "./hooks/useTrafficRefresh";
 
@@ -15,6 +15,8 @@ export function App() {
   const [origin, setOrigin] = useState<Coordinate>(CORRIDORS[0].origin);
   const [destination, setDestination] = useState<Coordinate>(CORRIDORS[0].destination);
   const [activeCorridor, setActiveCorridor] = useState<string | null>(CORRIDORS[0].name);
+  const [transportMode, setTransportMode] = useState<TransportMode>("car");
+  const [useExpressway, setUseExpressway] = useState<boolean>(true);
 
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string>("");
@@ -42,7 +44,7 @@ export function App() {
       const [statsData, incidentsData, initialRoutes] = await Promise.all([
         getDashboardStats(),
         getIncidents(),
-        analyzeRoute(origin, destination, true)
+        analyzeRoute(origin, destination, true, transportMode, useExpressway)
       ]);
       setStats(statsData);
       setIncidents(incidentsData);
@@ -55,24 +57,59 @@ export function App() {
     }
   };
 
+  const handleOriginChange = (coord: Coordinate) => {
+    setActiveCorridor(null);
+    setOrigin(coord);
+    if (coord.lat && coord.lng) {
+      triggerAnalyze(coord, destination, transportMode, useExpressway);
+    }
+  };
+
+  const handleDestinationChange = (coord: Coordinate) => {
+    setActiveCorridor(null);
+    setDestination(coord);
+    if (coord.lat && coord.lng) {
+      triggerAnalyze(origin, coord, transportMode, useExpressway);
+    }
+  };
+
+  const handleTransportModeChange = (mode: TransportMode) => {
+    setTransportMode(mode);
+    const updatedExp = (mode === "motorcycle" || mode === "walking") ? false : useExpressway;
+    if (mode === "motorcycle" || mode === "walking") {
+      setUseExpressway(false);
+    }
+    triggerAnalyze(origin, destination, mode, updatedExp);
+  };
+
+  const handleUseExpresswayChange = (use: boolean) => {
+    setUseExpressway(use);
+    triggerAnalyze(origin, destination, transportMode, use);
+  };
+
   const handleSelectCorridor = (item: QuickCorridorItem) => {
     setActiveCorridor(item.name);
     setOrigin(item.origin);
     setDestination(item.destination);
-    triggerAnalyze(item.origin, item.destination);
+    triggerAnalyze(item.origin, item.destination, transportMode, useExpressway);
   };
 
   const handleSwap = () => {
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
-    triggerAnalyze(destination, temp);
+    triggerAnalyze(destination, temp, transportMode, useExpressway);
   };
 
-  const triggerAnalyze = async (orig = origin, dest = destination) => {
+  const triggerAnalyze = async (
+    orig = origin,
+    dest = destination,
+    mode = transportMode,
+    exp = useExpressway
+  ) => {
     setIsLoading(true);
     try {
-      const fetchedRoutes = await analyzeRoute(orig, dest, true);
+      const fetchedRoutes = await analyzeRoute(orig, dest, true, mode, exp);
       setRoutes(fetchedRoutes);
       if (fetchedRoutes.length > 0) {
         setSelectedRouteId(fetchedRoutes[0].id);
@@ -124,11 +161,15 @@ export function App() {
           <RouteSearch
             origin={origin}
             destination={destination}
-            onOriginChange={setOrigin}
-            onDestinationChange={setDestination}
+            onOriginChange={handleOriginChange}
+            onDestinationChange={handleDestinationChange}
             onSwap={handleSwap}
             onAnalyze={() => triggerAnalyze()}
             isLoading={isLoading}
+            transportMode={transportMode}
+            onTransportModeChange={handleTransportModeChange}
+            useExpressway={useExpressway}
+            onUseExpresswayChange={handleUseExpresswayChange}
           />
 
           {routes.length > 1 && (
@@ -146,6 +187,8 @@ export function App() {
         <main className="flex-1 h-full relative">
           <MapContainer
             selectedRoute={selectedRoute}
+            origin={origin}
+            destination={destination}
             incidents={incidents}
             heatmapVisible={heatmapVisible}
             onToggleHeatmap={() => setHeatmapVisible(!heatmapVisible)}
@@ -162,11 +205,15 @@ export function App() {
           <RouteSearch
             origin={origin}
             destination={destination}
-            onOriginChange={setOrigin}
-            onDestinationChange={setDestination}
+            onOriginChange={handleOriginChange}
+            onDestinationChange={handleDestinationChange}
             onSwap={handleSwap}
             onAnalyze={() => triggerAnalyze()}
             isLoading={isLoading}
+            transportMode={transportMode}
+            onTransportModeChange={handleTransportModeChange}
+            useExpressway={useExpressway}
+            onUseExpresswayChange={handleUseExpresswayChange}
           />
 
           {routes.length > 1 && (

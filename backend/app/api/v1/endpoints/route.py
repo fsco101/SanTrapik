@@ -21,7 +21,9 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
         raw_routes = await routing_service.get_route(
             origin={"lat": req.origin.lat, "lng": req.origin.lng},
             destination={"lat": req.destination.lat, "lng": req.destination.lng},
-            include_alternatives=req.include_alternatives
+            include_alternatives=req.include_alternatives,
+            transport_mode=req.transport_mode,
+            use_expressway=req.use_expressway
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Routing service failure: {str(e)}")
@@ -37,7 +39,8 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
             coords,
             db=db,
             duration_seconds=r.get("duration_seconds"),
-            distance_meters=r.get("distance_meters")
+            distance_meters=r.get("distance_meters"),
+            transport_mode=req.transport_mode
         )
         temp_evaluated.append({
             "raw": r,

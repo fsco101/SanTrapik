@@ -1,13 +1,61 @@
-import type { RouteItem, DashboardStats, IncidentItem } from "../types/traffic";
+import type { RouteItem, DashboardStats, IncidentItem, PlaceSuggestion, TransportMode } from "../types/traffic";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api/v1";
 
-export async function analyzeRoute(origin: { lat: number; lng: number; name?: string }, destination: { lat: number; lng: number; name?: string }, includeAlternatives: boolean = true): Promise<RouteItem[]> {
+export async function searchPlaces(query: string): Promise<PlaceSuggestion[]> {
+  if (!query || query.trim().length === 0) return [];
+  try {
+    const res = await fetch(`${API_BASE}/places/search?q=${encodeURIComponent(query.trim())}&limit=8`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn("Backend places search failed, falling back to client-side Nominatim:", err);
+  }
+
+  // Resilient direct fallback to Nominatim (bounded to NCR)
+  try {
+    const directRes = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&viewbox=120.90,14.80,121.15,14.35&bounded=1&format=json&countrycodes=ph&limit=8`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (directRes.ok) {
+      const data = await directRes.json();
+      return data.map((item: any) => {
+        const parts = item.display_name.split(",").map((s: string) => s.trim());
+        return {
+          name: parts[0] || query,
+          display_name: item.display_name,
+          city: parts.length > 1 ? parts[1] : "Metro Manila",
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon)
+        };
+      });
+    }
+  } catch (err) {
+    console.error("Direct Nominatim search failed:", err);
+  }
+  return [];
+}
+
+export async function analyzeRoute(
+  origin: { lat: number; lng: number; name?: string },
+  destination: { lat: number; lng: number; name?: string },
+  includeAlternatives: boolean = true,
+  transportMode: TransportMode = "car",
+  useExpressway: boolean = true
+): Promise<RouteItem[]> {
   try {
     const res = await fetch(`${API_BASE}/route/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ origin, destination, include_alternatives: includeAlternatives }),
+      body: JSON.stringify({
+        origin,
+        destination,
+        include_alternatives: includeAlternatives,
+        transport_mode: transportMode,
+        use_expressway: useExpressway
+      }),
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();

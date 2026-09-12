@@ -45,11 +45,12 @@ class SpatialService:
         route_coords: List[List[float]],
         db: Session = None,
         duration_seconds: Optional[int] = None,
-        distance_meters: Optional[float] = None
+        distance_meters: Optional[float] = None,
+        transport_mode: str = "car"
     ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail]]:
         """
         Decomposes real route geometry into constituent Metro Manila road segments,
-        calculates live travel times and delay based on real-time traffic telemetry,
+        calculates live travel times and delay based on real-time traffic telemetry and transport mode,
         and invokes the ML model to forecast congestion relief duration.
         """
         route_line = LineString(route_coords)
@@ -190,17 +191,38 @@ class SpatialService:
             actual_dist_m = sum(haversine_distance(route_coords[k], route_coords[k+1]) for k in range(len(route_coords)-1))
             total_dist_km = round(actual_dist_m / 1000.0, 1)
 
-        # Baseline travel time (at free-flow 50 km/h average)
-        normal_travel_time_min = max(3, int(round((total_dist_km / 50.0) * 60)))
-
-        # Actual travel time: Use OSRM duration adjusted for live peak congestion
-        avg_cong = sum(s.congestion_percentage for s in matched_segments) / len(matched_segments)
-        cong_multiplier = 1.0 + (avg_cong / 100.0) * 0.95
-
-        if duration_seconds and duration_seconds > 0:
-            estimated_travel_time_min = max(normal_travel_time_min, int(round((duration_seconds / 60.0) * cong_multiplier)))
+        # Baseline speed and congestion impact according to transport mode
+        if transport_mode == "walking":
+            # Walking pace ~4.8 km/h regardless of vehicular traffic jams
+            normal_travel_time_min = max(3, int(round((total_dist_km / 4.8) * 60)))
+            estimated_travel_time_min = normal_travel_time_min
+            overall_congestion = "NORMAL"
         else:
-            estimated_travel_time_min = max(normal_travel_time_min, int(round(normal_travel_time_min * cong_multiplier)))
+            if transport_mode == "motorcycle":
+                # Motorcycles filter through Philippine traffic jams with lower delay penalty
+                cong_factor = 0.45
+                speed_cap = 45.0
+            elif transport_mode == "jeepney":
+                # Jeepneys have frequent curb stops, loading/unloading passenger dwell times
+                cong_factor = 1.30
+                speed_cap = 30.0
+            else:  # car
+                cong_factor = 0.95
+                speed_cap = 50.0
+
+            normal_travel_time_min = max(3, int(round((total_dist_km / speed_cap) * 60)))
+            avg_cong = sum(s.congestion_percentage for s in matched_segments) / len(matched_segments)
+            cong_multiplier = 1.0 + (avg_cong / 100.0) * cong_factor
+
+            if duration_seconds and duration_seconds > 0:
+                base_min = duration_seconds / 60.0
+                if transport_mode == "motorcycle":
+                    base_min *= 0.85
+                elif transport_mode == "jeepney":
+                    base_min *= 1.25
+                estimated_travel_time_min = max(normal_travel_time_min, int(round(base_min * cong_multiplier)))
+            else:
+                estimated_travel_time_min = max(normal_travel_time_min, int(round(normal_travel_time_min * cong_multiplier)))
 
         estimated_delay_min = max(0, estimated_travel_time_min - normal_travel_time_min)
 

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
-import type { RouteItem, IncidentItem } from "../../types/traffic";
+import type { RouteItem, IncidentItem, Coordinate } from "../../types/traffic";
 
 interface MapContainerProps {
   selectedRoute: RouteItem | null;
+  origin: Coordinate;
+  destination: Coordinate;
   incidents: IncidentItem[];
   heatmapVisible: boolean;
   onToggleHeatmap: () => void;
@@ -11,6 +13,8 @@ interface MapContainerProps {
 
 export const MapContainer: React.FC<MapContainerProps> = ({
   selectedRoute,
+  origin,
+  destination,
   incidents,
   heatmapVisible,
   onToggleHeatmap,
@@ -18,6 +22,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const endpointMarkersRef = useRef<maplibregl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // Initialize MapLibre GL JS
@@ -178,6 +183,62 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       markersRef.current.push(marker);
     });
   }, [incidents, mapLoaded]);
+
+  // Update Start Point & End Point Markers on Map
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+
+    // Clear previous endpoint markers
+    endpointMarkersRef.current.forEach((m) => m.remove());
+    endpointMarkersRef.current = [];
+
+    // 1. Start Point Marker (Emerald Beacon Pin)
+    if (origin && origin.lat && origin.lng) {
+      const startEl = document.createElement("div");
+      startEl.className = "group relative cursor-pointer z-30";
+      startEl.innerHTML = `
+        <div class="relative flex flex-col items-center">
+          <div class="px-2 py-0.5 mb-1 bg-emerald-950/90 text-emerald-300 font-mono text-[10px] font-bold rounded border border-emerald-500/40 shadow-md whitespace-nowrap backdrop-blur-sm">
+            START: ${origin.name || "Origin"}
+          </div>
+          <div class="relative flex items-center justify-center w-7 h-7">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+            <div class="relative w-7 h-7 rounded-full bg-emerald-500 border-2 border-white shadow-xl flex items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px] font-bold">trip_origin</span>
+            </div>
+          </div>
+        </div>
+      `;
+      const startMarker = new maplibregl.Marker({ element: startEl, anchor: "bottom" })
+        .setLngLat([origin.lng, origin.lat])
+        .addTo(map);
+      endpointMarkersRef.current.push(startMarker);
+    }
+
+    // 2. End Point Marker (Rose / Finish Flag Pin)
+    if (destination && destination.lat && destination.lng) {
+      const endEl = document.createElement("div");
+      endEl.className = "group relative cursor-pointer z-30";
+      endEl.innerHTML = `
+        <div class="relative flex flex-col items-center">
+          <div class="px-2 py-0.5 mb-1 bg-rose-950/90 text-rose-300 font-mono text-[10px] font-bold rounded border border-rose-500/40 shadow-md whitespace-nowrap backdrop-blur-sm">
+            DEST: ${destination.name || "Destination"}
+          </div>
+          <div class="relative flex items-center justify-center w-7 h-7">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+            <div class="relative w-7 h-7 rounded-full bg-rose-600 border-2 border-white shadow-xl flex items-center justify-center text-white">
+              <span class="material-symbols-outlined text-[16px] font-bold">flag</span>
+            </div>
+          </div>
+        </div>
+      `;
+      const endMarker = new maplibregl.Marker({ element: endEl, anchor: "bottom" })
+        .setLngLat([destination.lng, destination.lat])
+        .addTo(map);
+      endpointMarkersRef.current.push(endMarker);
+    }
+  }, [origin, destination, mapLoaded]);
 
   const recenterMetroManila = () => {
     if (mapRef.current) {
