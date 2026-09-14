@@ -5,7 +5,9 @@
   "goal": "Build the FastAPI backend application, integrate with OSRM/ORS for route generation, build PostGIS spatial snapping & incident intersection, and expose public REST APIs for route intelligence.",
   "status": "completed",
   "estimated_duration": "2 weeks",
-  "dependencies": ["sprint-1-data-and-database"],
+  "dependencies": [
+    "sprint-1-data-and-database"
+  ],
   "issues": [
     {
       "id": "SP2-001",
@@ -13,7 +15,12 @@
       "title": "[Sprint 2] FastAPI Core Architecture, CORS, Health Checks & Pydantic v2 Schemas",
       "priority": "high",
       "status": "completed",
-      "labels": ["sprint-2", "backend", "fastapi", "api"],
+      "labels": [
+        "sprint-2",
+        "backend",
+        "fastapi",
+        "api"
+      ],
       "description": "Initialize Python 3.11+ FastAPI application skeleton under `backend/app/`. Configure asynchronous database session management with SQLAlchemy 2.0 / asyncpg. Set up CORS middleware, environment configuration via pydantic-settings, and standard response envelopes with meta timestamps.",
       "acceptance_criteria": [
         "FastAPI app boots with `/api/v1/health` endpoint returning 200 OK and database connectivity status",
@@ -29,7 +36,12 @@
       "title": "[Sprint 2] Routing Engine Integration (OSRM / OpenRouteService)",
       "priority": "high",
       "status": "completed",
-      "labels": ["sprint-2", "backend", "routing", "osrm"],
+      "labels": [
+        "sprint-2",
+        "backend",
+        "routing",
+        "osrm"
+      ],
       "description": "Implement `RoutingService` in `backend/app/services/routing.py` that interfaces with OSRM or OpenRouteService API. Given start and destination coordinates, retrieve drivable GeoJSON LineString geometries, turn steps, distance in meters, and base duration.",
       "acceptance_criteria": [
         "Service queries OSRM/ORS and parses route geometry into valid GeoJSON LineStrings",
@@ -45,7 +57,12 @@
       "title": "[Sprint 2] Route Road-Segment Snapping & Spatial Intersect Service (PostGIS)",
       "priority": "high",
       "status": "completed",
-      "labels": ["sprint-2", "backend", "postgis", "geospatial"],
+      "labels": [
+        "sprint-2",
+        "backend",
+        "postgis",
+        "geospatial"
+      ],
       "description": "Build spatial analysis service in `backend/app/services/spatial.py`. Given a route LineString geometry, execute PostGIS queries (`ST_DWithin`, `ST_Intersects`, `ST_LineLocatePoint`) to identify the specific `road_segments` traversed, compute traversed length per segment, and identify any active `incidents` within a 50-meter buffer.",
       "acceptance_criteria": [
         "Identifies and orders road segments matching the route geometry from start to finish",
@@ -61,7 +78,11 @@
       "title": "[Sprint 2] Route Intelligence Analysis Endpoint (`POST /api/v1/route/analyze`)",
       "priority": "high",
       "status": "completed",
-      "labels": ["sprint-2", "backend", "api"],
+      "labels": [
+        "sprint-2",
+        "backend",
+        "api"
+      ],
       "description": "Implement the core endpoint `POST /api/v1/route/analyze` combining routing, spatial segment matching, real-time telemetry extraction, travel delay computation, and incident diagnostics into the standard response payload defined in SPEC.md Section 4.1.",
       "acceptance_criteria": [
         "Endpoint accepts start/dest names and coordinates and returns comprehensive route intelligence JSON",
@@ -78,7 +99,11 @@
       "title": "[Sprint 2] Traffic Heatmap, Incidents & City Dashboard REST Endpoints",
       "priority": "medium",
       "status": "completed",
-      "labels": ["sprint-2", "backend", "api"],
+      "labels": [
+        "sprint-2",
+        "backend",
+        "api"
+      ],
       "description": "Implement auxiliary telemetry endpoints: `GET /api/v1/traffic/heatmap` (GeoJSON FeatureCollection of all road segments with current speeds), `GET /api/v1/incidents` (filtered list of active incidents with coordinates), and `GET /api/v1/dashboard/stats` (Metro Manila aggregate stats, active incident counts, most congested corridors).",
       "acceptance_criteria": [
         "`/api/v1/traffic/heatmap` returns valid GeoJSON ready for MapLibre layer consumption",

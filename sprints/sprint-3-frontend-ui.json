@@ -109,7 +109,7 @@
       "acceptance_criteria": [
         "AI prediction component clearly distinguished from observed data via distinct indigo/cyan styling",
         "Displays predicted relief time (e.g., '10:20 PM'), minutes remaining, and animated confidence bar",
-        "Includes telemetry status badges (`[\u2726 AI Prediction]`, `[\u25cf Observed 9:54 PM]`)",
+        "Includes telemetry status badges (`[✦ AI Prediction]`, `[● Observed 9:54 PM]`)",
         "Displays the pulsing green 'Telemetry Live' connection indicator in header"
       ],
       "github_url": "https://github.com/fsco101/SanTrapik/issues/14"

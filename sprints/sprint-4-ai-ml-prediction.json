@@ -87,7 +87,7 @@
       "description": "Implement prediction confidence scoring and guardrails in `backend/app/ml/guardrails.py`. Compute model confidence based on feature distance from training distribution and tree variance. Clamp predicted relief duration to realistic bounds (e.g., minimum 5 mins, maximum 180 mins) and generate lower/upper prediction intervals.",
       "acceptance_criteria": [
         "Confidence score calculated between 0.00 and 1.00 for every prediction",
-        "Returns formatted window (e.g. '10:05 PM \u2013 10:25 PM') when confidence is below 85%",
+        "Returns formatted window (e.g. '10:05 PM – 10:25 PM') when confidence is below 85%",
         "Predicted relief times clamped to prevent nonsensical negative or multi-day forecasts",
         "Explicitly outputs `is_predicted: true` flag in API responses"
       ],
