@@ -92,6 +92,11 @@ export interface IncidentItem {
   reported_at: string;
   data_source: string;
   corridor?: string;
+  confidence?: number;
+  report_count?: number;
+  still_there_votes?: number;
+  cleared_votes?: number;
+  reporter_token?: string;
 }
 
 export interface CorridorCongestion {

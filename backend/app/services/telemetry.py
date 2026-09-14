@@ -241,10 +241,15 @@ class RealTimeTelemetryService:
         }
 
     def get_active_incidents(self, status: Optional[str] = None, severity: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Returns live incidents with dynamic timestamps relative to real time."""
+        """Returns live incidents with dynamic timestamps relative to real time, running decay check."""
         now = self.get_manila_now()
+        utc_now = datetime.now(timezone.utc)
 
-        # If live external API provider is configured, synchronize live external incidents
+        # 1. Run decay cycle to expire uncorroborated stale incidents
+        from backend.app.services.decay_worker import decay_worker
+        decay_worker.process_decay_cycle(self._live_incidents)
+
+        # 2. If live external API provider is configured, synchronize live external incidents
         if live_traffic_service.has_live_provider():
             external_incs = live_traffic_service.fetch_tomtom_incidents() or live_traffic_service.fetch_here_incidents()
             for ext in external_incs:
@@ -255,33 +260,48 @@ class RealTimeTelemetryService:
                     ext["point_lng_lat"] = [snapped_pt[0], snapped_pt[1]]
                     if not ext.get("corridor") or ext["corridor"] == "Metro Manila Corridor":
                         ext["corridor"] = snapped_road
+                    ext["confidence"] = 0.95
+                    ext["report_count"] = 1
+                    ext["still_there_votes"] = 0
+                    ext["cleared_votes"] = 0
                     self._live_incidents.append(ext)
 
         results = []
         for inc in self._live_incidents:
-            if status and inc["status"].upper() != status.upper():
+            # By default exclude resolved and expired unless explicitly requested
+            if not status and inc.get("status") in ["RESOLVED", "EXPIRED"]:
                 continue
-            if severity and inc["severity"].upper() != severity.upper():
+            if status and inc.get("status", "").upper() != status.upper():
+                continue
+            if severity and inc.get("severity", "").upper() != severity.upper():
                 continue
 
             reported_dt = now - timedelta(minutes=inc.get("minutes_ago", 2))
             results.append({
                 "id": inc["id"],
                 "incident_type": inc["incident_type"],
-                "description": inc["description"],
+                "description": inc.get("description", "Active road hazard"),
                 "severity": inc["severity"],
                 "status": inc["status"],
                 "lat": inc["point_lng_lat"][1],
                 "lng": inc["point_lng_lat"][0],
                 "reported_at": reported_dt.isoformat(),
                 "data_source": inc.get("data_source", "COMMUTER_LIVE_REPORT"),
-                "corridor": inc.get("corridor", "Metro Manila Corridor")
+                "corridor": inc.get("corridor", "Metro Manila Corridor"),
+                "confidence": inc.get("confidence", 0.75),
+                "report_count": inc.get("report_count", 1),
+                "still_there_votes": inc.get("still_there_votes", 0),
+                "cleared_votes": inc.get("cleared_votes", 0),
+                "reporter_token": inc.get("reporter_token")
             })
 
         return results
 
     def add_live_incident(self, incident_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Allows dynamic incident reporting in real-time with road centerline snapping."""
+        """Allows dynamic incident reporting in real-time with road centerline snapping and consensus clustering."""
+        import secrets
+        from backend.app.services.incident_consensus import consensus_engine
+
         now = self.get_manila_now()
         lng = incident_data.get("lng")
         lat = incident_data.get("lat")
@@ -293,29 +313,90 @@ class RealTimeTelemetryService:
         corridor_hint = incident_data.get("road_name") or incident_data.get("corridor")
         snapped_coords, road_name = self.snap_to_nearest_road(float(lng), float(lat), corridor_hint)
 
-        new_inc = {
+        raw_report = {
             "id": incident_data.get("id") or f"inc_live_{int(now.timestamp() * 1000) % 1000000}",
-            "incident_type": incident_data.get("incident_type", "ACCIDENT"),
+            "incident_type": incident_data.get("incident_type", "ACCIDENT").upper(),
             "description": incident_data.get("description", "Live traffic incident reported by commuter"),
-            "severity": incident_data.get("severity", "HIGH"),
-            "status": incident_data.get("status", "ACTIVE"),
+            "severity": incident_data.get("severity", "MEDIUM").upper(),
             "point_lng_lat": [snapped_coords[0], snapped_coords[1]],
             "lat": snapped_coords[1],
             "lng": snapped_coords[0],
             "corridor": road_name,
-            "minutes_ago": incident_data.get("minutes_ago", 1),
+            "minutes_ago": incident_data.get("minutes_ago", 0),
             "reported_at": now.isoformat(),
-            "data_source": incident_data.get("data_source", "COMMUTER_LIVE_REPORT")
+            "data_source": incident_data.get("data_source", "COMMUTER_REPORT")
         }
-        self._live_incidents.insert(0, new_inc)
-        return new_inc
 
-    def resolve_live_incident(self, incident_id: str) -> Optional[Dict[str, Any]]:
-        """Marks a reported live incident as resolved/cleared."""
+        # Evaluate against consensus clustering
+        eval_result = consensus_engine.evaluate_incoming_report(raw_report, self._live_incidents)
+
+        if eval_result["is_corroboration"]:
+            corroborated_inc = eval_result["incident"]
+            return corroborated_inc
+
+        # Newly created cluster: attach reporter session token
+        reporter_token = secrets.token_urlsafe(16)
+        raw_report["reporter_token"] = reporter_token
+        self._live_incidents.insert(0, raw_report)
+        return raw_report
+
+    def resolve_live_incident(
+        self,
+        incident_id: str,
+        reporter_token: Optional[str] = None,
+        is_admin: bool = False
+    ) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        Protected incident clearance:
+        Only the original author (holding valid reporter_token within 15 mins)
+        or an administrative caller may directly resolve an incident.
+        General users must vote via cast_clearance_vote().
+        """
         for inc in self._live_incidents:
             if str(inc["id"]) == str(incident_id):
-                inc["status"] = "RESOLVED"
-                return inc
-        return None
+                if is_admin:
+                    inc["status"] = "RESOLVED"
+                    return True, "Incident marked as RESOLVED by administrator", inc
+
+                author_token = inc.get("reporter_token")
+                if reporter_token and author_token and reporter_token == author_token:
+                    inc["status"] = "RESOLVED"
+                    return True, "Incident marked as RESOLVED by original reporter", inc
+
+                # Unauthenticated third party attempted unilateral resolve
+                return (
+                    False,
+                    "Unauthorized: Only original reporter or community vote quorum may resolve this hazard. Submit a clearance vote instead.",
+                    inc
+                )
+
+        return False, f"Incident '{incident_id}' not found in active telemetry", None
+
+    def cast_clearance_vote(self, incident_id: str, vote: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+        """
+        Records community confirmation votes.
+        When cleared_votes - still_there_votes >= 3, moves status to CLEARING / RESOLVED.
+        """
+        for inc in self._live_incidents:
+            if str(inc["id"]) == str(incident_id):
+                if inc.get("status") in ["RESOLVED", "EXPIRED"]:
+                    return False, "Incident is already resolved or expired", inc
+
+                if vote.upper() == "CLEARED":
+                    inc["cleared_votes"] = inc.get("cleared_votes", 0) + 1
+                elif vote.upper() == "STILL_THERE":
+                    inc["still_there_votes"] = inc.get("still_there_votes", 0) + 1
+
+                net_score = inc.get("cleared_votes", 0) - inc.get("still_there_votes", 0)
+                if net_score >= 3:
+                    inc["status"] = "RESOLVED"
+                    return True, f"Community consensus reached ({net_score} net clear votes): marked as RESOLVED", inc
+                elif net_score == 2:
+                    inc["status"] = "CLEARING"
+                    return True, f"Community vote recorded: marked as CLEARING ({net_score} net clear votes)", inc
+
+                return True, f"Vote recorded ({inc.get('cleared_votes')} clear vs {inc.get('still_there_votes')} active)", inc
+
+        return False, f"Incident '{incident_id}' not found", None
 
 telemetry_service = RealTimeTelemetryService()

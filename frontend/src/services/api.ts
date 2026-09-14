@@ -155,9 +155,23 @@ export async function reportLiveIncident(incidentData: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(incidentData),
   });
-  if (!res.ok) throw new Error(`Failed to report incident: ${res.status}`);
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => ({}));
+    const message = errorJson.detail || errorJson.message || `Failed to report incident: ${res.status}`;
+    throw new Error(message);
+  }
   const json = await res.json();
   const d = json.data;
+
+  // Store author reporter_token in localStorage if returned
+  if (d.reporter_token) {
+    try {
+      localStorage.setItem(`santrapik_author_${d.id}`, d.reporter_token);
+    } catch {
+      // Ignore localStorage issues in private mode
+    }
+  }
+
   return {
     id: d.id,
     incident_type: d.incident_type,
@@ -167,20 +181,54 @@ export async function reportLiveIncident(incidentData: {
     lat: d.lat ?? (d.point_lng_lat ? d.point_lng_lat[1] : incidentData.lat),
     lng: d.lng ?? (d.point_lng_lat ? d.point_lng_lat[0] : incidentData.lng),
     reported_at: d.reported_at || new Date().toISOString(),
-    data_source: d.data_source || "COMMUTER_LIVE_REPORT",
+    data_source: d.data_source || "COMMUTER_REPORT",
     corridor: d.corridor || incidentData.road_name,
+    confidence: d.confidence,
+    report_count: d.report_count,
+    still_there_votes: d.still_there_votes,
+    cleared_votes: d.cleared_votes,
+    reporter_token: d.reporter_token
   };
 }
 
 export async function resolveLiveIncident(incidentId: string): Promise<boolean> {
   try {
+    const storedToken = localStorage.getItem(`santrapik_author_${incidentId}`) || undefined;
+    const headers: Record<string, string> = {};
+    if (storedToken) {
+      headers["X-Reporter-Token"] = storedToken;
+    }
+
     const res = await fetch(`${API_BASE}/incidents/${incidentId}/resolve`, {
       method: "PATCH",
+      headers
     });
     return res.ok;
   } catch (err) {
     console.error("Failed to resolve incident:", err);
     return false;
+  }
+}
+
+export async function voteClearance(
+  incidentId: string,
+  vote: "STILL_THERE" | "CLEARED"
+): Promise<{ success: boolean; message?: string; status?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/vote-clearance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vote }),
+    });
+    const json = await res.json();
+    return {
+      success: res.ok,
+      message: json.message,
+      status: json.data?.status
+    };
+  } catch (err) {
+    console.error("Clearance vote failed:", err);
+    return { success: false, message: "Network error voting on clearance." };
   }
 }
 

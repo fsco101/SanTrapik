@@ -113,19 +113,21 @@ def test_incidents_endpoint():
     assert post_res.status_code == 200
     created = post_res.json()["data"]
     inc_id = created["id"]
+    token = created.get("reporter_token")
     assert created["incident_type"] == "ACCIDENT"
-    assert created["status"] == "ACTIVE"
+    assert created["status"] in ["ACTIVE", "REPORTED", "VERIFIED"]
     # Verify coordinate was snapped onto road centerline
     assert len(created["point_lng_lat"]) == 2
 
-    # 3. Filter by ACTIVE status and verify created incident is listed
-    res_active = client.get("/api/v1/incidents?status=ACTIVE")
+    # 3. Filter by ACTIVE / status and verify created incident is listed
+    res_active = client.get(f"/api/v1/incidents?status={created['status']}")
     assert res_active.status_code == 200
     active_incs = res_active.json()["data"]
     assert any(i["id"] == inc_id for i in active_incs)
 
-    # 4. Resolve the incident in real-time
-    res_resolve = client.patch(f"/api/v1/incidents/{inc_id}/resolve")
+    # 4. Resolve the incident in real-time with author token
+    headers = {"X-Reporter-Token": token} if token else {}
+    res_resolve = client.patch(f"/api/v1/incidents/{inc_id}/resolve", headers=headers)
     assert res_resolve.status_code == 200
     assert res_resolve.json()["status"] == "success"
 

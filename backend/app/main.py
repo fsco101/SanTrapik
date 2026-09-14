@@ -6,10 +6,27 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+from contextlib import asynccontextmanager
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.api.v1.api import api_router
+from backend.app.services.decay_worker import decay_worker
+from backend.app.services.telemetry import telemetry_service
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start incident decay worker in background
+    decay_task = asyncio.create_task(decay_worker.start(lambda: telemetry_service._live_incidents))
+    yield
+    # Clean shutdown
+    decay_worker.stop()
+    decay_task.cancel()
+    try:
+        await decay_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title="SanTrapik API Gateway",
@@ -17,7 +34,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/api/v1/openapi.json"
+    openapi_url="/api/v1/openapi.json",
+    lifespan=lifespan
 )
 
 # CORS Configuration

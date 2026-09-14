@@ -3,7 +3,7 @@
   "number": 6,
   "title": "Security Hardening, Rate Limiting & Crowdsourced Incident Consensus Engine",
   "goal": "Eliminate critical vulnerabilities in the public anonymous access model: implement sliding-window rate limiting, strict Pydantic v2 bounding box validation, spatiotemporal clustering (DBSCAN/quorum), anti-griefing incident resolution tokens, and automated half-life decay workers.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
   "dependencies": [
     "sprint-2-backend-services",
@@ -15,7 +15,7 @@
       "github_issue_number": 24,
       "title": "[Sprint 6] Strict Pydantic v2 Validation, Geographic Bounding Box Enforcement & Coordinate Sanitization",
       "priority": "critical",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-6",
         "backend",
@@ -36,7 +36,7 @@
       "github_issue_number": 25,
       "title": "[Sprint 6] Sliding-Window IP & Fingerprint Rate Limiting for Spatial Endpoints",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-6",
         "backend",
@@ -57,7 +57,7 @@
       "github_issue_number": 26,
       "title": "[Sprint 6] Spatiotemporal Incident Clustering & Corroboration Engine (150m / 15m Quorum)",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-6",
         "backend",
@@ -78,7 +78,7 @@
       "github_issue_number": 27,
       "title": "[Sprint 6] Tamper-Resistant Incident Lifecycle & Protected Resolution (Reporter Token & Community Vote)",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-6",
         "backend",
@@ -99,7 +99,7 @@
       "github_issue_number": 28,
       "title": "[Sprint 6] Automated Incident Aging, Half-Life Confidence Decay & Garbage Collection Worker",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-6",
         "backend",
