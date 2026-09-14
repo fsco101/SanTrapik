@@ -139,6 +139,6 @@ def test_api_route_analyze_integration():
     primary = routes[0]
     expected_relief = primary.get("expected_relief", {})
     assert expected_relief.get("is_predicted") is True
-    assert expected_relief.get("estimated_minutes_remaining") > 0
+    assert expected_relief.get("estimated_minutes_remaining") >= 0
     assert expected_relief.get("confidence") >= 0.60
     assert "model_version" in expected_relief

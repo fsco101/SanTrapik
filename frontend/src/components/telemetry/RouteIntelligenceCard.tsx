@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { RouteItem } from "../../types/traffic";
+import { voteClearance } from "../../services/api";
 
 interface RouteIntelligenceCardProps {
   route: RouteItem;
@@ -171,30 +172,66 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
 
         {incidentsOpen && (
           <div className="p-3 space-y-2 border-t border-white/5">
-            {uniqueIncidents.map((inc, idx) => (
-              <div
-                key={inc.id ? `${inc.id}-${idx}` : `inc-${idx}`}
-                className="text-xs space-y-1 bg-surface-panel p-2 rounded border border-white/5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
-                    {inc.type}
-                  </span>
-                  <span className="text-[10px] text-text-muted font-mono">
-                    {formatReportedTime(inc.reported_at)}
-                  </span>
+            {uniqueIncidents.map((inc, idx) => {
+              const isUnverified = inc.status === "REPORTED" || ((inc as any).report_count === 1 && inc.status !== "VERIFIED");
+              return (
+                <div
+                  key={inc.id ? `${inc.id}-${idx}` : `inc-${idx}`}
+                  className={`text-xs space-y-1.5 bg-surface-panel p-2.5 rounded border ${
+                    isUnverified ? "border-amber-500/40 border-dashed" : "border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
+                        {inc.type}
+                      </span>
+                      {isUnverified ? (
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                          [UNVERIFIED - 1 REPORT]
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                          [VERIFIED CONSENSUS]
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-text-muted font-mono">
+                      {formatReportedTime(inc.reported_at)}
+                    </span>
+                  </div>
+
+                  <p className="text-text-primary text-xs font-sans">{inc.description}</p>
+
+                  <div className="flex items-center justify-between text-[10px] text-text-muted font-mono pt-1 border-t border-white/5">
+                    <span className="truncate max-w-[180px]" title={inc.affectedSegments.join(", ")}>
+                      At: {inc.affectedSegments.join(", ") || "Active Corridor"}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={async () => {
+                          await voteClearance(inc.id, "STILL_THERE");
+                        }}
+                        className="px-1.5 py-0.5 bg-surface-card hover:bg-white/10 border border-white/10 rounded text-[9px] text-amber-300 font-mono transition"
+                        title="Confirm incident is still active"
+                      >
+                        Active
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await voteClearance(inc.id, "CLEARED");
+                        }}
+                        className="px-1.5 py-0.5 bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 rounded text-[9px] text-emerald-400 font-mono transition"
+                        title="Vote that road hazard has cleared"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-text-primary text-xs font-sans">{inc.description}</p>
-                <div className="flex items-center justify-between text-[10px] text-text-muted font-mono pt-1">
-                  <span className="truncate max-w-[200px]" title={inc.affectedSegments.join(", ")}>
-                    At: {inc.affectedSegments.join(", ") || "Active Corridor"}
-                  </span>
-                  <span className="text-text-secondary font-bold">
-                    Source: {inc.data_source || "LIVE_FEED"}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {uniqueIncidents.length === 0 && (
               <div className="py-2.5 px-3 bg-emerald-950/20 border border-emerald-500/20 rounded text-center space-y-1">
                 <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-mono text-xs font-bold">

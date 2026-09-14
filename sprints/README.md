@@ -68,7 +68,7 @@ All issues are tracked locally and synchronized with the GitHub repository: [fsc
 
 ### [Sprint 6: Security Hardening, Rate Limiting & Crowdsourced Incident Consensus Engine](./sprint-6-security-consensus.json)
 * **Goal:** Eliminate critical vulnerabilities in the public anonymous model: sliding-window rate limiting, Pydantic v2 bounding box validation, spatiotemporal clustering (DBSCAN/quorum), anti-griefing resolution tokens, and half-life decay workers.
-* **Status:** Planned
+* **Status:** Completed
 * **Issues:**
   - [#24: Strict Pydantic v2 Validation, Geographic Bounding Box Enforcement & Coordinate Sanitization](https://github.com/fsco101/SanTrapik/issues/24)
   - [#25: Sliding-Window IP & Fingerprint Rate Limiting for Spatial Endpoints](https://github.com/fsco101/SanTrapik/issues/25)
