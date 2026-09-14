@@ -1,0 +1,118 @@
+{
+  "sprint_id": "sprint-7-realtime-streaming",
+  "number": 7,
+  "title": "Real-Time Geospatial Streaming & Viewport-Filtered Live Telemetry",
+  "goal": "Upgrade the system from inefficient 60-second polling to real-time Server-Sent Events (SSE) and WebSockets, delivering low-latency geospatial event deltas filtered by client map viewport and active route buffer.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-6-security-consensus"
+  ],
+  "issues": [
+    {
+      "id": "SP7-001",
+      "github_issue_number": 29,
+      "title": "[Sprint 7] High-Throughput Server-Sent Events (SSE) Telemetry Stream Gateway",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-7",
+        "backend",
+        "streaming",
+        "sse"
+      ],
+      "description": "Replace HTTP polling with a persistent HTTP/2 Server-Sent Events endpoint (`GET /api/v1/telemetry/stream`) using `sse-starlette` or native FastAPI streaming. Deliver JSON event packets (`event: incident_update`, `event: velocity_shift`, `event: route_alert`) with automated 15-second keepalive pings (`:keepalive`) to prevent NAT/cellular carrier connection drops.",
+      "acceptance_criteria": [
+        "Endpoint accepts client connection and emits structured SSE events with distinct event types",
+        "Sends periodic keepalive heartbeats every 15s to keep mobile connections open",
+        "Gracefully handles client disconnections without leaking memory or coroutines in backend",
+        "Latency from incident creation in backend to event delivery on connected client is < 500ms"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/29"
+    },
+    {
+      "id": "SP7-002",
+      "github_issue_number": 30,
+      "title": "[Sprint 7] Viewport-Aware Geospatial Pub/Sub Channel Filtering (BBox Subscription)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-7",
+        "backend",
+        "spatial",
+        "pubsub"
+      ],
+      "description": "Broadcasting all Metro Manila incident events to every connected mobile device exhausts mobile bandwidth and client CPU. Enhance `/api/v1/telemetry/stream` to accept dynamic viewport query parameters (`min_lng`, `min_lat`, `max_lng`, `max_lat`). When an incident or speed delta occurs, only publish to clients whose active map viewport intersects the event location.",
+      "acceptance_criteria": [
+        "Clients subscribe with dynamic bounding box coordinates representing their visible screen",
+        "Server spatial filter matches new incident points against client subscription bounds using fast bbox intersection",
+        "Clients outside the event bounding box do not receive the payload, reducing data transfer by 80%+",
+        "Client pan/zoom updates subscription bbox via lightweight query parameter renegotiation"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/30"
+    },
+    {
+      "id": "SP7-003",
+      "github_issue_number": 31,
+      "title": "[Sprint 7] Live Active Route Buffer Subscriptions & Real-Time Chokepoint Reroute Alerts",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-7",
+        "backend",
+        "routing",
+        "alerts"
+      ],
+      "description": "When a commuter has an active analyzed route (e.g. Quezon City Circle to Makati), any sudden roadblock occurring directly on their corridor (within a 100m buffer of their route line) must trigger an immediate high-priority warning (`event: route_obstruction`). Compute route line buffer on route analysis and allow clients to subscribe to route-specific alerts.",
+      "acceptance_criteria": [
+        "Backend associates route GeoJSON with an ephemeral route channel subscription ID",
+        "New incidents within 100m of the active route polyline emit `event: route_obstruction` to the route subscriber",
+        "Payload includes estimated added delay in minutes and a recommendation to evaluate alternate corridors",
+        "Frontend triggers visual telemetry flash warning and offers instant 1-click alternative reroute"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/31"
+    },
+    {
+      "id": "SP7-004",
+      "github_issue_number": 32,
+      "title": "[Sprint 7] Frontend Streaming Hook (`useLiveTelemetryStream`) with Reconnect Backoff & Pulsar Telemetry",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-7",
+        "frontend",
+        "streaming",
+        "react"
+      ],
+      "description": "Create custom React hook `useLiveTelemetryStream` in `frontend/src/hooks/useLiveTelemetryStream.ts` replacing `useTrafficRefresh`. Connects to SSE endpoint using `EventSource` with exponential backoff reconnection (1s -> 2s -> 4s -> max 16s). Updates state stores directly, triggering smooth MapLibre GeoJSON updates without re-renders. Header connection dot pulses emerald when live, amber when reconnecting, and slate when offline.",
+      "acceptance_criteria": [
+        "Hook establishes and maintains stable SSE connection across mobile viewport shifts",
+        "Automatic reconnection with exponential backoff on intermittent cellular signal loss",
+        "New incidents immediately appear on map and in Incident Timeline accordion without page refresh",
+        "Header pulsar micro-badge visually communicates real-time connection status conforming to DESIGN.md"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/32"
+    },
+    {
+      "id": "SP7-005",
+      "github_issue_number": 33,
+      "title": "[Sprint 7] Dynamic Congestion Heatmap Vector Layer Streaming via GeoJSON Delta Updates",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-7",
+        "frontend",
+        "maplibre",
+        "heatmap"
+      ],
+      "description": "Instead of fetching the full Metro Manila road network GeoJSON on every toggle, stream corridor speed updates via delta patches (`[segment_id, current_speed, traffic_level]`). Update MapLibre source feature states in-memory (`map.setFeatureState`) to smoothly transition road segment colors (Green -> Amber -> Orange -> Red) at 60 FPS without redrawing the vector tile layer.",
+      "acceptance_criteria": [
+        "Heatmap toggle consumes speed deltas and updates feature state properties in MapLibre GL",
+        "Color transitions on road segments render smoothly without canvas blinking or frame drops",
+        "Payload size for city-wide speed updates reduced from > 200 KB GeoJSON to < 12 KB delta packet",
+        "Tooltips on road segments reflect real-time streamed velocity immediately"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/33"
+    }
+  ]
+}

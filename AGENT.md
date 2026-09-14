@@ -84,13 +84,25 @@ SanTrapik/
 │   ├── code.html            # Working HTML/Tailwind reference UI implementation
 │   └── screen.png           # Visual design screenshot
 │
+├── .agents/                 # WORKSPACE CUSTOMIZATIONS & SPECIALIZED SKILLS
+│   └── skills/
+│       ├── traffic-geospatial-intelligence/
+│       ├── incident-telemetry-resilience/
+│       ├── traffic-prediction-mlops/
+│       └── obsidian-telemetry-ui/
+│
 ├── sprints/                 # SPRINT MANAGEMENT (JSON FORMAT)
-│   ├── index.json           # Master sprint index & execution tracker
+│   ├── index.json           # Master sprint index & execution tracker (Sprints 1-10)
 │   ├── sprint-1-data-and-database.json
 │   ├── sprint-2-backend-services.json
 │   ├── sprint-3-frontend-ui.json
 │   ├── sprint-4-ai-ml-prediction.json
-│   └── sprint-5-integration-testing.json
+│   ├── sprint-5-integration-testing.json
+│   ├── sprint-6-security-consensus.json
+│   ├── sprint-7-realtime-streaming.json
+│   ├── sprint-8-multimodal-manila.json
+│   ├── sprint-9-advanced-ai-forecasting.json
+│   └── sprint-10-performance-offline-pwa.json
 │
 ├── frontend/                # React + Vite + TypeScript web application (implements DESIGN/)
 │   ├── src/

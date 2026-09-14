@@ -1,0 +1,121 @@
+{
+  "sprint_id": "sprint-10-performance-offline-pwa",
+  "number": 10,
+  "title": "High-Performance Vector Tile Caching, Spatial Redis Layers & Offline PWA Resilience",
+  "goal": "Achieve sub-50ms hot corridor response times, implement PostGIS MVT dynamic vector tiles, add Redis spatial caching, and provide Progressive Web App (PWA) offline resilience for commuters facing spotty mobile connections.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-7-realtime-streaming",
+    "sprint-9-advanced-ai-forecasting"
+  ],
+  "issues": [
+    {
+      "id": "SP10-001",
+      "github_issue_number": 44,
+      "title": "[Sprint 10] Redis-Backed Ephemeral Spatial Caching for Hot Corridors & Route Analysis",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-10",
+        "backend",
+        "redis",
+        "caching",
+        "performance"
+      ],
+      "description": "Thousands of commuters query identical key corridors (e.g. EDSA Balintawak to Cubao, C-5 Ortigas to BGC) simultaneously during rush hours. Implement a high-performance Redis cache layer with geohash-based spatial keys and a 30-60 second TTL. Cache snapped geometries, speed aggregations, and ML predictions, slashing database CPU and reducing median API response times to < 50ms.",
+      "acceptance_criteria": [
+        "Redis cache hashes coordinate pairs using 7-character geohash precision (~150m cell)",
+        "Hot route lookups served from cache with sub-30ms response time",
+        "Cache automatically invalidates when high-severity incidents occur on cached road segments",
+        "Gracefully falls back to direct PostGIS execution if Redis instance is down"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/44"
+    },
+    {
+      "id": "SP10-002",
+      "github_issue_number": 45,
+      "title": "[Sprint 10] PostGIS Mapbox Vector Tile (MVT) Dynamic Endpoint (`ST_AsMVT`)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-10",
+        "backend",
+        "database",
+        "mvt",
+        "spatial"
+      ],
+      "description": "Serving city-wide traffic speeds as GeoJSON consumes excessive network bandwidth and client parsing overhead. Build a fast dynamic vector tile endpoint (`GET /api/v1/tiles/{z}/{x}/{y}.pbf`) leveraging PostGIS `ST_AsMVT` and `ST_TileEnvelope`. Stream protobuf vector tiles directly into MapLibre GL, enabling smooth 60fps rendering of all 5,000+ Metro Manila road segments with negligible payload sizes (< 35 KB per tile).",
+      "acceptance_criteria": [
+        "FastAPI endpoint generates binary protocol buffer vector tiles using PostGIS `ST_AsMVT`",
+        "MapLibre GL consumes vector tiles as a native vector source rather than raw GeoJSON",
+        "Tile generation executes in < 40ms with spatial GIST index acceleration",
+        "Tile responses configured with HTTP cache-control headers (`max-age=30`)"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/45"
+    },
+    {
+      "id": "SP10-003",
+      "github_issue_number": 46,
+      "title": "[Sprint 10] Progressive Web App (PWA) Service Worker, Offline Asset Caching & Install Prompt",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-10",
+        "frontend",
+        "pwa",
+        "offline"
+      ],
+      "description": "Metro Manila commuters frequently travel through underground tunnels (EDSA Ayala/Shaw), elevated viaducts, and cellular dead zones. Configure Vite PWA plugin (`vite-plugin-pwa`) with workbox service worker to cache the core application bundle, fonts (`Outfit`, `Inter`, `JetBrains Mono`), MapLibre basemap style assets, and UI state offline. Support desktop/mobile web app installation with dark-mode splash screen.",
+      "acceptance_criteria": [
+        "Web application registers service worker and passes PWA audit in Chrome Lighthouse (score >= 90)",
+        "Application loads instantly offline with cached assets and clear offline indicator banner",
+        "Web App Manifest configured with obsidian theme color (`#080C14`) and high-resolution icons",
+        "Non-intrusive 'Add to Home Screen' prompt enabled for mobile browsers"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/46"
+    },
+    {
+      "id": "SP10-004",
+      "github_issue_number": 47,
+      "title": "[Sprint 10] Saved Commute Corridors & Local Storage Telemetry Bookmarks",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-10",
+        "frontend",
+        "ux",
+        "storage"
+      ],
+      "description": "Allow commuters to bookmark frequent daily routes (e.g. 'Home to Makati Office', 'Quezon City to BGC') with custom labels. Store bookmarks in browser localStorage (maintaining the zero-login anonymous model). Render bookmarked corridors in the Quick Corridors bar alongside default arterials, showing 1-click route activation with live travel time snapshots.",
+      "acceptance_criteria": [
+        "Users can save any origin/destination pair as a custom named corridor bookmark",
+        "Bookmarks stored strictly on client device in localStorage without requiring accounts",
+        "Quick Corridors bar displays custom bookmarks with quick delete / edit controls",
+        "1-click selection loads route immediately"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/47"
+    },
+    {
+      "id": "SP10-005",
+      "github_issue_number": 48,
+      "title": "[Sprint 10] End-to-End Stress Testing, Sub-100ms Latency Verification & OWASP Security Audit",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-10",
+        "qa",
+        "security",
+        "loadtesting"
+      ],
+      "description": "Execute comprehensive system stress and vulnerability verification. Conduct automated load tests using Locust or k6 simulating 500 concurrent commuters executing spatial route queries and SSE connections. Verify that 95th percentile response time is < 150ms. Conduct an automated OWASP API Top 10 security audit to ensure zero data leakage, SQL injection vulnerabilities in PostGIS queries, or Cross-Site Scripting exposures.",
+      "acceptance_criteria": [
+        "Load test demonstrates system handles 500 concurrent users with 0% error rate and p95 latency < 150ms",
+        "Zero SQL injection vulnerabilities found in raw PostGIS queries or ORM queries",
+        "Automated security scans confirm rate limiting, CORS restrictions, and input sanitization meet production standards",
+        "Full test suite passes with 100% test coverage on critical spatial and security modules"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/48"
+    }
+  ]
+}

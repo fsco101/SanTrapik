@@ -1,8 +1,8 @@
 # SanTrapik Sprint Management
 
-This directory contains the structured sprint specifications and issue tracking for the **SanTrapik** project. All sprints are defined in **JSON** format, aligned with [SPEC.md](../SPEC.md), [DESIGN/DESIGN.md](../DESIGN/DESIGN.md), and [AGENT.md](../AGENT.md).
+This directory contains the structured sprint specifications and issue tracking for the **SanTrapik** project. All sprints are defined in **JSON** format, aligned with [SPEC.md](../SPEC.md), [DESIGN/DESIGN.md](../DESIGN/DESIGN.md), [AGENT.md](../AGENT.md), and the specialized project skills in `.agents/skills/`.
 
-All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik](https://github.com/fsco101/SanTrapik/issues).
+All issues are tracked locally and synchronized with the GitHub repository: [fsco101/SanTrapik](https://github.com/fsco101/SanTrapik/issues).
 
 ---
 
@@ -66,8 +66,73 @@ All issues have been synchronized with the GitHub repository: [fsco101/SanTrapik
 
 ---
 
+### [Sprint 6: Security Hardening, Rate Limiting & Crowdsourced Incident Consensus Engine](./sprint-6-security-consensus.json)
+* **Goal:** Eliminate critical vulnerabilities in the public anonymous model: sliding-window rate limiting, Pydantic v2 bounding box validation, spatiotemporal clustering (DBSCAN/quorum), anti-griefing resolution tokens, and half-life decay workers.
+* **Status:** Planned
+* **Issues:**
+  - [#24: Strict Pydantic v2 Validation, Geographic Bounding Box Enforcement & Coordinate Sanitization](https://github.com/fsco101/SanTrapik/issues/24)
+  - [#25: Sliding-Window IP & Fingerprint Rate Limiting for Spatial Endpoints](https://github.com/fsco101/SanTrapik/issues/25)
+  - [#26: Spatiotemporal Incident Clustering & Corroboration Engine (150m / 15m Quorum)](https://github.com/fsco101/SanTrapik/issues/26)
+  - [#27: Tamper-Resistant Incident Lifecycle & Protected Resolution (Reporter Token & Community Vote)](https://github.com/fsco101/SanTrapik/issues/27)
+  - [#28: Automated Incident Aging, Half-Life Confidence Decay & Garbage Collection Worker](https://github.com/fsco101/SanTrapik/issues/28)
+
+---
+
+### [Sprint 7: Real-Time Geospatial Streaming & Viewport-Filtered Live Telemetry](./sprint-7-realtime-streaming.json)
+* **Goal:** Upgrade from 60-second polling to persistent Server-Sent Events (SSE) and WebSockets, delivering low-latency geospatial event deltas filtered by client map viewport and active route buffer.
+* **Status:** Planned
+* **Issues:**
+  - [#29: High-Throughput Server-Sent Events (SSE) Telemetry Stream Gateway](https://github.com/fsco101/SanTrapik/issues/29)
+  - [#30: Viewport-Aware Geospatial Pub/Sub Channel Filtering (BBox Subscription)](https://github.com/fsco101/SanTrapik/issues/30)
+  - [#31: Live Active Route Buffer Subscriptions & Real-Time Chokepoint Reroute Alerts](https://github.com/fsco101/SanTrapik/issues/31)
+  - [#32: Frontend Streaming Hook (`useLiveTelemetryStream`) with Reconnect Backoff & Pulsar Telemetry](https://github.com/fsco101/SanTrapik/issues/32)
+  - [#33: Dynamic Congestion Heatmap Vector Layer Streaming via GeoJSON Delta Updates](https://github.com/fsco101/SanTrapik/issues/33)
+
+---
+
+### [Sprint 8: Philippine Multi-Modal Commuter Intelligence & Corridor Economics](./sprint-8-multimodal-manila.json)
+* **Goal:** Empower Metro Manila commuters with street-smart local intelligence: Expressway toll vs free surface cost-benefit analysis, motorcycle lane-filtering velocity adjustments, monsoon flood hazard warning integration, MMDA number coding advisories, and chokepoint cause diagnostics.
+* **Status:** Planned
+* **Issues:**
+  - [#34: Skyway & Urban Expressway Toll Calculation Engine with Cost-Benefit Telemetry](https://github.com/fsco101/SanTrapik/issues/34)
+  - [#35: Philippine Motorcycle Commute Telemetry (Arterial Lane Filtering & TRB 400cc Restrictions)](https://github.com/fsco101/SanTrapik/issues/35)
+  - [#36: Metro Manila Monsoon & Flood Hazard Geo-Integration (PAGASA & Impassable Underpass Warnings)](https://github.com/fsco101/SanTrapik/issues/36)
+  - [#37: MMDA Unified Vehicular Volume Reduction Program (UVVRP) Number Coding Checker & Route Advisory](https://github.com/fsco101/SanTrapik/issues/37)
+  - [#38: Chokepoint Root Cause Diagnostics Decomposition](https://github.com/fsco101/SanTrapik/issues/38)
+
+---
+
+### [Sprint 9: Advanced AI Congestion Relief & Spatiotemporal Forecasting Pipeline](./sprint-9-advanced-ai-forecasting.json)
+* **Goal:** Advance ML inference from simple corridor regression to incident clearance duration modeling, probabilistic quantile bounds (P10/P50/P90), upstream queue spillover prediction, and interactive time-horizon forecasting.
+* **Status:** Planned
+* **Issues:**
+  - [#39: Incident Clearance Duration Regression Pipeline](https://github.com/fsco101/SanTrapik/issues/39)
+  - [#40: Quantile Regression & Conformal Prediction Envelopes (P10, P50, P90 Relief Windows)](https://github.com/fsco101/SanTrapik/issues/40)
+  - [#41: Spatiotemporal Bottleneck Spillover Predictor (Upstream Queue Propagation)](https://github.com/fsco101/SanTrapik/issues/41)
+  - [#42: ML Model Drift Detection, Continuous Evaluation & Fallback Circuit Breaker](https://github.com/fsco101/SanTrapik/issues/42)
+  - [#43: Frontend AI Prognosis Horizon Visualizer (Time Slider for +15m, +30m, +60m)](https://github.com/fsco101/SanTrapik/issues/43)
+
+---
+
+### [Sprint 10: High-Performance Vector Tile Caching, Spatial Redis Layers & Offline PWA Resilience](./sprint-10-performance-offline-pwa.json)
+* **Goal:** Achieve sub-50ms hot corridor response times, implement PostGIS MVT dynamic vector tiles, add Redis spatial caching, and provide Progressive Web App (PWA) offline resilience for commuters facing spotty mobile connections.
+* **Status:** Planned
+* **Issues:**
+  - [#44: Redis-Backed Ephemeral Spatial Caching for Hot Corridors & Route Analysis](https://github.com/fsco101/SanTrapik/issues/44)
+  - [#45: PostGIS Mapbox Vector Tile (MVT) Dynamic Endpoint (`ST_AsMVT`)](https://github.com/fsco101/SanTrapik/issues/45)
+  - [#46: Progressive Web App (PWA) Service Worker, Offline Asset Caching & Install Prompt](https://github.com/fsco101/SanTrapik/issues/46)
+  - [#47: Saved Commute Corridors & Local Storage Telemetry Bookmarks](https://github.com/fsco101/SanTrapik/issues/47)
+  - [#48: End-to-End Stress Testing, Sub-100ms Latency Verification & OWASP Security Audit](https://github.com/fsco101/SanTrapik/issues/48)
+
+---
+
 ## Operating Protocol for AI Agents
 
-1. **Sprint Execution:** Follow the **Data-First Development Strategy** outlined in `AGENT.md`.
-2. **Frontend Fidelity:** All frontend components must replicate the design system, colors, and layouts in [`DESIGN/`](../DESIGN/).
-3. **Closing Issues:** When an issue is completed, mark its status as `"completed"` in the corresponding JSON file and close the issue on GitHub via `gh issue close <number>`.
+1. **Active Sprint:** Always check `sprints/index.json` to identify the current active sprint.
+2. **Dedicated Branching:** Follow the branch naming convention `sprint-<number>-<short-description>` branched from `main`.
+3. **Specialized Skills:** When working on spatial, security, ML, or UI tasks, activate and adhere to the skills in `.agents/skills/`:
+   - `traffic-geospatial-intelligence`
+   - `incident-telemetry-resilience`
+   - `traffic-prediction-mlops`
+   - `obsidian-telemetry-ui`
+4. **Verification Gate:** Run `py -m pytest backend/tests` and `npm run build` in `frontend/` before marking any issue as completed.

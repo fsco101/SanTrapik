@@ -1,11 +1,11 @@
 {
   "project": "SanTrapik",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI-Powered Metro Manila Traffic Intelligence & Road Incident Monitoring System",
-  "total_sprints": 5,
-  "total_issues": 23,
-  "status": "completed",
-  "active_sprint_id": null,
+  "total_sprints": 10,
+  "total_issues": 48,
+  "status": "in_progress",
+  "active_sprint_id": "sprint-6-security-consensus",
   "sprints": [
     {
       "id": "sprint-1-data-and-database",
@@ -66,6 +66,66 @@
       "total_issues": 4,
       "completed_issues": 4,
       "objective": "Complete end-to-end integration across frontend, backend, PostGIS, and ML model; implement alternative route comparison, Docker Compose, and performance verification."
+    },
+    {
+      "id": "sprint-6-security-consensus",
+      "number": 6,
+      "title": "Security Hardening, Rate Limiting & Crowdsourced Incident Consensus Engine",
+      "file": "sprint-6-security-consensus.json",
+      "status": "planned",
+      "dependencies": ["sprint-2-backend-services", "sprint-5-integration-testing"],
+      "issue_range": "#24 - #28",
+      "total_issues": 5,
+      "completed_issues": 0,
+      "objective": "Eliminate critical vulnerabilities in the public anonymous model: sliding-window rate limiting, Pydantic v2 bounding box validation, spatiotemporal clustering (DBSCAN/quorum), anti-griefing resolution tokens, and half-life decay workers."
+    },
+    {
+      "id": "sprint-7-realtime-streaming",
+      "number": 7,
+      "title": "Real-Time Geospatial Streaming & Viewport-Filtered Live Telemetry",
+      "file": "sprint-7-realtime-streaming.json",
+      "status": "planned",
+      "dependencies": ["sprint-6-security-consensus"],
+      "issue_range": "#29 - #33",
+      "total_issues": 5,
+      "completed_issues": 0,
+      "objective": "Upgrade from 60-second polling to persistent Server-Sent Events (SSE) and WebSockets, delivering low-latency geospatial event deltas filtered by client map viewport and active route buffer."
+    },
+    {
+      "id": "sprint-8-multimodal-manila",
+      "number": 8,
+      "title": "Philippine Multi-Modal Commuter Intelligence & Corridor Economics",
+      "file": "sprint-8-multimodal-manila.json",
+      "status": "planned",
+      "dependencies": ["sprint-5-integration-testing", "sprint-6-security-consensus"],
+      "issue_range": "#34 - #38",
+      "total_issues": 5,
+      "completed_issues": 0,
+      "objective": "Empower Metro Manila commuters with street-smart local intelligence: Expressway toll vs free surface cost-benefit analysis, motorcycle lane-filtering velocity adjustments, monsoon flood hazard warning integration, MMDA number coding advisories, and chokepoint cause diagnostics."
+    },
+    {
+      "id": "sprint-9-advanced-ai-forecasting",
+      "number": 9,
+      "title": "Advanced AI Congestion Relief & Spatiotemporal Forecasting Pipeline",
+      "file": "sprint-9-advanced-ai-forecasting.json",
+      "status": "planned",
+      "dependencies": ["sprint-4-ai-ml-prediction", "sprint-8-multimodal-manila"],
+      "issue_range": "#39 - #43",
+      "total_issues": 5,
+      "completed_issues": 0,
+      "objective": "Advance ML inference from simple corridor regression to incident clearance duration modeling, probabilistic quantile bounds (P10/P50/P90), upstream queue spillover prediction, and interactive time-horizon forecasting."
+    },
+    {
+      "id": "sprint-10-performance-offline-pwa",
+      "number": 10,
+      "title": "High-Performance Vector Tile Caching, Spatial Redis Layers & Offline PWA Resilience",
+      "file": "sprint-10-performance-offline-pwa.json",
+      "status": "planned",
+      "dependencies": ["sprint-7-realtime-streaming", "sprint-9-advanced-ai-forecasting"],
+      "issue_range": "#44 - #48",
+      "total_issues": 5,
+      "completed_issues": 0,
+      "objective": "Achieve sub-50ms hot corridor response times, implement PostGIS MVT dynamic vector tiles, add Redis spatial caching, and provide Progressive Web App (PWA) offline resilience for commuters facing spotty mobile connections."
     }
   ]
 }

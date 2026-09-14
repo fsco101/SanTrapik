@@ -1,0 +1,119 @@
+{
+  "sprint_id": "sprint-6-security-consensus",
+  "number": 6,
+  "title": "Security Hardening, Rate Limiting & Crowdsourced Incident Consensus Engine",
+  "goal": "Eliminate critical vulnerabilities in the public anonymous access model: implement sliding-window rate limiting, strict Pydantic v2 bounding box validation, spatiotemporal clustering (DBSCAN/quorum), anti-griefing incident resolution tokens, and automated half-life decay workers.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-2-backend-services",
+    "sprint-5-integration-testing"
+  ],
+  "issues": [
+    {
+      "id": "SP6-001",
+      "github_issue_number": 24,
+      "title": "[Sprint 6] Strict Pydantic v2 Validation, Geographic Bounding Box Enforcement & Coordinate Sanitization",
+      "priority": "critical",
+      "status": "open",
+      "labels": [
+        "sprint-6",
+        "backend",
+        "security",
+        "spatial"
+      ],
+      "description": "Currently, `POST /api/v1/incidents` accepts raw dictionary payloads without Pydantic schema validation, allowing arbitrary coordinate injection and XSS payloads. Implement strict Pydantic v2 models (`IncidentCreateRequest`) with Metro Manila boundary validation (`METRO_MANILA_STRICT_BBOX` [120.90, 14.35, 121.15, 14.80]), sanitize free-text descriptions using Bleach or regex, and reject NaN/infinite/out-of-bounds coordinates with HTTP 422.",
+      "acceptance_criteria": [
+        "`IncidentCreateRequest` schema strictly typed in `backend/app/schemas/telemetry.py`",
+        "Coordinates outside Philippine/Metro Manila bounds are rejected with HTTP 422 Unprocessable Entity",
+        "XSS injection strings (`<script>`, `<iframe>`) in description fields are stripped and sanitized",
+        "Unit tests in `backend/tests/test_security.py` confirm rejection of malformed or out-of-bounds payloads"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/24"
+    },
+    {
+      "id": "SP6-002",
+      "github_issue_number": 25,
+      "title": "[Sprint 6] Sliding-Window IP & Fingerprint Rate Limiting for Spatial Endpoints",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-6",
+        "backend",
+        "security",
+        "middleware"
+      ],
+      "description": "Geospatial queries (`ST_DWithin`, route snapping, incident queries) are computationally expensive. Implement an in-memory / Redis-backed sliding window rate limiter middleware in FastAPI to protect spatial endpoints from denial-of-service. Enforce limits: max 60 route analyses/minute per IP, max 5 incident reports/10 minutes per IP, returning standard HTTP 429 Too Many Requests with `Retry-After` headers.",
+      "acceptance_criteria": [
+        "FastAPI middleware tracks request rates using client IP and optional forward proxy headers (`X-Forwarded-For`)",
+        "Exceeding rate threshold triggers HTTP 429 with JSON payload containing retry countdown",
+        "Whitelisted internal health check (`/api/v1/health`) bypasses rate limiting",
+        "Automated tests verify that burst requests beyond threshold are throttled"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/25"
+    },
+    {
+      "id": "SP6-003",
+      "github_issue_number": 26,
+      "title": "[Sprint 6] Spatiotemporal Incident Clustering & Corroboration Engine (150m / 15m Quorum)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-6",
+        "backend",
+        "consensus",
+        "ml"
+      ],
+      "description": "Single anonymous reports should not immediately become high-severity confirmed alerts. Implement a spatiotemporal clustering service (`IncidentConsensusEngine` in `backend/app/services/incident_consensus.py`) that clusters reports within a 150-meter spatial radius and 15-minute window. Single reports are assigned `status: REPORTED` (confidence 0.35); corroborating reports from distinct IPs escalate the cluster to `status: VERIFIED` (confidence 0.75+).",
+      "acceptance_criteria": [
+        "New reports within 150m and 15 minutes of an active incident increment corroboration count rather than creating duplicate markers",
+        "Corroboration increases confidence score from initial 0.35 up to 0.98",
+        "Status promotes from `REPORTED` to `VERIFIED` upon receiving 2+ independent reports or verified agency source (MMDA)",
+        "Frontend renders unverified reports with dashed outline and `[UNVERIFIED]` badge"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/26"
+    },
+    {
+      "id": "SP6-004",
+      "github_issue_number": 27,
+      "title": "[Sprint 6] Tamper-Resistant Incident Lifecycle & Protected Resolution (Reporter Token & Community Vote)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-6",
+        "backend",
+        "frontend",
+        "security"
+      ],
+      "description": "Currently, anyone can call `PATCH /incidents/{id}/resolve` and clear real active road hazards. Introduce anti-griefing controls: when an incident is created, return a cryptographic session token (`reporter_token`) stored in the reporter's localStorage, permitting the original author to mark it resolved within 15 minutes. For general commuters, implement a confirmation voting mechanism ('Is this road clear? [STILL THERE] / [CLEARED]'). Only a net clearance score of +3 moves status to `RESOLVED`.",
+      "acceptance_criteria": [
+        "`POST /incidents` returns an ephemeral `reporter_token` enabling immediate author clearance",
+        "Unauthenticated third parties must submit clearance votes via `POST /incidents/{id}/vote-clearance`",
+        "Net clearance threshold (clear votes - active votes >= 3) triggers automatic transition to `CLEARING` and `RESOLVED`",
+        "Frontend displays 'Still Active' vs 'Cleared' confirmation buttons on incident cards"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/27"
+    },
+    {
+      "id": "SP6-005",
+      "github_issue_number": 28,
+      "title": "[Sprint 6] Automated Incident Aging, Half-Life Confidence Decay & Garbage Collection Worker",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-6",
+        "backend",
+        "worker",
+        "telemetry"
+      ],
+      "description": "Prevent stale or abandoned incident reports from permanently clogging road corridors. Implement an asynchronous background worker task running every 60 seconds that applies exponential half-life decay to active incident confidence scores ($T_{\\text{half}} = 20$ minutes for unverified, $60$ minutes for verified accidents). When confidence drops below 0.15 without fresh corroboration, transition incident to `status: EXPIRED` and remove from active route delay calculations.",
+      "acceptance_criteria": [
+        "Background task periodically iterates over active incidents and recalculates time-decayed confidence",
+        "Uncorroborated single-reporter incidents auto-expire after 30 minutes of inactivity",
+        "Expired incidents are archived in database and excluded from `/api/v1/incidents` active queries",
+        "Route analysis automatically recalculates when an incident expires along a monitored corridor"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/28"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "sprint_id": "sprint-8-multimodal-manila",
+  "number": 8,
+  "title": "Philippine Multi-Modal Commuter Intelligence & Corridor Economics",
+  "goal": "Empower Metro Manila commuters with street-smart local intelligence: Expressway toll vs. free surface cost-benefit analysis, motorcycle lane-filtering velocity adjustments, monsoon flood hazard warning integration, MMDA number coding advisories, and chokepoint cause diagnostics.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-5-integration-testing",
+    "sprint-6-security-consensus"
+  ],
+  "issues": [
+    {
+      "id": "SP8-001",
+      "github_issue_number": 34,
+      "title": "[Sprint 8] Skyway & Urban Expressway Toll Calculation Engine with Cost-Benefit Telemetry",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-8",
+        "backend",
+        "frontend",
+        "economics",
+        "routing"
+      ],
+      "description": "When comparing expressway routes (Skyway Stages 1-3, NAIAX, CAVITEX, NLEX/SLEX) against free surface roads (EDSA, Osmeña Highway, C-5), commuters need to weigh money spent vs. minutes saved. Build a toll calculation database and matrix (Class 1 vehicle rates e.g. Skyway Stage 3 Buendia to Balintawak PHP 264) and display a cost-benefit pill in the Route Comparison UI: e.g. 'Saves 28 mins for PHP 264 (PHP 9.40/min saved)'.",
+      "acceptance_criteria": [
+        "Backend contains accurate entry/exit toll rate table for Metro Manila expressways (Skyway, NAIAX, SLEX, NLEX)",
+        "Route analysis calculates total toll fee in PHP when expressway segments are traversed",
+        "Route Comparison card renders cost-benefit metric: 'Toll: PHP 264 | Saves 28 mins'",
+        "Allows user to sort or filter routes by 'Zero Tolls' vs 'Fastest Regardless of Toll'"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/34"
+    },
+    {
+      "id": "SP8-002",
+      "github_issue_number": 35,
+      "title": "[Sprint 8] Philippine Motorcycle Commute Telemetry (Arterial Lane Filtering & TRB 400cc Restrictions)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-8",
+        "backend",
+        "routing",
+        "motorcycle"
+      ],
+      "description": "In Metro Manila, motorcycles represent over 50% of vehicular volume. Implement two critical local realities: (1) Under Toll Regulatory Board (TRB) rules, motorcycles < 400cc are legally barred from expressways (force `use_expressway=false` with advisory pill), and (2) in severe arterial traffic (car speed < 15 km/h), motorcycles perform lane-filtering at 25-35 km/h. Adjust the routing velocity calculation model specifically for motorcycle transport mode.",
+      "acceptance_criteria": [
+        "Selecting `motorcycle` transport mode disables expressway toggle with explicit TRB 400cc rule advisory",
+        "Motorcycle travel time calculation dampens congestion penalties based on empirical lane-filtering factors",
+        "Route comparison accurately reflects that motorcycle travel times on EDSA/C-5 are 30-50% faster than cars during gridlock",
+        "Avoids directing motorcycle commuters to pedestrian overpasses or unpaved alleyways"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/35"
+    },
+    {
+      "id": "SP8-003",
+      "github_issue_number": 36,
+      "title": "[Sprint 8] Metro Manila Monsoon & Flood Hazard Geo-Integration (PAGASA & Impassable Underpass Warnings)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-8",
+        "backend",
+        "frontend",
+        "hazards",
+        "weather"
+      ],
+      "description": "Metro Manila commutes are severely impacted by habagat (southwest monsoon), typhoons, and localized flash floods in vulnerable underpasses (España/UST, Balintawak, EDSA Taft, Buendia, Araneta Ave). Ingest PAGASA rainfall warnings and maintain a geo-registry of flood-prone chokepoints. When flood levels reach gutter/tire depth, mark corridors as `IMPASSABLE_TO_LIGHT_VEHICLES` and automatically divert routes.",
+      "acceptance_criteria": [
+        "Flood hazard schema tracks water depth (Gutter Deep, Half-Tire, Submerged) and passable vehicle classes",
+        "Routing engine detects flooded segments and penalizes or avoids them in route generation",
+        "UI displays high-contrast amber/red flood hazard alert badges along affected corridors",
+        "Incident list flags weather-induced hazards with source attribution"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/36"
+    },
+    {
+      "id": "SP8-004",
+      "github_issue_number": 37,
+      "title": "[Sprint 8] MMDA Unified Vehicular Volume Reduction Program (UVVRP) Number Coding Checker & Route Advisory",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-8",
+        "backend",
+        "frontend",
+        "compliance",
+        "mmda"
+      ],
+      "description": "MMDA enforces number coding (UVVRP) in Metro Manila based on license plate ending digit during peak hours (7:00-10:00 AM, 5:00-8:00 PM on Mondays through Fridays), with varying LGU window hours (e.g. Makati no window hours vs Manila window hours). Add an optional plate ending selector (0-9) in the search bar. If the selected route passes through corridors enforcing number coding at the current time, render a prominent advisory badge `[CODING RESTRICTION ACTIVE]`.",
+      "acceptance_criteria": [
+        "Rule engine encodes MMDA and LGU number coding schedules and exemptions",
+        "Route analysis checks if route crosses active coding zones during restricted hours for given plate ending",
+        "Frontend renders non-intrusive compliance alert in Route Search card",
+        "Zero personal user data stored; plate selection is transient in local state"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/37"
+    },
+    {
+      "id": "SP8-005",
+      "github_issue_number": 38,
+      "title": "[Sprint 8] Chokepoint Root Cause Diagnostics Decomposition",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-8",
+        "backend",
+        "frontend",
+        "telemetry",
+        "analytics"
+      ],
+      "description": "Instead of reporting a monolithic delay (e.g. '+35 mins delay'), decompose the delay into its causative root factors in API and UI: e.g. '+18 mins from 2-lane stalled truck at Santolan', '+12 mins from evening rush volume surge', and '+5 mins from wet road surface'. Render this breakdown in the Route Intelligence Card using monospaced diagnostic bars.",
+      "acceptance_criteria": [
+        "Backend diagnostic algorithm attributes delay minutes to verified incidents, volume surges, and bottlenecks",
+        "API schema returns `delay_decomposition: { incident_delay_min, baseline_congestion_min, weather_delay_min }`",
+        "Route Intelligence Card renders diagnostic breakdown matching DESIGN.md typography",
+        "Provides commuters with clarity on whether their delay is temporary (clearing accident) or chronic rush"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/38"
+    }
+  ]
+}

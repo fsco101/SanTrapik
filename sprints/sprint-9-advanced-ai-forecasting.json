@@ -1,0 +1,119 @@
+{
+  "sprint_id": "sprint-9-advanced-ai-forecasting",
+  "number": 9,
+  "title": "Advanced AI Congestion Relief & Spatiotemporal Forecasting Pipeline",
+  "goal": "Advance ML inference from simple corridor regression to incident clearance modeling, probabilistic quantile bounds (P10/P50/P90), upstream queue spillover prediction, and interactive time-horizon forecasting.",
+  "status": "planned",
+  "estimated_duration": "2 weeks",
+  "dependencies": [
+    "sprint-4-ai-ml-prediction",
+    "sprint-8-multimodal-manila"
+  ],
+  "issues": [
+    {
+      "id": "SP9-001",
+      "github_issue_number": 39,
+      "title": "[Sprint 9] Incident Clearance Duration Regression Pipeline",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-9",
+        "ml",
+        "prediction",
+        "incidents"
+      ],
+      "description": "Train a specialized sub-model in `ml/pipelines/train_clearance_model.py` predicting physical incident clearance duration (`incident_clearance_minutes`). Incorporate incident type (e.g. stalled public bus vs minor sedan fender bender), number of lanes blocked, emergency tow truck dispatch status, and road geometry width. Feed this clearance estimate into the primary corridor relief pipeline.",
+      "acceptance_criteria": [
+        "Model predicts clearance duration with MAE <= 7.0 minutes on historical MMDA incident data",
+        "Serialized pipeline saved to `ml/models/incident_clearance_model.joblib`",
+        "FastAPI route analysis combines incident clearance with corridor recovery dynamics",
+        "Incident drawer in frontend displays estimated physical clearance time with confidence meter"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/39"
+    },
+    {
+      "id": "SP9-002",
+      "github_issue_number": 40,
+      "title": "[Sprint 9] Quantile Regression & Conformal Prediction Envelopes (P10, P50, P90 Relief Windows)",
+      "priority": "high",
+      "status": "open",
+      "labels": [
+        "sprint-9",
+        "ml",
+        "uncertainty",
+        "statistics"
+      ],
+      "description": "Replace single-point estimates with probabilistic quantile regression (GradientBoostingRegressor with quantile loss or Conformal Prediction). Compute 10th percentile (optimistic fast clearance), 50th percentile (median expected), and 90th percentile (pessimistic protracted delay). Bounding intervals dynamically expand during high-variance conditions (e.g. heavy rain or multi-lane pileups).",
+      "acceptance_criteria": [
+        "Inference engine outputs `p10_optimistic_mins`, `p50_median_mins`, and `p90_pessimistic_mins`",
+        "Confidence score inversely correlates with width of the P90 - P10 prediction interval",
+        "UI displays human-friendly bounded window (e.g. '~25–40 mins') rather than misleading false point precision",
+        "Guardrail guarantees non-negative lower bounds under all conditions"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/40"
+    },
+    {
+      "id": "SP9-003",
+      "github_issue_number": 41,
+      "title": "[Sprint 9] Spatiotemporal Bottleneck Spillover Predictor (Upstream Queue Propagation)",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-9",
+        "ml",
+        "spatial",
+        "graph"
+      ],
+      "description": "In Metro Manila, a severe choke point at EDSA Shaw flyover inevitably spills upstream into Cubao within 20 minutes. Build a spatial graph propagation model connecting sequential road segments using PostGIS topological links. Calculate backpressure shockwaves and predict which upstream segments will deteriorate over the next 15-45 minutes.",
+      "acceptance_criteria": [
+        "Graph adjacency model connects contiguous road segments in directional flow order",
+        "Spillover algorithm flags upstream segments at high risk of queuing shockwaves",
+        "API provides proactive warnings: 'Upstream slowdown expected at Cubao in ~15 mins'",
+        "Map renders subtle cautionary amber pulse along segments likely to experience spillover"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/41"
+    },
+    {
+      "id": "SP9-004",
+      "github_issue_number": 42,
+      "title": "[Sprint 9] ML Model Drift Detection, Continuous Evaluation & Fallback Circuit Breaker",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-9",
+        "mlops",
+        "monitoring",
+        "reliability"
+      ],
+      "description": "Establish automated model health monitoring. Log inference input distributions and track prediction residuals against observed recovery times. If data drift is detected (e.g. abnormal holiday traffic patterns) or if model error spikes (residual MAE > 15 mins over 1 hour), trigger an automated circuit breaker that smoothly degrades to deterministic empirical MMDA lookup tables.",
+      "acceptance_criteria": [
+        "Telemetry service logs model inference telemetry and observed ground truth comparisons asynchronously",
+        "Circuit breaker trips when model error or input outlier rate exceeds defined threshold",
+        "Automatic fallback to heuristic lookup table preserves API stability without crashing route analysis",
+        "Health check endpoint reports active model inference state (`OPERATIONAL`, `DEGRADED`, `FALLBACK`)"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/42"
+    },
+    {
+      "id": "SP9-005",
+      "github_issue_number": 43,
+      "title": "[Sprint 9] Frontend AI Prognosis Horizon Visualizer (Time Slider for +15m, +30m, +60m)",
+      "priority": "medium",
+      "status": "open",
+      "labels": [
+        "sprint-9",
+        "frontend",
+        "visualization",
+        "ux"
+      ],
+      "description": "Add an interactive forecast time slider to the Route Intelligence Card allowing users to scrub forward in time (+15m, +30m, +45m, +60m). The map dynamically updates segment speeds and route delay projections to show how traffic will look if the user leaves later. Employs electric indigo/cyan spectral styling conforming to DESIGN.md.",
+      "acceptance_criteria": [
+        "Scrubber allows selecting time offsets (+0m, +15m, +30m, +45m, +60m)",
+        "Route Intelligence Card and Segment Velocity Bar update to display projected traffic conditions at target departure time",
+        "Clear `[AI FORECAST: DEPARTURE +30M]` header badge prevents confusion with live telemetry",
+        "Smooth transitions without tearing or rebuilding map canvas"
+      ],
+      "github_url": "https://github.com/fsco101/SanTrapik/issues/43"
+    }
+  ]
+}
