@@ -14,6 +14,8 @@ interface RouteSearchProps {
   onTransportModeChange: (mode: TransportMode) => void;
   useExpressway: boolean;
   onUseExpresswayChange: (use: boolean) => void;
+  plateEnding: number | null;
+  onPlateEndingChange: (ending: number | null) => void;
 }
 
 export const RouteSearch: React.FC<RouteSearchProps> = ({
@@ -28,6 +30,8 @@ export const RouteSearch: React.FC<RouteSearchProps> = ({
   onTransportModeChange,
   useExpressway,
   onUseExpresswayChange,
+  plateEnding,
+  onPlateEndingChange,
 }) => {
   // Origin search state
   const [originQuery, setOriginQuery] = useState(origin.name || "");
@@ -378,6 +382,91 @@ export const RouteSearch: React.FC<RouteSearchProps> = ({
           />
         </button>
       </div>
+
+      {/* 4. MMDA Number Coding (UVVRP) Selector */}
+      {(() => {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat
+        const codingMap: Record<number, number[]> = {
+          1: [1, 2],
+          2: [3, 4],
+          3: [5, 6],
+          4: [7, 8],
+          5: [9, 0],
+        };
+        const todayCodedDigits = codingMap[dayOfWeek] || [];
+        const isCodedToday = todayCodedDigits.length > 0;
+
+        return (
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] uppercase font-bold text-text-muted tracking-wider block font-mono">
+                MMDA Number Coding (UVVRP)
+              </span>
+              {transportMode !== "car" ? (
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {transportMode.toUpperCase()} EXEMPT
+                </span>
+              ) : isCodedToday ? (
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  CODING: {todayCodedDigits.join(" & ")} TODAY
+                </span>
+              ) : (
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-white/5">
+                  WEEKEND SUSPENDED
+                </span>
+              )}
+            </div>
+
+            {transportMode === "car" ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 bg-surface-card/60 p-1 rounded-lg border border-white/5 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => onPlateEndingChange(null)}
+                    className={`px-2 py-1 text-[10px] font-mono font-semibold rounded transition ${
+                      plateEnding === null
+                        ? "bg-ai-primary text-white border border-ai-primary"
+                        : "bg-surface-elevated/40 text-text-muted hover:text-white"
+                    }`}
+                  >
+                    Any
+                  </button>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((digit) => {
+                    const isSelected = plateEnding === digit;
+                    const isCoded = todayCodedDigits.includes(digit);
+                    return (
+                      <button
+                        key={digit}
+                        type="button"
+                        onClick={() => onPlateEndingChange(isSelected ? null : digit)}
+                        className={`flex-1 min-w-[22px] py-1 text-[11px] font-mono font-bold rounded text-center transition ${
+                          isSelected
+                            ? "bg-ai-primary text-white border border-ai-cyan shadow-sm"
+                            : isCoded
+                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25"
+                            : "bg-surface-elevated/40 text-text-secondary hover:text-white hover:bg-surface-elevated"
+                        }`}
+                        title={isCoded ? `Plate ending in ${digit} is coded today` : `Plate ending in ${digit}`}
+                      >
+                        {digit}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-text-muted px-1">
+                  <span>Peak: 7-10 AM, 5-8 PM</span>
+                  <span>Makati: No Window (7 AM-7 PM)</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[10px] text-text-muted px-1">
+                Motorcycles, public transport, and pedestrians are legally exempt from MMDA UVVRP.
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Action Button */}
       <button

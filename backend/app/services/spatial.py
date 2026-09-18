@@ -8,9 +8,18 @@ from shapely.geometry import LineString, Point
 from sqlalchemy.orm import Session
 
 from backend.app.db.models import RoadSegment, TrafficRecord, Incident, Prediction
-from backend.app.schemas.route import RouteSegmentDetail, IncidentSummary, SegmentPrediction, RouteSummary, ExpectedRelief
+from backend.app.schemas.route import (
+    RouteSegmentDetail,
+    IncidentSummary,
+    SegmentPrediction,
+    RouteSummary,
+    ExpectedRelief,
+    DelayDecomposition,
+    FloodHazardDetail
+)
 from backend.app.ml.inference import prediction_service
 from backend.app.services.telemetry import telemetry_service, DATA_FILE
+from backend.app.services.flood_service import flood_service
 
 def haversine_distance(coord1: List[float], coord2: List[float]) -> float:
     """Calculate distance in meters between two [lng, lat] coordinates."""
@@ -47,10 +56,11 @@ class SpatialService:
         duration_seconds: Optional[int] = None,
         distance_meters: Optional[float] = None,
         transport_mode: str = "car"
-    ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail]]:
+    ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail], DelayDecomposition, List[FloodHazardDetail], bool]:
         """
         Decomposes real route geometry into constituent Metro Manila road segments,
         calculates live travel times and delay based on real-time traffic telemetry and transport mode,
+        evaluates motorcycle lane-filtering dynamics, flood hazard passability, delay decomposition,
         and invokes the ML model to forecast congestion relief duration.
         """
         route_line = LineString(route_coords)
@@ -126,6 +136,11 @@ class SpatialService:
                 level = live_telemetry["traffic_level"]
                 cong = live_telemetry["congestion_percentage"]
 
+                # Motorcycle lane-filtering physics:
+                # In gridlock (cong >= 40% or car speed < 20 km/h), motorcycles filter at 26-32 km/h
+                if transport_mode == "motorcycle" and cong >= 40.0:
+                    speed = round(min(35.0, max(speed, 26.0 + (cong * 0.05))), 1)
+
                 # Calculate physical segment length in meters
                 seg_coords = feat["geometry"]["coordinates"]
                 seg_length_m = sum(haversine_distance(seg_coords[k], seg_coords[k+1]) for k in range(len(seg_coords)-1))
@@ -159,14 +174,14 @@ class SpatialService:
 
         # Fallback if route does not intersect monitored arterials
         if not matched_segments:
-            # Construct a dynamic segment based on the primary road
+            fallback_speed = 32.0 if transport_mode != "motorcycle" else 35.0
             matched_segments.append(RouteSegmentDetail(
                 segment_id="seg_primary_corridor",
                 name="Traversed Metro Manila Arterial",
                 road_code="NCR",
                 direction="BOTH",
                 traffic_level="MODERATE",
-                average_speed_kmh=32.0,
+                average_speed_kmh=fallback_speed,
                 congestion_percentage=45.0,
                 incidents=[],
                 prediction=SegmentPrediction(
@@ -178,7 +193,7 @@ class SpatialService:
             ))
             ml_segment_inputs.append({
                 "id": "seg_primary",
-                "current_speed": 32.0,
+                "current_speed": fallback_speed,
                 "baseline_speed": 55.0,
                 "distance_meters": 5000.0
             })
@@ -187,42 +202,74 @@ class SpatialService:
         if distance_meters and distance_meters > 0:
             total_dist_km = round(distance_meters / 1000.0, 1)
         else:
-            # Calculate from actual route polyline
             actual_dist_m = sum(haversine_distance(route_coords[k], route_coords[k+1]) for k in range(len(route_coords)-1))
             total_dist_km = round(actual_dist_m / 1000.0, 1)
 
-        # Baseline speed and congestion impact according to transport mode
+        # 3. Flood Hazard Geo-Integration
+        is_impassable_flood, active_flood_hazards = flood_service.check_route_flooding(route_coords)
+        flood_hazard_details = [
+            FloodHazardDetail(
+                id=f["id"],
+                corridor=f["corridor"],
+                city=f["city"],
+                water_depth=f.get("water_depth", "HALF_TIRE"),
+                passable_to_light=f.get("passable_to_light", False),
+                description=f.get("description"),
+                distance_meters=f.get("distance_meters")
+            )
+            for f in active_flood_hazards
+        ]
+
+        # Calculate travel time according to transport mode
+        avg_cong = sum(s.congestion_percentage for s in matched_segments) / len(matched_segments)
+
         if transport_mode == "walking":
             # Walking pace ~4.8 km/h regardless of vehicular traffic jams
             normal_travel_time_min = max(3, int(round((total_dist_km / 4.8) * 60)))
             estimated_travel_time_min = normal_travel_time_min
             overall_congestion = "NORMAL"
-        else:
-            if transport_mode == "motorcycle":
-                # Motorcycles filter through Philippine traffic jams with lower delay penalty
-                cong_factor = 0.45
-                speed_cap = 45.0
-            elif transport_mode == "jeepney":
-                # Jeepneys have frequent curb stops, loading/unloading passenger dwell times
-                cong_factor = 1.30
-                speed_cap = 30.0
-            else:  # car
-                cong_factor = 0.95
-                speed_cap = 50.0
-
+        elif transport_mode == "motorcycle":
+            # Motorcycle lane filtering: in gridlock (avg_cong >= 25%), filtering at 26-32 km/h
+            # yields empirical 30% to 50% travel time savings over cars.
+            speed_cap = 45.0
             normal_travel_time_min = max(3, int(round((total_dist_km / speed_cap) * 60)))
-            avg_cong = sum(s.congestion_percentage for s in matched_segments) / len(matched_segments)
-            cong_multiplier = 1.0 + (avg_cong / 100.0) * cong_factor
 
+            # Car travel time baseline for comparison
+            car_cong_multiplier = 1.0 + (avg_cong / 100.0) * 0.95
             if duration_seconds and duration_seconds > 0:
-                base_min = duration_seconds / 60.0
-                if transport_mode == "motorcycle":
-                    base_min *= 0.85
-                elif transport_mode == "jeepney":
-                    base_min *= 1.25
-                estimated_travel_time_min = max(normal_travel_time_min, int(round(base_min * cong_multiplier)))
+                car_time = max(max(3, int(round((total_dist_km / 50.0) * 60))), int(round((duration_seconds / 60.0) * car_cong_multiplier)))
             else:
-                estimated_travel_time_min = max(normal_travel_time_min, int(round(normal_travel_time_min * cong_multiplier)))
+                car_normal = max(3, int(round((total_dist_km / 50.0) * 60)))
+                car_time = max(car_normal, int(round(car_normal * car_cong_multiplier)))
+
+            if avg_cong >= 25.0:
+                # 30% to 45% time savings over car
+                savings_ratio = min(0.45, max(0.30, 0.25 + (avg_cong / 100.0) * 0.20))
+                estimated_travel_time_min = max(normal_travel_time_min, int(round(car_time * (1.0 - savings_ratio))))
+            else:
+                cong_multiplier = 1.0 + (avg_cong / 100.0) * 0.35
+                base_min = (duration_seconds / 60.0) if (duration_seconds and duration_seconds > 0) else normal_travel_time_min
+                estimated_travel_time_min = max(normal_travel_time_min, int(round(base_min * cong_multiplier)))
+        elif transport_mode == "jeepney":
+            # Jeepneys have frequent curb stops and dwell times
+            speed_cap = 30.0
+            normal_travel_time_min = max(3, int(round((total_dist_km / speed_cap) * 60)))
+            cong_multiplier = 1.0 + (avg_cong / 100.0) * 1.30
+            base_min = (duration_seconds / 60.0) if (duration_seconds and duration_seconds > 0) else normal_travel_time_min
+            estimated_travel_time_min = max(normal_travel_time_min, int(round(base_min * 1.25 * cong_multiplier)))
+        else:  # car
+            speed_cap = 50.0
+            normal_travel_time_min = max(3, int(round((total_dist_km / speed_cap) * 60)))
+            cong_multiplier = 1.0 + (avg_cong / 100.0) * 0.95
+            base_min = (duration_seconds / 60.0) if (duration_seconds and duration_seconds > 0) else normal_travel_time_min
+            estimated_travel_time_min = max(normal_travel_time_min, int(round(base_min * cong_multiplier)))
+
+        # Flood impact on travel time
+        if flood_hazard_details:
+            if is_impassable_flood:
+                estimated_travel_time_min += 15  # Detour penalty
+            else:
+                estimated_travel_time_min += 6   # Monsoon waterlogging slowdown
 
         estimated_delay_min = max(0, estimated_travel_time_min - normal_travel_time_min)
 
@@ -253,7 +300,84 @@ class SpatialService:
             most_affected_segment=most_affected_segment
         )
 
-        # 3. AI / ML Congestion Relief Forecast
+        # 4. Delay Decomposition Diagnostics
+        total_delay_float = float(estimated_delay_min)
+        if total_delay_float <= 0:
+            delay_decomp = DelayDecomposition(
+                incident_delay_min=0.0,
+                baseline_congestion_min=0.0,
+                weather_delay_min=0.0,
+                total_delay_min=0.0,
+                primary_cause="NORMAL_FLOW",
+                cause_details="Free-flow vehicular speeds along traversed corridor."
+            )
+        else:
+            raw_weather = 0.0
+            if flood_hazard_details:
+                for fld in flood_hazard_details:
+                    if fld.water_depth in ["SUBMERGED", "TIRE_DEEP"]:
+                        raw_weather += 12.0
+                    elif fld.water_depth == "HALF_TIRE":
+                        raw_weather += 8.0
+                    else:
+                        raw_weather += 4.0
+
+            raw_incident = 0.0
+            for inc_id in unique_incident_ids:
+                matching_inc = next((i for s in matched_segments for i in s.incidents if i.id == inc_id), None)
+                if matching_inc:
+                    sev = matching_inc.severity.upper()
+                    if sev == "CRITICAL":
+                        raw_incident += 14.0
+                    elif sev == "HIGH":
+                        raw_incident += 9.0
+                    elif sev == "MODERATE":
+                        raw_incident += 5.0
+                    else:
+                        raw_incident += 3.0
+
+            # Scale and allocate components within total delay
+            incident_delay = min(total_delay_float, raw_incident)
+            rem = total_delay_float - incident_delay
+            weather_delay = min(rem, raw_weather)
+            baseline_congestion = max(0.0, total_delay_float - incident_delay - weather_delay)
+
+            incident_delay = round(incident_delay, 1)
+            weather_delay = round(weather_delay, 1)
+            baseline_congestion = round(total_delay_float - incident_delay - weather_delay, 1)
+            if baseline_congestion < 0:
+                baseline_congestion = 0.0
+                weather_delay = round(total_delay_float - incident_delay, 1)
+
+            # Determine primary cause
+            causes = [
+                ("INCIDENT", incident_delay),
+                ("MONSOON_FLOOD", weather_delay),
+                ("RUSH_HOUR_VOLUME", baseline_congestion)
+            ]
+            causes.sort(key=lambda x: x[1], reverse=True)
+            primary_cause = causes[0][0]
+
+            parts = []
+            if incident_delay > 0:
+                parts.append(f"Active incident bottlenecks (+{incident_delay}m)")
+            if weather_delay > 0:
+                parts.append(f"Monsoon waterlogging & slow runoff (+{weather_delay}m)")
+            if baseline_congestion > 0:
+                parts.append(f"Rush-hour commuter volume (+{baseline_congestion}m)")
+
+            cause_details = "; ".join(parts) if parts else "Recurrent corridor congestion."
+
+            delay_decomp = DelayDecomposition(
+                incident_delay_min=incident_delay,
+                baseline_congestion_min=baseline_congestion,
+                weather_delay_min=weather_delay,
+                total_delay_min=round(total_delay_float, 1),
+                primary_cause=primary_cause,
+                cause_details=cause_details
+            )
+
+        # 5. AI / ML Congestion Relief Forecast
         ml_prediction = prediction_service.predict_corridor_relief(
             segments=ml_segment_inputs,
             incidents=ml_incident_inputs,
@@ -273,6 +397,6 @@ class SpatialService:
             model_version=ml_prediction.get("model_version", "v1.4-rt-gbr")
         )
 
-        return summary, expected_relief, matched_segments
+        return summary, expected_relief, matched_segments, delay_decomp, flood_hazard_details, is_impassable_flood
 
 spatial_service = SpatialService()

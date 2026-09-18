@@ -2,12 +2,48 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Any, Dict, Literal
 from backend.app.schemas.coordinates import Coordinate
 
+class TollCostBenefit(BaseModel):
+    toll_fee_php: float = 0.0
+    time_saved_min: int = 0
+    cost_per_min_saved: Optional[float] = None
+    comparison_route_name: Optional[str] = None
+    is_zero_toll: bool = True
+
+class DelayDecomposition(BaseModel):
+    incident_delay_min: float = 0.0
+    baseline_congestion_min: float = 0.0
+    weather_delay_min: float = 0.0
+    total_delay_min: float = 0.0
+    primary_cause: str = "NORMAL_FLOW"  # 'INCIDENT', 'RUSH_HOUR_VOLUME', 'MONSOON_FLOOD', 'NORMAL_FLOW'
+    cause_details: str = ""
+
+class NumberCodingAdvisory(BaseModel):
+    is_coding_active: bool = False
+    is_restricted: bool = False
+    plate_ending: Optional[int] = None
+    restricted_hours: str = "N/A"
+    restricted_day: str = "None"
+    has_window_hours: bool = True
+    window_hours: str = ""
+    message: str = ""
+    affected_corridors: List[str] = []
+
+class FloodHazardDetail(BaseModel):
+    id: str
+    corridor: str
+    city: str
+    water_depth: str  # 'GUTTER_DEEP', 'HALF_TIRE', 'TIRE_DEEP', 'SUBMERGED'
+    passable_to_light: bool = True
+    description: Optional[str] = None
+    distance_meters: Optional[float] = None
+
 class RouteRequest(BaseModel):
     origin: Coordinate
     destination: Coordinate
     include_alternatives: bool = Field(False, description="Whether to compute alternative routes")
     transport_mode: Literal["car", "motorcycle", "jeepney", "walking"] = Field("car", description="Commute mode: car, motorcycle, jeepney, walking")
     use_expressway: bool = Field(True, description="Whether to utilize expressways / tollways (e.g. Skyway)")
+    plate_ending: Optional[int] = Field(None, ge=0, le=9, description="Vehicle license plate ending digit (0-9)")
 
 class IncidentSummary(BaseModel):
     id: str
@@ -67,6 +103,12 @@ class RouteItem(BaseModel):
     expected_relief: ExpectedRelief
     geometry: GeoJSONLineString
     segments: List[RouteSegmentDetail]
+    toll_fee_php: float = 0.0
+    toll_cost_benefit: Optional[TollCostBenefit] = None
+    delay_decomposition: Optional[DelayDecomposition] = None
+    coding_advisory: Optional[NumberCodingAdvisory] = None
+    flood_hazards: List[FloodHazardDetail] = []
+    is_impassable_flood: bool = False
 
 class RouteAnalyzeData(BaseModel):
     routes: List[RouteItem]

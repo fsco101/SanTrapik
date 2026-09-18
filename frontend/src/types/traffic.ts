@@ -62,6 +62,45 @@ export interface ExpectedRelief {
   is_predicted: boolean;
 }
 
+export interface TollCostBenefit {
+  toll_fee_php: number;
+  time_saved_min: number;
+  cost_per_min_saved?: number | null;
+  comparison_route_name?: string | null;
+  is_zero_toll: boolean;
+}
+
+export interface DelayDecomposition {
+  incident_delay_min: number;
+  baseline_congestion_min: number;
+  weather_delay_min: number;
+  total_delay_min: number;
+  primary_cause: "INCIDENT" | "RUSH_HOUR_VOLUME" | "MONSOON_FLOOD" | "NORMAL_FLOW" | string;
+  cause_details: string;
+}
+
+export interface NumberCodingAdvisory {
+  is_coding_active: boolean;
+  is_restricted: boolean;
+  plate_ending?: number | null;
+  restricted_hours: string;
+  restricted_day: string;
+  has_window_hours: boolean;
+  window_hours: string;
+  message: string;
+  affected_corridors: string[];
+}
+
+export interface FloodHazardDetail {
+  id: string;
+  corridor: string;
+  city: string;
+  water_depth: "GUTTER_DEEP" | "HALF_TIRE" | "TIRE_DEEP" | "SUBMERGED" | string;
+  passable_to_light: boolean;
+  description?: string;
+  distance_meters?: number;
+}
+
 export interface RouteGeometry {
   type: "LineString";
   coordinates: [number, number][];
@@ -79,6 +118,12 @@ export interface RouteItem {
   expected_relief: ExpectedRelief;
   geometry: RouteGeometry;
   segments: RouteSegmentDetail[];
+  toll_fee_php?: number;
+  toll_cost_benefit?: TollCostBenefit;
+  delay_decomposition?: DelayDecomposition;
+  coding_advisory?: NumberCodingAdvisory;
+  flood_hazards?: FloodHazardDetail[];
+  is_impassable_flood?: boolean;
 }
 
 export interface IncidentItem {

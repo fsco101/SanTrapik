@@ -125,6 +125,172 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
       </div>
 
+      {/* 2.1 Multi-Modal Telemetry Bar: Toll Economics & Coding Advisory */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+        {/* Toll Economics Card */}
+        <div className="bg-surface-card/80 border border-white/5 rounded p-2.5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase text-text-muted font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-amber-400">toll</span>
+              Expressway Toll
+            </span>
+            {(route.toll_fee_php || 0) > 0 ? (
+              <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30">
+                PHP {Math.round(route.toll_fee_php || 0)}
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                ZERO TOLL
+              </span>
+            )}
+          </div>
+          {route.toll_cost_benefit?.cost_per_min_saved !== undefined &&
+          route.toll_cost_benefit.cost_per_min_saved !== null &&
+          route.toll_cost_benefit.time_saved_min > 0 ? (
+            <p className="text-[11px] text-amber-200 leading-snug">
+              Saves {route.toll_cost_benefit.time_saved_min}m vs surface road (PHP {route.toll_cost_benefit.cost_per_min_saved}/min saved)
+            </p>
+          ) : (
+            <p className="text-[11px] text-text-muted leading-snug">
+              {(route.toll_fee_php || 0) === 0 ? "Public arterial road (no toll charges)." : "Expressway transit corridor."}
+            </p>
+          )}
+        </div>
+
+        {/* Number Coding Advisory Card */}
+        <div className="bg-surface-card/80 border border-white/5 rounded p-2.5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase text-text-muted font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-indigo-400">pin</span>
+              MMDA UVVRP Coding
+            </span>
+            {route.coding_advisory?.is_restricted ? (
+              <span className="text-[10px] font-bold text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
+                RESTRICTED
+              </span>
+            ) : route.coding_advisory?.is_coding_active ? (
+              <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30">
+                ENFORCED
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                EXEMPT / CLEAR
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-text-secondary leading-snug truncate" title={route.coding_advisory?.message}>
+            {route.coding_advisory?.message || "No UVVRP restriction active for this route."}
+          </p>
+        </div>
+      </div>
+
+      {/* 2.2 Monsoon & Flood Hazard Geo-Integration Alert */}
+      {route.flood_hazards && route.flood_hazards.length > 0 && (
+        <div className="p-3 rounded-lg border border-rose-500/40 bg-rose-950/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-rose-400 font-mono font-bold text-xs">
+              <span className="material-symbols-outlined text-[16px]">flood</span>
+              <span>Monsoon Flood Hazard Warning</span>
+            </div>
+            {route.is_impassable_flood ? (
+              <span className="text-[9px] font-mono font-bold bg-rose-500 text-white px-2 py-0.5 rounded">
+                IMPASSABLE TO LIGHT VEHICLES
+              </span>
+            ) : (
+              <span className="text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">
+                PASSABLE WITH CAUTION
+              </span>
+            )}
+          </div>
+          {route.flood_hazards.map((fld) => (
+            <div key={fld.id} className="text-xs font-mono bg-black/30 p-2 rounded border border-rose-500/20 space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-bold text-white">{fld.corridor} ({fld.city})</span>
+                <span className="text-amber-400 font-bold uppercase">Depth: {fld.water_depth.replace("_", " ")}</span>
+              </div>
+              <p className="text-[10px] text-slate-300 font-sans">{fld.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 2.3 Chokepoint Root Cause Delay Decomposition */}
+      {route.delay_decomposition && (
+        <div className="bg-surface-card border border-white/5 rounded p-3 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-bold text-text-muted tracking-wider font-mono flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-ai-cyan">analytics</span>
+              Root Cause Delay Decomposition
+            </span>
+            <span className="text-[9px] font-mono font-bold bg-ai-primary/20 text-ai-cyan border border-ai-primary/40 px-1.5 py-0.5 rounded uppercase">
+              {route.delay_decomposition.primary_cause.replace(/_/g, " ")}
+            </span>
+          </div>
+
+          {/* Stacked Diagnostic Delay Bar */}
+          {route.delay_decomposition.total_delay_min > 0 ? (
+            <div className="space-y-1">
+              <div className="h-3.5 w-full bg-slate-900 rounded overflow-hidden flex gap-0.5 p-0.5 border border-white/10">
+                {route.delay_decomposition.incident_delay_min > 0 && (
+                  <div
+                    style={{
+                      width: `${(route.delay_decomposition.incident_delay_min / route.delay_decomposition.total_delay_min) * 100}%`,
+                    }}
+                    className="h-full bg-rose-500 rounded-sm"
+                    title={`Incident Bottlenecks: ${route.delay_decomposition.incident_delay_min}m`}
+                  />
+                )}
+                {route.delay_decomposition.baseline_congestion_min > 0 && (
+                  <div
+                    style={{
+                      width: `${(route.delay_decomposition.baseline_congestion_min / route.delay_decomposition.total_delay_min) * 100}%`,
+                    }}
+                    className="h-full bg-amber-500 rounded-sm"
+                    title={`Rush Hour Volume: ${route.delay_decomposition.baseline_congestion_min}m`}
+                  />
+                )}
+                {route.delay_decomposition.weather_delay_min > 0 && (
+                  <div
+                    style={{
+                      width: `${(route.delay_decomposition.weather_delay_min / route.delay_decomposition.total_delay_min) * 100}%`,
+                    }}
+                    className="h-full bg-cyan-500 rounded-sm"
+                    title={`Monsoon / Weather Runoff: ${route.delay_decomposition.weather_delay_min}m`}
+                  />
+                )}
+              </div>
+
+              {/* Legend & Breakdown Metrics */}
+              <div className="grid grid-cols-3 gap-1 pt-1 text-[10px] font-mono">
+                <div className="flex items-center gap-1 text-slate-300">
+                  <span className="w-2 h-2 rounded-sm bg-rose-500 shrink-0"></span>
+                  <span>Incident: +{route.delay_decomposition.incident_delay_min}m</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-300">
+                  <span className="w-2 h-2 rounded-sm bg-amber-500 shrink-0"></span>
+                  <span>Rush Vol: +{route.delay_decomposition.baseline_congestion_min}m</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-300">
+                  <span className="w-2 h-2 rounded-sm bg-cyan-500 shrink-0"></span>
+                  <span>Weather: +{route.delay_decomposition.weather_delay_min}m</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5 py-1">
+              <span className="material-symbols-outlined text-[15px]">check_circle</span>
+              <span>Free-flow travel speeds across corridor. Zero net delay.</span>
+            </div>
+          )}
+
+          {route.delay_decomposition.cause_details && (
+            <p className="text-[10px] font-mono text-text-secondary border-t border-white/5 pt-1.5 leading-relaxed">
+              {route.delay_decomposition.cause_details}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* 3. Segment Velocity Bar */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs font-mono">

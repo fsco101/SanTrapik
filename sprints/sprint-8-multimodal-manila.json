@@ -3,7 +3,7 @@
   "number": 8,
   "title": "Philippine Multi-Modal Commuter Intelligence & Corridor Economics",
   "goal": "Empower Metro Manila commuters with street-smart local intelligence: Expressway toll vs. free surface cost-benefit analysis, motorcycle lane-filtering velocity adjustments, monsoon flood hazard warning integration, MMDA number coding advisories, and chokepoint cause diagnostics.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
   "dependencies": [
     "sprint-5-integration-testing",
@@ -15,7 +15,7 @@
       "github_issue_number": 34,
       "title": "[Sprint 8] Skyway & Urban Expressway Toll Calculation Engine with Cost-Benefit Telemetry",
       "priority": "high",
-      "status": "open",
+      "status": "closed",
       "labels": [
         "sprint-8",
         "backend",
@@ -37,7 +37,7 @@
       "github_issue_number": 35,
       "title": "[Sprint 8] Philippine Motorcycle Commute Telemetry (Arterial Lane Filtering & TRB 400cc Restrictions)",
       "priority": "high",
-      "status": "open",
+      "status": "closed",
       "labels": [
         "sprint-8",
         "backend",
@@ -58,7 +58,7 @@
       "github_issue_number": 36,
       "title": "[Sprint 8] Metro Manila Monsoon & Flood Hazard Geo-Integration (PAGASA & Impassable Underpass Warnings)",
       "priority": "high",
-      "status": "open",
+      "status": "closed",
       "labels": [
         "sprint-8",
         "backend",
@@ -80,7 +80,7 @@
       "github_issue_number": 37,
       "title": "[Sprint 8] MMDA Unified Vehicular Volume Reduction Program (UVVRP) Number Coding Checker & Route Advisory",
       "priority": "medium",
-      "status": "open",
+      "status": "closed",
       "labels": [
         "sprint-8",
         "backend",
@@ -102,7 +102,7 @@
       "github_issue_number": 38,
       "title": "[Sprint 8] Chokepoint Root Cause Diagnostics Decomposition",
       "priority": "medium",
-      "status": "open",
+      "status": "closed",
       "labels": [
         "sprint-8",
         "backend",

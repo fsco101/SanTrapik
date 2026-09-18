@@ -181,7 +181,9 @@ class RoutingService:
             pass  # Fall through to topological offline routing
 
         # 2. Topological Offline Corridor Routing (Guarantees zero zig-zags and smooth road alignment)
-        result = self._generate_topological_routes(orig_coord, dest_coord, include_alternatives)
+        result = self._generate_topological_routes(
+            orig_coord, dest_coord, include_alternatives, use_expressway=use_expressway, transport_mode=transport_mode
+        )
         self._route_cache[cache_key] = result
         return result
 
@@ -219,7 +221,14 @@ class RoutingService:
             mid_lat = (orig[1] + dest[1]) / 2.0
         return candidates
 
-    def _generate_topological_routes(self, orig: List[float], dest: List[float], include_alternatives: bool) -> List[Dict[str, Any]]:
+    def _generate_topological_routes(
+        self,
+        orig: List[float],
+        dest: List[float],
+        include_alternatives: bool,
+        use_expressway: bool = True,
+        transport_mode: str = "car"
+    ) -> List[Dict[str, Any]]:
         """
         Generates smoothly connected, topologically sorted corridor paths using real road geometry
         from the Metro Manila dataset. Never concatenates disjoint segments arbitrarily.
@@ -303,6 +312,30 @@ class RoutingService:
                     "coordinates": alt_coords
                 }
             })
+
+            # 3. Skyway Stage 3 Elevated Bypass (Cars only, when expressway enabled)
+            if use_expressway and transport_mode == "car":
+                skyway_coords = [
+                    orig,
+                    [121.0020, 14.6575],  # Balintawak
+                    [121.0010, 14.6360],  # Sgt Rivera
+                    [121.0070, 14.6080],  # Nagtahan / Sta. Mesa
+                    [121.0120, 14.5850],  # Paco / Quirino
+                    [121.0160, 14.5550],  # Buendia / Makati
+                    dest
+                ]
+                sky_dist = sum(haversine_distance(skyway_coords[k], skyway_coords[k+1]) for k in range(len(skyway_coords)-1))
+                sky_duration = int(sky_dist / (60 * 1000 / 3600))  # 60 km/h elevated expressway speed
+                routes.append({
+                    "id": "rt_skyway_stage3",
+                    "name": "via Skyway Stage 3 Bypass",
+                    "distance_meters": round(sky_dist, 1),
+                    "duration_seconds": sky_duration,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": skyway_coords
+                    }
+                })
 
         return routes
 

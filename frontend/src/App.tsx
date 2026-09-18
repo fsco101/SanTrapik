@@ -19,6 +19,7 @@ export function App() {
   const [activeCorridor, setActiveCorridor] = useState<string | null>(CORRIDORS[0].name);
   const [transportMode, setTransportMode] = useState<TransportMode>("car");
   const [useExpressway, setUseExpressway] = useState<boolean>(true);
+  const [plateEnding, setPlateEnding] = useState<number | null>(null);
 
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string>("");
@@ -69,7 +70,7 @@ export function App() {
       const [statsData, incidentsData, initialRoutes] = await Promise.all([
         getDashboardStats(),
         getIncidents(),
-        analyzeRoute(origin, destination, true, transportMode, useExpressway)
+        analyzeRoute(origin, destination, true, transportMode, useExpressway, plateEnding)
       ]);
       setStats(statsData);
       setIncidents(incidentsData);
@@ -86,7 +87,7 @@ export function App() {
     setActiveCorridor(null);
     setOrigin(coord);
     if (coord.lat && coord.lng) {
-      triggerAnalyze(coord, destination, transportMode, useExpressway);
+      triggerAnalyze(coord, destination, transportMode, useExpressway, plateEnding);
     }
   };
 
@@ -94,7 +95,7 @@ export function App() {
     setActiveCorridor(null);
     setDestination(coord);
     if (coord.lat && coord.lng) {
-      triggerAnalyze(origin, coord, transportMode, useExpressway);
+      triggerAnalyze(origin, coord, transportMode, useExpressway, plateEnding);
     }
   };
 
@@ -104,37 +105,43 @@ export function App() {
     if (mode === "motorcycle" || mode === "walking") {
       setUseExpressway(false);
     }
-    triggerAnalyze(origin, destination, mode, updatedExp);
+    triggerAnalyze(origin, destination, mode, updatedExp, plateEnding);
   };
 
   const handleUseExpresswayChange = (use: boolean) => {
     setUseExpressway(use);
-    triggerAnalyze(origin, destination, transportMode, use);
+    triggerAnalyze(origin, destination, transportMode, use, plateEnding);
+  };
+
+  const handlePlateEndingChange = (ending: number | null) => {
+    setPlateEnding(ending);
+    triggerAnalyze(origin, destination, transportMode, useExpressway, ending);
   };
 
   const handleSelectCorridor = (item: QuickCorridorItem) => {
     setActiveCorridor(item.name);
     setOrigin(item.origin);
     setDestination(item.destination);
-    triggerAnalyze(item.origin, item.destination, transportMode, useExpressway);
+    triggerAnalyze(item.origin, item.destination, transportMode, useExpressway, plateEnding);
   };
 
   const handleSwap = () => {
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
-    triggerAnalyze(destination, temp, transportMode, useExpressway);
+    triggerAnalyze(destination, temp, transportMode, useExpressway, plateEnding);
   };
 
   const triggerAnalyze = async (
     orig = origin,
     dest = destination,
     mode = transportMode,
-    exp = useExpressway
+    exp = useExpressway,
+    plate = plateEnding
   ) => {
     setIsLoading(true);
     try {
-      const fetchedRoutes = await analyzeRoute(orig, dest, true, mode, exp);
+      const fetchedRoutes = await analyzeRoute(orig, dest, true, mode, exp, plate);
       setRoutes(fetchedRoutes);
       if (fetchedRoutes.length > 0) {
         setSelectedRouteId(fetchedRoutes[0].id);
@@ -252,6 +259,8 @@ export function App() {
             onTransportModeChange={handleTransportModeChange}
             useExpressway={useExpressway}
             onUseExpresswayChange={handleUseExpresswayChange}
+            plateEnding={plateEnding}
+            onPlateEndingChange={handlePlateEndingChange}
           />
 
           {routes.length > 1 && (
@@ -303,6 +312,8 @@ export function App() {
             onTransportModeChange={handleTransportModeChange}
             useExpressway={useExpressway}
             onUseExpresswayChange={handleUseExpresswayChange}
+            plateEnding={plateEnding}
+            onPlateEndingChange={handlePlateEndingChange}
           />
 
           {routes.length > 1 && (

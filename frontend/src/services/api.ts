@@ -43,7 +43,8 @@ export async function analyzeRoute(
   destination: { lat: number; lng: number; name?: string },
   includeAlternatives: boolean = true,
   transportMode: TransportMode = "car",
-  useExpressway: boolean = true
+  useExpressway: boolean = true,
+  plateEnding?: number | null
 ): Promise<RouteItem[]> {
   try {
     const res = await fetch(`${API_BASE}/route/analyze`, {
@@ -54,7 +55,8 @@ export async function analyzeRoute(
         destination,
         include_alternatives: includeAlternatives,
         transport_mode: transportMode,
-        use_expressway: useExpressway
+        use_expressway: useExpressway,
+        plate_ending: plateEnding !== undefined && plateEnding !== null ? plateEnding : null
       }),
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
