@@ -121,6 +121,10 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
         )
         evaluated_routes.append(route_item)
 
+        # Register route geometry for active corridor buffer monitoring (<100m alerts)
+        from backend.app.services.streaming import stream_manager
+        stream_manager.register_route(r["id"], item["coords"])
+
     now = datetime.now(timezone.utc)
     return RouteAnalyzeResponse(
         status="success",

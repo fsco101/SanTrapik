@@ -3,8 +3,9 @@
   "number": 7,
   "title": "Real-Time Geospatial Streaming & Viewport-Filtered Live Telemetry",
   "goal": "Upgrade the system from inefficient 60-second polling to real-time Server-Sent Events (SSE) and WebSockets, delivering low-latency geospatial event deltas filtered by client map viewport and active route buffer.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
+  "completed_at": "2026-09-18T20:00:00Z",
   "dependencies": [
     "sprint-6-security-consensus"
   ],
@@ -14,7 +15,7 @@
       "github_issue_number": 29,
       "title": "[Sprint 7] High-Throughput Server-Sent Events (SSE) Telemetry Stream Gateway",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-7",
         "backend",
@@ -35,7 +36,7 @@
       "github_issue_number": 30,
       "title": "[Sprint 7] Viewport-Aware Geospatial Pub/Sub Channel Filtering (BBox Subscription)",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-7",
         "backend",
@@ -56,7 +57,7 @@
       "github_issue_number": 31,
       "title": "[Sprint 7] Live Active Route Buffer Subscriptions & Real-Time Chokepoint Reroute Alerts",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-7",
         "backend",
@@ -77,7 +78,7 @@
       "github_issue_number": 32,
       "title": "[Sprint 7] Frontend Streaming Hook (`useLiveTelemetryStream`) with Reconnect Backoff & Pulsar Telemetry",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-7",
         "frontend",
@@ -98,7 +99,7 @@
       "github_issue_number": 33,
       "title": "[Sprint 7] Dynamic Congestion Heatmap Vector Layer Streaming via GeoJSON Delta Updates",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-7",
         "frontend",
