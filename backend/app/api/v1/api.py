@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.app.api.v1.endpoints import health, route, traffic, incidents, dashboard, places
+from backend.app.api.v1.endpoints import health, route, traffic, incidents, dashboard, places, streaming
 
 api_router = APIRouter()
 
@@ -9,3 +9,5 @@ api_router.include_router(traffic.router, tags=["Traffic Telemetry"])
 api_router.include_router(incidents.router, tags=["Road Incidents"])
 api_router.include_router(dashboard.router, tags=["City Dashboard"])
 api_router.include_router(places.router, tags=["Places & Landmarks"])
+api_router.include_router(streaming.router, tags=["Telemetry Streaming"])
+

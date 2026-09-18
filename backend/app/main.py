@@ -15,18 +15,42 @@ from backend.app.api.v1.api import api_router
 from backend.app.services.decay_worker import decay_worker
 from backend.app.services.telemetry import telemetry_service
 
+from backend.app.services.streaming import stream_manager
+
+async def periodic_telemetry_broadcaster():
+    """Periodically streams velocity deltas and macro stats to active SSE subscribers."""
+    while True:
+        try:
+            await asyncio.sleep(20)
+            if stream_manager.active_subscriber_count > 0:
+                deltas = telemetry_service.get_live_velocity_deltas()
+                await stream_manager.broadcast_velocity_deltas(deltas)
+                stats = telemetry_service.get_live_dashboard_stats()
+                await stream_manager.broadcast_stats(stats)
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            pass
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start incident decay worker in background
     decay_task = asyncio.create_task(decay_worker.start(lambda: telemetry_service._live_incidents))
+    broadcast_task = asyncio.create_task(periodic_telemetry_broadcaster())
     yield
     # Clean shutdown
     decay_worker.stop()
     decay_task.cancel()
+    broadcast_task.cancel()
     try:
         await decay_task
     except asyncio.CancelledError:
         pass
+    try:
+        await broadcast_task
+    except asyncio.CancelledError:
+        pass
+
 
 app = FastAPI(
     title="SanTrapik API Gateway",

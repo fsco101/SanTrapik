@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { RouteItem, IncidentItem, Coordinate } from "../../types/traffic";
+import type { VelocityShiftDelta, ViewportBBox } from "../../types/streaming";
 
 interface MapContainerProps {
   selectedRoute: RouteItem | null;
@@ -11,6 +12,8 @@ interface MapContainerProps {
   incidents: IncidentItem[];
   heatmapVisible: boolean;
   onToggleHeatmap: () => void;
+  speedDeltas?: VelocityShiftDelta[];
+  onViewportChange?: (bbox: ViewportBBox) => void;
   onResolveIncident?: (id: string) => void;
   onOpenReportModal?: () => void;
 }
@@ -24,6 +27,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   incidents,
   heatmapVisible,
   onToggleHeatmap,
+  speedDeltas = [],
+  onViewportChange,
   onResolveIncident,
   onOpenReportModal,
 }) => {
@@ -38,6 +43,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   useEffect(() => {
     onSelectRouteRef.current = onSelectRoute;
   }, [onSelectRoute]);
+
+  const onViewportChangeRef = useRef(onViewportChange);
+  useEffect(() => {
+    onViewportChangeRef.current = onViewportChange;
+  }, [onViewportChange]);
 
   // Initialize MapLibre GL JS
   useEffect(() => {
@@ -146,6 +156,95 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           "line-opacity": 0.95
         }
       });
+
+      // 3. Monitored Road Network Congestion Heatmap Source & Layer
+      const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api/v1";
+      fetch(`${API_BASE}/traffic/heatmap`)
+        .then((res) => res.json())
+        .then((geojson) => {
+          if (!map || map.getSource("heatmap-source")) return;
+          map.addSource("heatmap-source", {
+            type: "geojson",
+            data: geojson
+          });
+
+          map.addLayer({
+            id: "heatmap-layer",
+            type: "line",
+            source: "heatmap-source",
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+              "visibility": heatmapVisible ? "visible" : "none"
+            },
+            paint: {
+              "line-width": 5.5,
+              "line-opacity": 0.85,
+              "line-color": [
+                "coalesce",
+                ["feature-state", "color"],
+                ["get", "traffic_color"],
+                "#10B981"
+              ]
+            }
+          });
+
+          // Interactive Tactical Tooltip on Road Hover
+          const hoverPopup = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            offset: 12
+          });
+
+          map.on("mouseenter", "heatmap-layer", () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+
+          map.on("mousemove", "heatmap-layer", (e) => {
+            if (!e.features || !e.features[0]) return;
+            const f = e.features[0];
+            const segId = f.id;
+            const state = typeof segId === "number" ? map.getFeatureState({ source: "heatmap-source", id: segId }) : {};
+            const name = (state?.road_name as string) || f.properties?.road_name || "Arterial Corridor";
+            const speed = (state?.speed as number) ?? f.properties?.current_speed_kmh ?? "--";
+            const level = (state?.level as string) || f.properties?.traffic_level || "NORMAL";
+            const color = (state?.color as string) || f.properties?.traffic_color || "#10B981";
+            const cong = (state?.congestion as number) ?? f.properties?.congestion_percentage ?? 0;
+
+            hoverPopup
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <div class="p-2 bg-slate-900/95 text-white rounded-lg border border-white/10 font-mono text-[11px] shadow-xl backdrop-blur-md select-none">
+                  <div class="font-sans font-bold text-slate-200 text-xs mb-1">${name}</div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full" style="background-color: ${color}"></span>
+                    <span>${level} • ${speed} km/h</span>
+                    <span class="text-slate-400">(${cong}% cong)</span>
+                  </div>
+                </div>
+              `)
+              .addTo(map);
+          });
+
+          map.on("mouseleave", "heatmap-layer", () => {
+            map.getCanvas().style.cursor = "";
+            hoverPopup.remove();
+          });
+        })
+        .catch((err) => console.warn("Failed to load initial heatmap vector data:", err));
+
+      // 4. Viewport Move Listener (emits active bounding box for geospatial pub/sub filtering)
+      map.on("moveend", () => {
+        const bounds = map.getBounds();
+        if (bounds && onViewportChangeRef.current) {
+          onViewportChangeRef.current({
+            min_lng: bounds.getWest(),
+            min_lat: bounds.getSouth(),
+            max_lng: bounds.getEast(),
+            max_lat: bounds.getNorth()
+          });
+        }
+      });
     });
 
     mapRef.current = map;
@@ -154,6 +253,32 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       map.remove();
     };
   }, []);
+
+  // Toggle Heatmap Layer Visibility without Re-fetching
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || !map.getLayer("heatmap-layer")) return;
+    map.setLayoutProperty("heatmap-layer", "visibility", heatmapVisible ? "visible" : "none");
+  }, [heatmapVisible, mapLoaded]);
+
+  // Dynamic In-Memory Vector Layer Feature-State Updates (60 FPS zero flicker)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || !speedDeltas || speedDeltas.length === 0 || !map.getSource("heatmap-source")) return;
+    speedDeltas.forEach((delta) => {
+      map.setFeatureState(
+        { source: "heatmap-source", id: delta.segment_id },
+        {
+          color: delta.traffic_color,
+          speed: delta.current_speed_kmh,
+          level: delta.traffic_level,
+          congestion: delta.congestion_percentage,
+          road_name: delta.road_name
+        }
+      );
+    });
+  }, [speedDeltas, mapLoaded]);
+
 
   // Update Route Polylines & Midpoint Comparison Pills
   useEffect(() => {

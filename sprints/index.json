@@ -5,7 +5,7 @@
   "total_sprints": 10,
   "total_issues": 48,
   "status": "in_progress",
-  "active_sprint_id": "sprint-7-realtime-streaming",
+  "active_sprint_id": "sprint-8-multimodal-manila",
   "sprints": [
     {
       "id": "sprint-1-data-and-database",
@@ -84,13 +84,14 @@
       "number": 7,
       "title": "Real-Time Geospatial Streaming & Viewport-Filtered Live Telemetry",
       "file": "sprint-7-realtime-streaming.json",
-      "status": "planned",
+      "status": "completed",
       "dependencies": ["sprint-6-security-consensus"],
       "issue_range": "#29 - #33",
       "total_issues": 5,
-      "completed_issues": 0,
+      "completed_issues": 5,
       "objective": "Upgrade from 60-second polling to persistent Server-Sent Events (SSE) and WebSockets, delivering low-latency geospatial event deltas filtered by client map viewport and active route buffer."
     },
+
     {
       "id": "sprint-8-multimodal-manila",
       "number": 8,

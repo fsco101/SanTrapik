@@ -6,8 +6,9 @@ for Metro Manila arterials based on real-time clock, daylight patterns, and acti
 
 import os
 import json
+import asyncio
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from shapely.geometry import Point, LineString
 from shapely.ops import nearest_points
 from backend.app.services.live_traffic import live_traffic_service
@@ -139,7 +140,7 @@ class RealTimeTelemetryService:
         features = []
         now = self.get_manila_now()
 
-        for feat in self._cached_roads:
+        for idx, feat in enumerate(self._cached_roads):
             props = feat["properties"]
             name = props["road_name"]
             baseline = float(props["baseline_speed_kmh"])
@@ -172,7 +173,10 @@ class RealTimeTelemetryService:
 
             features.append({
                 "type": "Feature",
+                "id": idx,
                 "properties": {
+                    "id": idx,
+                    "segment_id": idx,
                     "road_name": name,
                     "road_code": props.get("road_code"),
                     "direction": direction,
@@ -188,6 +192,29 @@ class RealTimeTelemetryService:
             })
 
         return features
+
+    def get_live_velocity_deltas(self) -> List[Dict[str, Any]]:
+        """
+        Extracts lightweight speed delta array (<12 KB) for high-frequency
+        MapLibre feature state streaming without transmitting full GeoJSON geometries.
+        """
+        features = self.get_live_heatmap_features()
+        deltas = []
+        for feat in features:
+            props = feat["properties"]
+            deltas.append({
+                "segment_id": feat["id"],
+                "road_name": props["road_name"],
+                "road_code": props.get("road_code"),
+                "direction": props.get("direction"),
+                "current_speed_kmh": props["current_speed_kmh"],
+                "traffic_level": props["traffic_level"],
+                "congestion_percentage": props["congestion_percentage"],
+                "traffic_color": props["traffic_color"],
+                "last_updated": props["last_updated"]
+            })
+        return deltas
+
 
     def get_live_dashboard_stats(self) -> Dict[str, Any]:
         """Dynamically computes aggregate city metrics across all road segments."""
@@ -330,15 +357,22 @@ class RealTimeTelemetryService:
         # Evaluate against consensus clustering
         eval_result = consensus_engine.evaluate_incoming_report(raw_report, self._live_incidents)
 
-        if eval_result["is_corroboration"]:
-            corroborated_inc = eval_result["incident"]
-            return corroborated_inc
+        target_inc = eval_result["incident"] if eval_result["is_corroboration"] else raw_report
+        if not eval_result["is_corroboration"]:
+            # Newly created cluster: attach reporter session token
+            reporter_token = secrets.token_urlsafe(16)
+            raw_report["reporter_token"] = reporter_token
+            self._live_incidents.insert(0, raw_report)
 
-        # Newly created cluster: attach reporter session token
-        reporter_token = secrets.token_urlsafe(16)
-        raw_report["reporter_token"] = reporter_token
-        self._live_incidents.insert(0, raw_report)
-        return raw_report
+        # Broadcast incident to active SSE subscribers
+        from backend.app.services.streaming import stream_manager
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(stream_manager.broadcast_incident(target_inc))
+        except RuntimeError:
+            pass
+
+        return target_inc
 
     def resolve_live_incident(
         self,
@@ -354,14 +388,26 @@ class RealTimeTelemetryService:
         """
         for inc in self._live_incidents:
             if str(inc["id"]) == str(incident_id):
+                can_resolve = False
+                res_msg = ""
                 if is_admin:
-                    inc["status"] = "RESOLVED"
-                    return True, "Incident marked as RESOLVED by administrator", inc
+                    can_resolve = True
+                    res_msg = "Incident marked as RESOLVED by administrator"
+                else:
+                    author_token = inc.get("reporter_token")
+                    if reporter_token and author_token and reporter_token == author_token:
+                        can_resolve = True
+                        res_msg = "Incident marked as RESOLVED by original reporter"
 
-                author_token = inc.get("reporter_token")
-                if reporter_token and author_token and reporter_token == author_token:
+                if can_resolve:
                     inc["status"] = "RESOLVED"
-                    return True, "Incident marked as RESOLVED by original reporter", inc
+                    from backend.app.services.streaming import stream_manager
+                    try:
+                        loop = asyncio.get_running_loop()
+                        loop.create_task(stream_manager.broadcast_incident(inc))
+                    except RuntimeError:
+                        pass
+                    return True, res_msg, inc
 
                 # Unauthenticated third party attempted unilateral resolve
                 return (
@@ -387,6 +433,13 @@ class RealTimeTelemetryService:
                 elif vote.upper() == "STILL_THERE":
                     inc["still_there_votes"] = inc.get("still_there_votes", 0) + 1
 
+                from backend.app.services.streaming import stream_manager
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(stream_manager.broadcast_incident(inc))
+                except RuntimeError:
+                    pass
+
                 net_score = inc.get("cleared_votes", 0) - inc.get("still_there_votes", 0)
                 if net_score >= 3:
                     inc["status"] = "RESOLVED"
@@ -396,6 +449,7 @@ class RealTimeTelemetryService:
                     return True, f"Community vote recorded: marked as CLEARING ({net_score} net clear votes)", inc
 
                 return True, f"Vote recorded ({inc.get('cleared_votes')} clear vs {inc.get('still_there_votes')} active)", inc
+
 
         return False, f"Incident '{incident_id}' not found", None
 

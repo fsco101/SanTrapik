@@ -9,8 +9,9 @@ import { MapContainer } from "./components/map/MapContainer";
 import { BottomTelemetrySheet } from "./components/layout/BottomTelemetrySheet";
 import { IncidentReportModal } from "./components/incident/IncidentReportModal";
 import type { Coordinate, RouteItem, DashboardStats, IncidentItem, TransportMode } from "./types/traffic";
+import type { VelocityShiftDelta, ViewportBBox, RouteObstructionAlert } from "./types/streaming";
 import { analyzeRoute, getDashboardStats, getIncidents, resolveLiveIncident } from "./services/api";
-import { useTrafficRefresh } from "./hooks/useTrafficRefresh";
+import { useLiveTelemetryStream } from "./hooks/useLiveTelemetryStream";
 
 export function App() {
   const [origin, setOrigin] = useState<Coordinate>(CORRIDORS[0].origin);
@@ -28,17 +29,39 @@ export function App() {
   const [heatmapVisible, setHeatmapVisible] = useState<boolean>(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
 
-  // Background telemetry polling every 60s
-  const { isOnline, freshnessText, refreshData } = useTrafficRefresh({
-    intervalMs: 60000,
-    onRefreshStats: setStats,
-    onRefreshIncidents: setIncidents,
+  // Streaming states (SP7-002, SP7-003, SP7-004, SP7-005)
+  const [viewportBBox, setViewportBBox] = useState<ViewportBBox | null>(null);
+  const [speedDeltas, setSpeedDeltas] = useState<VelocityShiftDelta[]>([]);
+  const [obstructionAlert, setObstructionAlert] = useState<RouteObstructionAlert | null>(null);
+
+  // Persistent Server-Sent Events (SSE) telemetry stream with exponential backoff
+  const {
+    status: connectionStatus,
+    isOnline,
+    freshnessText,
+    reconnect: refreshStream,
+  } = useLiveTelemetryStream({
+    bbox: viewportBBox,
+    routeId: selectedRouteId || null,
+    onIncidentUpdate: (newInc) => {
+      setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== newInc.id)]);
+    },
+    onVelocityShift: (deltas) => {
+      setSpeedDeltas(deltas);
+    },
+    onRouteAlert: (alert) => {
+      setObstructionAlert(alert);
+    },
+    onStatsUpdate: (updatedStats) => {
+      setStats(updatedStats);
+    },
   });
 
   // Initial load
   useEffect(() => {
     loadInitialData();
   }, []);
+
 
   const loadInitialData = async () => {
     setIsLoading(true);
@@ -116,7 +139,7 @@ export function App() {
       if (fetchedRoutes.length > 0) {
         setSelectedRouteId(fetchedRoutes[0].id);
       }
-      refreshData();
+      refreshStream();
     } finally {
       setIsLoading(false);
     }
@@ -143,21 +166,64 @@ export function App() {
       <Header
         stats={stats}
         isLoading={isLoading}
-        onRefresh={() => triggerAnalyze()}
+        onRefresh={() => {
+          triggerAnalyze();
+          refreshStream();
+        }}
         freshnessText={freshnessText}
         isOnline={isOnline}
+        connectionStatus={connectionStatus}
         onOpenReportModal={() => setIsReportModalOpen(true)}
       />
+
+      {/* Real-Time Chokepoint Route Obstruction Flash Alert (SP7-003) */}
+      {obstructionAlert && (
+        <div className="bg-rose-950/95 border-b border-rose-500/50 text-white px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-30 shadow-lg font-mono text-xs backdrop-blur-md animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-rose-400 text-[18px]">warning</span>
+            <span className="font-bold text-rose-300">[ROUTE OBSTRUCTION DETECTED]</span>
+            <span>
+              {obstructionAlert.incident_type} on {obstructionAlert.corridor} ({obstructionAlert.distance_to_route_meters}m from corridor)
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">
+              +{obstructionAlert.estimated_delay_minutes}m delay
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {routes.length > 1 && (
+              <button
+                onClick={() => {
+                  const alt = routes.find((r) => r.id !== selectedRouteId);
+                  if (alt) {
+                    setSelectedRouteId(alt.id);
+                  }
+                  setObstructionAlert(null);
+                }}
+                className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[15px]">alt_route</span>
+                <span>Switch to Alternate Route</span>
+              </button>
+            )}
+            <button
+              onClick={() => setObstructionAlert(null)}
+              className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-slate-300 text-xs transition"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Offline Notice Banner */}
       {!isOnline && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-300 text-xs px-4 py-1.5 flex items-center justify-between font-mono z-30">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            Backend API offline: Displaying pre-computed Metro Manila corridor telemetry.
+            Backend streaming offline: Reconnecting with exponential backoff...
           </span>
           <button
-            onClick={() => refreshData()}
+            onClick={() => refreshStream()}
             className="text-[11px] underline hover:text-white"
           >
             Retry Connection
@@ -210,10 +276,13 @@ export function App() {
             incidents={incidents}
             heatmapVisible={heatmapVisible}
             onToggleHeatmap={() => setHeatmapVisible(!heatmapVisible)}
+            speedDeltas={speedDeltas}
+            onViewportChange={setViewportBBox}
             onResolveIncident={handleResolveIncident}
             onOpenReportModal={() => setIsReportModalOpen(true)}
           />
         </main>
+
 
         {/* Mobile Bottom Telemetry Sheet */}
         <BottomTelemetrySheet activeRoute={selectedRoute}>
