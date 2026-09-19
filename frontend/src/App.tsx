@@ -8,6 +8,7 @@ import { RouteComparison } from "./components/route/RouteComparison";
 import { MapContainer } from "./components/map/MapContainer";
 import { BottomTelemetrySheet } from "./components/layout/BottomTelemetrySheet";
 import { IncidentReportModal } from "./components/incident/IncidentReportModal";
+import { IncidentDrawer } from "./components/incident/IncidentDrawer";
 import type { Coordinate, RouteItem, DashboardStats, IncidentItem, TransportMode } from "./types/traffic";
 import type { VelocityShiftDelta, ViewportBBox, RouteObstructionAlert } from "./types/streaming";
 import { analyzeRoute, getDashboardStats, getIncidents, resolveLiveIncident } from "./services/api";
@@ -29,6 +30,8 @@ export function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [heatmapVisible, setHeatmapVisible] = useState<boolean>(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  const [selectedIncident, setSelectedIncident] = useState<any | null>(null);
+  const [isIncidentDrawerOpen, setIsIncidentDrawerOpen] = useState<boolean>(false);
 
   // Streaming states (SP7-002, SP7-003, SP7-004, SP7-005)
   const [viewportBBox, setViewportBBox] = useState<ViewportBBox | null>(null);
@@ -271,7 +274,15 @@ export function App() {
             />
           )}
 
-          {selectedRoute && <RouteIntelligenceCard route={selectedRoute} />}
+          {selectedRoute && (
+            <RouteIntelligenceCard
+              route={selectedRoute}
+              onSelectIncident={(inc) => {
+                setSelectedIncident(inc);
+                setIsIncidentDrawerOpen(true);
+              }}
+            />
+          )}
         </aside>
 
         {/* Interactive Map Canvas */}
@@ -289,6 +300,10 @@ export function App() {
             onViewportChange={setViewportBBox}
             onResolveIncident={handleResolveIncident}
             onOpenReportModal={() => setIsReportModalOpen(true)}
+            onSelectIncident={(inc) => {
+              setSelectedIncident(inc);
+              setIsIncidentDrawerOpen(true);
+            }}
           />
         </main>
 
@@ -324,7 +339,15 @@ export function App() {
             />
           )}
 
-          {selectedRoute && <RouteIntelligenceCard route={selectedRoute} />}
+          {selectedRoute && (
+            <RouteIntelligenceCard
+              route={selectedRoute}
+              onSelectIncident={(inc) => {
+                setSelectedIncident(inc);
+                setIsIncidentDrawerOpen(true);
+              }}
+            />
+          )}
         </BottomTelemetrySheet>
       </div>
 
@@ -334,6 +357,14 @@ export function App() {
         onClose={() => setIsReportModalOpen(false)}
         onIncidentReported={handleIncidentReported}
         defaultLocation={origin}
+      />
+
+      {/* Slide-over Incident Physical Clearance Diagnostics Drawer (SP9-001) */}
+      <IncidentDrawer
+        isOpen={isIncidentDrawerOpen}
+        onClose={() => setIsIncidentDrawerOpen(false)}
+        incident={selectedIncident}
+        corridorName={activeCorridor || undefined}
       />
     </div>
   );

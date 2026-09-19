@@ -91,3 +91,41 @@ def calculate_relief_timestamps(
         "is_predicted": True,
         "model_version": "v1.4-rt-gbr",
     }
+
+def format_quantile_relief(
+    p10: float,
+    p50: float,
+    p90: float,
+    base_confidence: float = 0.88,
+    timestamp: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    """
+    Formats multi-quantile predictions (P10/P50/P90) into bounded intervals with dynamic confidence.
+    Enforces non-negative bounds and P10 <= P50 <= P90 (SP9-002).
+    """
+    min_mins = max(5, int(round(p10)))
+    est_mins = max(min_mins, int(round(p50)))
+    max_mins = max(est_mins, int(round(p90)))
+
+    interval_width = max_mins - min_mins
+
+    # Confidence inversely correlates with prediction interval width
+    width_penalty = min(0.38, (interval_width / 120.0))
+    confidence = round(max(0.50, min(0.96, base_confidence - width_penalty)), 2)
+
+    if interval_width <= 6:
+        window_display = f"~{est_mins} mins"
+    else:
+        window_display = f"{min_mins}–{max_mins} mins"
+
+    time_meta = calculate_relief_timestamps(est_mins, confidence, timestamp)
+
+    return {
+        **time_meta,
+        "p10_optimistic_mins": min_mins,
+        "p50_median_mins": est_mins,
+        "p90_pessimistic_mins": max_mins,
+        "relief_window_display": window_display,
+        "confidence_score": confidence,
+        "confidence_tier": "HIGH" if confidence >= 0.80 else ("MEDIUM" if confidence >= 0.65 else "LOW"),
+    }

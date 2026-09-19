@@ -24,6 +24,16 @@ export interface IncidentSummary {
   description?: string;
   reported_at: string;
   status: string;
+  clearance_minutes?: number;
+  p10_clearance_mins?: number;
+  p50_clearance_mins?: number;
+  p90_clearance_mins?: number;
+  clearance_window_display?: string;
+  confidence_score?: number;
+  confidence_tier?: string;
+  tow_dispatch_status?: string;
+  lanes_blocked?: number;
+  road_width_lanes?: number;
 }
 
 export interface SegmentPrediction {
@@ -59,6 +69,12 @@ export interface ExpectedRelief {
   relief_time: string;
   estimated_minutes_remaining: number;
   confidence: number;
+  confidence_interval?: string;
+  p10_optimistic_mins?: number;
+  p50_median_mins?: number;
+  p90_pessimistic_mins?: number;
+  relief_window_display?: string;
+  model_version?: string;
   is_predicted: boolean;
 }
 
@@ -124,6 +140,8 @@ export interface RouteItem {
   coding_advisory?: NumberCodingAdvisory;
   flood_hazards?: FloodHazardDetail[];
   is_impassable_flood?: boolean;
+  spillover_warnings?: string[];
+  spillover_segments?: string[];
 }
 
 export interface IncidentItem {
@@ -142,6 +160,16 @@ export interface IncidentItem {
   still_there_votes?: number;
   cleared_votes?: number;
   reporter_token?: string;
+  clearance_minutes?: number;
+  p10_clearance_mins?: number;
+  p50_clearance_mins?: number;
+  p90_clearance_mins?: number;
+  clearance_window_display?: string;
+  confidence_score?: number;
+  confidence_tier?: string;
+  tow_dispatch_status?: string;
+  lanes_blocked?: number;
+  road_width_lanes?: number;
 }
 
 export interface CorridorCongestion {

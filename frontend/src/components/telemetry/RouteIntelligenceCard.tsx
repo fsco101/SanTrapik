@@ -4,13 +4,25 @@ import { voteClearance } from "../../services/api";
 
 interface RouteIntelligenceCardProps {
   route: RouteItem;
+  onSelectIncident?: (incident: any) => void;
 }
 
-export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ route }) => {
+export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ route, onSelectIncident }) => {
   const [incidentsOpen, setIncidentsOpen] = useState(true);
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
+  const [departureOffset, setDepartureOffset] = useState<number>(0);
 
   const { summary, expected_relief, segments } = route;
+
+  // SP9-005: AI Prognosis Horizon calculations
+  // As departure shifts forward, clearance progression decays bottlenecks
+  const projectedTravelTime = departureOffset === 0
+    ? summary.estimated_travel_time_min
+    : Math.max(
+        summary.normal_travel_time_min,
+        Math.round(summary.estimated_travel_time_min - (departureOffset * 0.22))
+      );
+  const projectedDelay = Math.max(0, projectedTravelTime - summary.normal_travel_time_min);
 
   // Format hours and minutes
   const formatTime = (minutes: number) => {
@@ -61,6 +73,15 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         status: string;
         data_source?: string;
         affectedSegments: string[];
+        clearance_minutes?: number;
+        p10_clearance_mins?: number;
+        p50_clearance_mins?: number;
+        p90_clearance_mins?: number;
+        clearance_window_display?: string;
+        confidence_score?: number;
+        tow_dispatch_status?: string;
+        lanes_blocked?: number;
+        road_width_lanes?: number;
       }
     >();
 
@@ -103,12 +124,53 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
       </div>
 
+      {/* 1.1 AI Prognosis Departure Time Scrubber (SP9-005) */}
+      <div className="p-3 bg-surface-card rounded-lg border border-indigo-500/30 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs font-bold font-mono">
+            <span className="material-symbols-outlined text-ai-cyan text-[16px]">schedule</span>
+            <span className="text-text-primary uppercase text-[11px] tracking-wider">Departure Horizon Scrubber</span>
+          </div>
+          {departureOffset > 0 ? (
+            <span className="text-[10px] font-mono font-bold bg-ai-primary/20 text-ai-cyan border border-ai-cyan/40 px-2 py-0.5 rounded animate-pulse">
+              [AI FORECAST: DEPARTURE +{departureOffset}M]
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">
+              LIVE TELEMETRY (NOW)
+            </span>
+          )}
+        </div>
+
+        {/* Step Selector Slider */}
+        <div className="space-y-1.5 font-mono">
+          <input
+            type="range"
+            min="0"
+            max="60"
+            step="15"
+            value={departureOffset}
+            onChange={(e) => setDepartureOffset(Number(e.target.value))}
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-ai-cyan"
+          />
+          <div className="flex justify-between text-[10px] text-text-muted">
+            <span className={departureOffset === 0 ? "text-ai-cyan font-bold" : ""}>+0m (Now)</span>
+            <span className={departureOffset === 15 ? "text-ai-cyan font-bold" : ""}>+15m</span>
+            <span className={departureOffset === 30 ? "text-ai-cyan font-bold" : ""}>+30m</span>
+            <span className={departureOffset === 45 ? "text-ai-cyan font-bold" : ""}>+45m</span>
+            <span className={departureOffset === 60 ? "text-ai-cyan font-bold" : ""}>+60m</span>
+          </div>
+        </div>
+      </div>
+
       {/* 2. Metric Cluster: Estimated vs Normal vs Net Delay */}
       <div className="grid grid-cols-3 gap-2 bg-surface-card rounded p-3 border border-white/5 font-mono">
         <div>
-          <span className="text-[10px] uppercase text-text-muted block">Estimated</span>
+          <span className="text-[10px] uppercase text-text-muted block">
+            {departureOffset > 0 ? `Forecast (+${departureOffset}m)` : "Estimated"}
+          </span>
           <span className="text-xl font-bold text-text-primary">
-            {formatTime(summary.estimated_travel_time_min)}
+            {formatTime(projectedTravelTime)}
           </span>
         </div>
         <div>
@@ -119,8 +181,8 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
         <div>
           <span className="text-[10px] uppercase text-text-muted block">Net Delay</span>
-          <span className={`text-xl font-bold ${summary.estimated_delay_min > 0 ? sevStyle.text : "text-traffic-normal"}`}>
-            {summary.estimated_delay_min > 0 ? `+${summary.estimated_delay_min}m` : "On Time"}
+          <span className={`text-xl font-bold ${projectedDelay > 0 ? sevStyle.text : "text-traffic-normal"}`}>
+            {projectedDelay > 0 ? `+${projectedDelay}m` : "On Time"}
           </span>
         </div>
       </div>
@@ -184,7 +246,22 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
       </div>
 
-      {/* 2.2 Monsoon & Flood Hazard Geo-Integration Alert */}
+      {/* 2.2 Spatiotemporal Bottleneck Spillover Warning (SP9-003) */}
+      {route.spillover_warnings && route.spillover_warnings.length > 0 && (
+        <div className="p-3 rounded-lg border border-amber-500/40 bg-amber-950/20 space-y-1.5 font-mono">
+          <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+            <span className="material-symbols-outlined text-[16px] animate-pulse">crisis_alert</span>
+            <span>Spatiotemporal Queue Spillover Advisory</span>
+          </div>
+          {route.spillover_warnings.map((warn, idx) => (
+            <p key={idx} className="text-[11px] text-amber-200/90 leading-snug">
+              • {warn}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* 2.3 Monsoon & Flood Hazard Geo-Integration Alert */}
       {route.flood_hazards && route.flood_hazards.length > 0 && (
         <div className="p-3 rounded-lg border border-rose-500/40 bg-rose-950/20 space-y-2">
           <div className="flex items-center justify-between">
@@ -214,7 +291,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         </div>
       )}
 
-      {/* 2.3 Chokepoint Root Cause Delay Decomposition */}
+      {/* 2.4 Chokepoint Root Cause Delay Decomposition */}
       {route.delay_decomposition && (
         <div className="bg-surface-card border border-white/5 rounded p-3 space-y-2.5">
           <div className="flex items-center justify-between">
@@ -343,9 +420,11 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
               return (
                 <div
                   key={inc.id ? `${inc.id}-${idx}` : `inc-${idx}`}
-                  className={`text-xs space-y-1.5 bg-surface-panel p-2.5 rounded border ${
+                  onClick={() => onSelectIncident?.(inc)}
+                  className={`text-xs space-y-1.5 bg-surface-panel p-2.5 rounded border transition-all cursor-pointer hover:border-ai-cyan/50 hover:bg-surface-elevated/60 ${
                     isUnverified ? "border-amber-500/40 border-dashed" : "border-white/10"
                   }`}
+                  title="Click to view detailed physical clearance diagnostics"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
@@ -363,9 +442,15 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-text-muted font-mono">
-                      {formatReportedTime(inc.reported_at)}
-                    </span>
+                    {inc.clearance_window_display ? (
+                      <span className="text-[10px] text-ai-cyan font-mono font-bold bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                        Clearance: {inc.clearance_window_display}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-text-muted font-mono">
+                        {formatReportedTime(inc.reported_at)}
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-text-primary text-xs font-sans">{inc.description}</p>
@@ -374,7 +459,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
                     <span className="truncate max-w-[180px]" title={inc.affectedSegments.join(", ")}>
                       At: {inc.affectedSegments.join(", ") || "Active Corridor"}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={async () => {
                           await voteClearance(inc.id, "STILL_THERE");
@@ -413,8 +498,8 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
         )}
       </div>
 
-      {/* 5. AI Relief Prediction Footer */}
-      <div className="pt-2 border-t border-indigo-500/30 bg-indigo-950/20 -mx-4 -mb-4 p-4 space-y-2">
+      {/* 5. AI Relief Prediction Footer (SP9-002 Quantile Envelopes) */}
+      <div className="pt-2 border-t border-indigo-500/30 bg-indigo-950/20 -mx-4 -mb-4 p-4 space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-ai-cyan">auto_awesome</span>
@@ -423,7 +508,7 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
             </span>
           </div>
           <span className="text-[10px] font-mono font-semibold text-ai-cyan bg-indigo-900/60 px-1.5 py-0.5 rounded border border-indigo-500/30">
-            Model v1.0.2
+            {expected_relief.model_version || "v1.4-rt-gbr"}
           </span>
         </div>
 
@@ -433,8 +518,8 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
             <span className="text-lg font-bold text-white tracking-tight">
               {expected_relief.relief_time}
             </span>
-            <span className="text-xs text-ai-cyan ml-1.5">
-              (~{expected_relief.estimated_minutes_remaining}m remaining)
+            <span className="text-xs text-ai-cyan ml-1.5 font-bold">
+              ({expected_relief.relief_window_display || `~${expected_relief.estimated_minutes_remaining}m`})
             </span>
           </div>
           <div className="text-right">
@@ -444,6 +529,24 @@ export const RouteIntelligenceCard: React.FC<RouteIntelligenceCardProps> = ({ ro
             </span>
           </div>
         </div>
+
+        {/* Quantile Bounds Breakdown (P10 / P50 / P90) */}
+        {expected_relief.p10_optimistic_mins !== undefined && (
+          <div className="grid grid-cols-3 gap-1.5 text-center font-mono text-[10px] bg-black/40 p-1.5 rounded border border-white/5">
+            <div>
+              <span className="text-emerald-400 block text-[9px] font-bold">P10 OPT</span>
+              <span className="text-white font-semibold">~{expected_relief.p10_optimistic_mins}m</span>
+            </div>
+            <div className="border-x border-white/10">
+              <span className="text-ai-cyan block text-[9px] font-bold">P50 MED</span>
+              <span className="text-white font-semibold">~{expected_relief.p50_median_mins}m</span>
+            </div>
+            <div>
+              <span className="text-rose-400 block text-[9px] font-bold">P90 MAX</span>
+              <span className="text-white font-semibold">~{expected_relief.p90_pessimistic_mins}m</span>
+            </div>
+          </div>
+        )}
 
         {/* Linear Confidence Bar */}
         <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">

@@ -52,7 +52,7 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
     temp_evaluated = []
     for r in raw_routes:
         coords = r["geometry"]["coordinates"]
-        summary, expected_relief, segments, delay_decomp, flood_hazards, is_impassable_flood = spatial_service.analyze_route(
+        summary, expected_relief, segments, delay_decomp, flood_hazards, is_impassable_flood, spillover_warnings, spillover_segments = spatial_service.analyze_route(
             coords,
             db=db,
             duration_seconds=r.get("duration_seconds"),
@@ -95,7 +95,9 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
             "flood_hazards": flood_hazards,
             "is_impassable_flood": is_impassable_flood,
             "toll_fee": toll_fee,
-            "coding_adv": coding_adv
+            "coding_adv": coding_adv,
+            "spillover_warnings": spillover_warnings,
+            "spillover_segments": spillover_segments,
         })
 
     # Second pass: compute comparative toll economics against best zero-toll route
@@ -208,7 +210,9 @@ async def analyze_route(req: RouteRequest, db: Session = Depends(get_db)):
             delay_decomposition=item["delay_decomp"],
             coding_advisory=item["coding_adv"],
             flood_hazards=item["flood_hazards"],
-            is_impassable_flood=item["is_impassable_flood"]
+            is_impassable_flood=item["is_impassable_flood"],
+            spillover_warnings=item.get("spillover_warnings", []),
+            spillover_segments=item.get("spillover_segments", [])
         )
         evaluated_routes.append(route_item)
 

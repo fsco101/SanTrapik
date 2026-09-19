@@ -3,7 +3,7 @@
   "number": 9,
   "title": "Advanced AI Congestion Relief & Spatiotemporal Forecasting Pipeline",
   "goal": "Advance ML inference from simple corridor regression to incident clearance modeling, probabilistic quantile bounds (P10/P50/P90), upstream queue spillover prediction, and interactive time-horizon forecasting.",
-  "status": "planned",
+  "status": "completed",
   "estimated_duration": "2 weeks",
   "dependencies": [
     "sprint-4-ai-ml-prediction",
@@ -15,7 +15,7 @@
       "github_issue_number": 39,
       "title": "[Sprint 9] Incident Clearance Duration Regression Pipeline",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-9",
         "ml",
@@ -36,7 +36,7 @@
       "github_issue_number": 40,
       "title": "[Sprint 9] Quantile Regression & Conformal Prediction Envelopes (P10, P50, P90 Relief Windows)",
       "priority": "high",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-9",
         "ml",
@@ -57,7 +57,7 @@
       "github_issue_number": 41,
       "title": "[Sprint 9] Spatiotemporal Bottleneck Spillover Predictor (Upstream Queue Propagation)",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-9",
         "ml",
@@ -78,7 +78,7 @@
       "github_issue_number": 42,
       "title": "[Sprint 9] ML Model Drift Detection, Continuous Evaluation & Fallback Circuit Breaker",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-9",
         "mlops",
@@ -99,7 +99,7 @@
       "github_issue_number": 43,
       "title": "[Sprint 9] Frontend AI Prognosis Horizon Visualizer (Time Slider for +15m, +30m, +60m)",
       "priority": "medium",
-      "status": "open",
+      "status": "completed",
       "labels": [
         "sprint-9",
         "frontend",

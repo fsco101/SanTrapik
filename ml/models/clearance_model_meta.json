@@ -1,0 +1,18 @@
+{
+  "model_name": "incident_clearance_model",
+  "version": "v1.0.0-clearance",
+  "trained_at": "2026-09-19T15:39:00.080793+00:00",
+  "mae_minutes": 1.28,
+  "rmse_minutes": 1.81,
+  "r2_score": 0.9988,
+  "target_mae_met": true,
+  "feature_columns": [
+    "incident_type_code",
+    "lanes_blocked",
+    "road_width_lanes",
+    "blockage_ratio",
+    "tow_truck_dispatched",
+    "is_peak_hour",
+    "heavy_vehicle_involved"
+  ]
+}

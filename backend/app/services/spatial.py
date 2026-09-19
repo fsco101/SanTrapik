@@ -20,6 +20,7 @@ from backend.app.schemas.route import (
 from backend.app.ml.inference import prediction_service
 from backend.app.services.telemetry import telemetry_service, DATA_FILE
 from backend.app.services.flood_service import flood_service
+from backend.app.services.spillover import spillover_engine
 
 def haversine_distance(coord1: List[float], coord2: List[float]) -> float:
     """Calculate distance in meters between two [lng, lat] coordinates."""
@@ -56,7 +57,7 @@ class SpatialService:
         duration_seconds: Optional[int] = None,
         distance_meters: Optional[float] = None,
         transport_mode: str = "car"
-    ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail], DelayDecomposition, List[FloodHazardDetail], bool]:
+    ) -> Tuple[RouteSummary, ExpectedRelief, List[RouteSegmentDetail], DelayDecomposition, List[FloodHazardDetail], bool, List[str], List[str]]:
         """
         Decomposes real route geometry into constituent Metro Manila road segments,
         calculates live travel times and delay based on real-time traffic telemetry and transport mode,
@@ -111,13 +112,24 @@ class SpatialService:
                     if seg_line.distance(inc_pt) < 0.0015:
                         has_inc = True
                         max_sev = inc["severity"]
+                        clearance_pred = prediction_service.predict_incident_clearance(inc)
                         seg_incidents.append(IncidentSummary(
                             id=inc["id"],
                             type=inc["incident_type"],
                             severity=inc["severity"],
                             description=inc["description"],
                             reported_at=inc["reported_at"],
-                            status=inc["status"]
+                            status=inc["status"],
+                            clearance_minutes=clearance_pred.get("clearance_minutes"),
+                            p10_clearance_mins=clearance_pred.get("p10_clearance_mins"),
+                            p50_clearance_mins=clearance_pred.get("p50_clearance_mins"),
+                            p90_clearance_mins=clearance_pred.get("p90_clearance_mins"),
+                            clearance_window_display=clearance_pred.get("clearance_window_display"),
+                            confidence_score=clearance_pred.get("confidence_score"),
+                            confidence_tier=clearance_pred.get("confidence_tier"),
+                            tow_dispatch_status=clearance_pred.get("tow_dispatch_status"),
+                            lanes_blocked=clearance_pred.get("lanes_blocked"),
+                            road_width_lanes=clearance_pred.get("road_width_lanes"),
                         ))
                         if not any(item.get("id") == inc["id"] for item in ml_incident_inputs):
                             ml_incident_inputs.append({
@@ -125,7 +137,7 @@ class SpatialService:
                                 "road_segment_id": props.get("road_code", name),
                                 "type": inc["incident_type"],
                                 "severity": inc["severity"],
-                                "duration_minutes": 25.0
+                                "duration_minutes": clearance_pred.get("clearance_minutes", 25.0)
                             })
 
                 # Compute real-time speed and congestion
@@ -393,10 +405,20 @@ class SpatialService:
             estimated_minutes_remaining=relief_minutes,
             confidence=ml_prediction["confidence_score"],
             confidence_interval=ml_prediction.get("confidence_interval"),
+            p10_optimistic_mins=ml_prediction.get("p10_optimistic_mins"),
+            p50_median_mins=ml_prediction.get("p50_median_mins"),
+            p90_pessimistic_mins=ml_prediction.get("p90_pessimistic_mins"),
+            relief_window_display=ml_prediction.get("relief_window_display"),
             is_predicted=True,
             model_version=ml_prediction.get("model_version", "v1.4-rt-gbr")
         )
 
-        return summary, expected_relief, matched_segments, delay_decomp, flood_hazard_details, is_impassable_flood
+        # 6. Spatiotemporal Bottleneck Spillover Predictor (SP9-003)
+        spillover_warnings, spillover_segments = spillover_engine.predict_spillover(
+            route_segments=[s.model_dump() for s in matched_segments],
+            active_incidents=ml_incident_inputs
+        )
+
+        return summary, expected_relief, matched_segments, delay_decomp, flood_hazard_details, is_impassable_flood, spillover_warnings, spillover_segments
 
 spatial_service = SpatialService()

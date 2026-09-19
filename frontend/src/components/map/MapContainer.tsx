@@ -16,6 +16,7 @@ interface MapContainerProps {
   onViewportChange?: (bbox: ViewportBBox) => void;
   onResolveIncident?: (id: string) => void;
   onOpenReportModal?: () => void;
+  onSelectIncident?: (incident: IncidentItem) => void;
 }
 
 export const MapContainer: React.FC<MapContainerProps> = ({
@@ -31,6 +32,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   onViewportChange,
   onResolveIncident,
   onOpenReportModal,
+  onSelectIncident,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -154,6 +156,31 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           ],
           "line-width": 5,
           "line-opacity": 0.95
+        }
+      });
+
+      // 2.5 Spatiotemporal Bottleneck Spillover Pulse Layer (SP9-003)
+      map.addSource("spillover-source", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+
+      map.addLayer({
+        id: "spillover-glow",
+        type: "line",
+        source: "spillover-source",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#F59E0B",
+          "line-width": 9,
+          "line-opacity": 0.65,
+          "line-blur": 3
         }
       });
 
@@ -313,6 +340,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       });
     } else if (activeSource) {
       activeSource.setData({ type: "FeatureCollection", features: [] });
+    }
+
+    // 1.1 Update Spatiotemporal Spillover Layer (SP9-003)
+    const spilloverSource = map.getSource("spillover-source") as maplibregl.GeoJSONSource;
+    if (spilloverSource && selectedRoute && selectedRoute.spillover_segments && selectedRoute.spillover_segments.length > 0) {
+      spilloverSource.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              description: "Upstream bottleneck queuing shockwave"
+            },
+            geometry: {
+              type: "LineString",
+              coordinates: selectedRoute.geometry.coordinates
+            }
+          }
+        ]
+      });
+    } else if (spilloverSource) {
+      spilloverSource.setData({ type: "FeatureCollection", features: [] });
     }
 
     // 2. Update Alternate Routes
@@ -492,6 +541,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             <span>Source: <strong class="text-slate-200">${inc.data_source}</strong></span>
             <span>Coords: ${inc.lat.toFixed(4)}, ${inc.lng.toFixed(4)}</span>
           </div>
+          <button id="btn-diag-${inc.id}" class="w-full mb-1.5 py-1 px-2.5 rounded bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-500/40 text-ai-cyan font-mono text-[10px] font-bold flex items-center justify-center gap-1 transition">
+            <span class="material-symbols-outlined text-[13px]">auto_awesome</span>
+            <span>Clearance Diagnostics</span>
+          </button>
           <button id="btn-resolve-${inc.id}" class="w-full py-1.5 px-2.5 rounded bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-200 hover:text-white font-mono text-[10px] font-bold flex items-center justify-center gap-1 transition">
             <span class="material-symbols-outlined text-[14px]">check_circle</span>
             <span>Mark Cleared / Resolved</span>
@@ -500,6 +553,16 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       `);
 
       popup.on("open", () => {
+        const diagBtn = document.getElementById(`btn-diag-${inc.id}`);
+        if (diagBtn) {
+          diagBtn.onclick = () => {
+            if (onSelectIncident) {
+              onSelectIncident(inc);
+            }
+            popup.remove();
+          };
+        }
+
         const btn = document.getElementById(`btn-resolve-${inc.id}`);
         if (btn) {
           btn.onclick = () => {
@@ -518,12 +581,16 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
       el.onclick = (e) => {
         e.stopPropagation();
-        marker.togglePopup();
+        if (onSelectIncident) {
+          onSelectIncident(inc);
+        } else {
+          marker.togglePopup();
+        }
       };
 
       markersRef.current.push(marker);
     });
-  }, [incidents, mapLoaded, onResolveIncident]);
+  }, [incidents, mapLoaded, onResolveIncident, onSelectIncident]);
 
   // Update Start Point & End Point Markers on Map
   useEffect(() => {

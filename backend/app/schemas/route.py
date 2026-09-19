@@ -52,6 +52,16 @@ class IncidentSummary(BaseModel):
     description: Optional[str] = None
     reported_at: str
     status: str
+    clearance_minutes: Optional[int] = None
+    p10_clearance_mins: Optional[int] = None
+    p50_clearance_mins: Optional[int] = None
+    p90_clearance_mins: Optional[int] = None
+    clearance_window_display: Optional[str] = None
+    confidence_score: Optional[float] = None
+    confidence_tier: Optional[str] = None
+    tow_dispatch_status: Optional[str] = None
+    lanes_blocked: Optional[int] = None
+    road_width_lanes: Optional[int] = None
 
 class SegmentPrediction(BaseModel):
     predicted_relief_time: str
@@ -84,6 +94,10 @@ class ExpectedRelief(BaseModel):
     estimated_minutes_remaining: int
     confidence: float
     confidence_interval: Optional[str] = None
+    p10_optimistic_mins: Optional[int] = None
+    p50_median_mins: Optional[int] = None
+    p90_pessimistic_mins: Optional[int] = None
+    relief_window_display: Optional[str] = None
     is_predicted: bool = True
     model_version: Optional[str] = "v1.4-rt-gbr"
 
@@ -109,6 +123,8 @@ class RouteItem(BaseModel):
     coding_advisory: Optional[NumberCodingAdvisory] = None
     flood_hazards: List[FloodHazardDetail] = []
     is_impassable_flood: bool = False
+    spillover_warnings: List[str] = []
+    spillover_segments: List[str] = []
 
 class RouteAnalyzeData(BaseModel):
     routes: List[RouteItem]
