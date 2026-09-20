@@ -91,9 +91,24 @@ Metro Manila's street dynamics require strict transport mode separation:
 - **Tollway Restriction**: Barred by Toll Regulatory Board (TRB) / DOTr rules from elevated and at-grade expressways unless displacement is $\ge 400\text{cc}$.
 - **Lane Filtering Velocity Differential**: In heavy arterial gridlock ($\le 15\text{ km/h}$ car speed), motorcycles maintain higher average velocities ($25\text{--}35\text{ km/h}$) due to lane splitting. Delay models must dampen congestion impact for motorcycle profiles.
 
-### 3. Pedestrians (`walking`)
-- Strictly excludes expressways, high-speed overpasses, and vehicular underpasses (e.g. EDSA-Shaw tunnel, EDSA-Ayala tunnel).
-- Prefers routes with verified footbridges and sidewalks.
+### 3. Pedestrians & Walking Paths (`walking`)
+- **Strict Vehicle Infrastructure Exclusion**: Strictly excludes expressways, high-speed flyovers, elevated ramps, and vehicular underpasses (e.g. EDSA-Shaw tunnel, EDSA-Ayala tunnel, Quezon Ave underpass).
+- **Sidewalk & Footbridge Snapping**: Snaps to designated pedestrian paths, sidewalk networks, marked crosswalks, and MMDA/LGU footbridges.
+- **Physical Friction & Elevation**:
+  - Footbridge vertical climb penalties ($+45\text{ seconds}$ per staircase flight without escalators).
+  - Walking velocity baseline: $3.5\text{--}4.5\text{ km/h}$, degrading to $\le 2.0\text{ km/h}$ under dense transit station concourse crowds (e.g., MRT Cubao or MRT Taft during rush hour).
+- **Flood Impassability Thresholds**:
+  - Gutter-deep ($> 0.15\text{ m}$) water triggers walking speed reduction by $50\%$ with caution flag.
+  - Knee-deep / tire-level ($> 0.30\text{ m}$) water renders segment **IMPASSABLE** for pedestrians, forcing route re-calculation around flooded corridors (e.g. España, Taft, R. Papa).
+
+### 4. Commuters & Public Transit Corridors (`commuter` / `transit`)
+- **Dedicated Busway vs. Mixed Traffic Corridors**:
+  - **EDSA Busway (Carousel)**: Operates in dedicated median lane. Immune to private vehicle gridlock, but subject to bus-bunching and station boarding queue delays (Monumento, Cubao, Ortigas, Guadalupe, Taft).
+  - **Mixed-Traffic Corridors**: Jeepneys, UV Express, and city buses on arterial corridors (Commonwealth, Quezon Ave, España, Taft, Ortigas Ave, C-5). High friction from curbside passenger loading/unloading, decreasing average transit speed during peak hours ($8\text{--}12\text{ km/h}$).
+- **Multi-Modal Commute Path Aggregation**:
+  A complete commuter journey connects multi-modal legs:
+  $$\text{Path} = \text{Walking Leg 1 (First Mile)} \rightarrow \text{Transit Corridor Leg} \rightarrow \text{Walking Leg 2 (Last Mile)}$$
+  Routing queries evaluate congestion level across each segment to inform the commuter whether walking a segment is faster than riding in gridlock.
 
 ---
 
@@ -112,6 +127,14 @@ def calculate_harmonic_speed(segments: list[dict]) -> float:
     return round(total_dist / total_time_hours, 1) if total_time_hours > 0 else 0.0
 ```
 
+### Commuter Congestion Level Index (CLI)
+For commuters evaluating a route or transit corridor:
+$$\text{CLI} = 1.0 - \left(\frac{v_{\text{current}}}{v_{\text{baseline}}}\right)$$
+- $\text{CLI} < 0.20$: `[LOW CONGESTION]` (Smooth commute flow)
+- $0.20 \le \text{CLI} < 0.50$: `[MODERATE CONGESTION]` (Standard city delays, minor stop-and-go)
+- $0.50 \le \text{CLI} < 0.75$: `[HEAVY CONGESTION]` (Significant commuter delay, slow PUV movement)
+- $\text{CLI} \ge 0.75$: `[GRIDLOCK]` (Standstill traffic; walking or rail alternative recommended)
+
 ---
 
 ## 6. Common Anti-Patterns to Avoid
@@ -120,6 +143,9 @@ def calculate_harmonic_speed(segments: list[dict]) -> float:
 | :--- | :--- | :--- |
 | Calculating Euclidean distance on `(lng, lat)` | High latitude distortion; distances off by 30%+. | Use `ST_Distance(geom::geography)` or PRS92 `EPSG:3123`. |
 | Unbounded spatial queries without GiST `&&` | Spikes PostgreSQL CPU to 100% under concurrent lookups. | Enforce bounding box index pruning (`ST_DWithin` / `&&`). |
+| Routing pedestrians through vehicular tunnels or expressways | Dangerous and illegal; routes pedestrians through EDSA-Shaw tunnel or Skyway. | Strictly filter out `highway=motorway`, `highway=trunk`, tunnels, and non-pedestrian links. |
+| Ignoring flood impassability on pedestrian paths | Directs walking commuters into knee-deep, hazardous floodwaters. | Flag flooded road segments as impassable for pedestrian routing. |
+| Treating public transit corridors as uniform car traffic | Under-reports bus/jeepney travel times due to curbside stops and queue bottlenecks. | Apply commuter transit profile with stop friction and dedicated busway lane weights. |
 | Allowing motorcycles on Skyway routes | Violates Philippine TRB law; gives illegal commute advice. | Force `use_expressway=False` unless motorcycle $\ge 400\text{cc}$. |
 | Arithmetic mean for route average speed | Masks severe gridlock (1 km standstill + 9 km fast road = falsely high average). | Use distance-weighted Harmonic Mean speed. |
 | Ingesting raw polylines without Ramer-Douglas-Peucker | Bloats GeoJSON responses to several megabytes on mobile networks. | Simplify polylines with `ST_SimplifyPreserveTopology(geom, 0.00005)`. |

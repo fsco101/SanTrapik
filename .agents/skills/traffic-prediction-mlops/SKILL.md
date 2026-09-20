@@ -12,16 +12,20 @@ This skill provides the machine learning pipeline standards, spatiotemporal feat
 
 ---
 
-## 1. Problem Formulation & Metrics
+## 1. Problem Formulation & Commuter Metrics
 
-### The Target Variable: Time-to-Relief ($\Delta t_{\text{relief}}$)
-The prediction target is defined as the elapsed time in minutes from the current observation timestamp ($t_0$) until the corridor's average velocity recovers to $\ge 80\%$ of its designated baseline free-flow speed ($v_{\text{baseline}}$):
-$$\Delta t_{\text{relief}} = \min \{ \Delta t > 0 \mid v(t_0 + \Delta t) \ge 0.80 \times v_{\text{baseline}} \}$$
+### The Target Variable: Time-to-Relief ($\Delta t_{\text{relief}}$) & Commute Delay
+Standard navigation apps tell commuters where traffic is right now; SanTrapik forecasts **when** congestion along their path will ease and calculates the **commuter travel delay**:
+1. **Corridor Relief ($\Delta t_{\text{relief}}$)**: Elapsed time in minutes until the corridor recovers to $\ge 80\%$ baseline speed:
+   $$\Delta t_{\text{relief}} = \min \{ \Delta t > 0 \mid v(t_0 + \Delta t) \ge 0.80 \times v_{\text{baseline}} \}$$
+2. **Commuter Path Delay ($\Delta t_{\text{delay}}$)**: Expected excess travel time for commuters navigating that corridor vs. free-flow transit schedule:
+   $$\Delta t_{\text{delay}} = t_{\text{congested}} - t_{\text{free\_flow}} + t_{\text{boarding\_friction}}$$
+3. **Pedestrian Hazard Clearance ($\Delta t_{\text{drain}}$)**: For flood-compromised pedestrian paths (e.g. España, Taft Ave, Katipunan), forecast time until floodwaters recede below the $0.15\text{ m}$ (gutter-deep) walkability threshold.
 
 ### Evaluation Guardrails
 - **Primary Metric**: Mean Absolute Error (MAE) $\le 8.5\text{ minutes}$ across peak chokepoint test sets.
 - **Secondary Metric**: Root Mean Squared Error (RMSE) $\le 12.0\text{ minutes}$ (penalizing catastrophic under-predictions).
-- **Asymmetric Penalty Rule**: Under-predicting relief time (telling a driver traffic will clear in 10 mins when it takes 50 mins) causes high commuter frustration. Over-predicting is preferred over false optimism.
+- **Asymmetric Penalty Rule**: Under-predicting relief time (telling a commuter traffic will clear in 10 mins when it takes 50 mins) causes severe commuter stranding. Over-predicting is preferred over false optimism.
 
 ---
 
@@ -34,7 +38,7 @@ import pandas as pd
 from datetime import datetime
 
 def extract_spatiotemporal_features(row: dict) -> dict:
-    """Extracts cyclic, corridor, and incident features for relief regression."""
+    """Extracts cyclic, corridor, transit, and incident features for commuter relief regression."""
     timestamp = row["timestamp"]
     hour = timestamp.hour + timestamp.minute / 60.0
     day_of_week = timestamp.weekday()
@@ -43,7 +47,7 @@ def extract_spatiotemporal_features(row: dict) -> dict:
     sin_hour = np.sin(2 * np.pi * hour / 24.0)
     cos_hour = np.cos(2 * np.pi * hour / 24.0)
 
-    # 2. Manila specific peak hour indicators
+    # 2. Manila-specific peak commuter hours
     is_morning_rush = 1 if (7.0 <= hour <= 10.0 and day_of_week < 5) else 0
     is_evening_rush = 1 if (17.0 <= hour <= 21.0 and day_of_week < 5) else 0
     is_payday_friday = 1 if (day_of_week == 4 and timestamp.day in [14, 15, 16, 29, 30, 31]) else 0
@@ -53,16 +57,24 @@ def extract_spatiotemporal_features(row: dict) -> dict:
     baseline = max(20.0, row["baseline_speed_kmh"])
     velocity_ratio = speed / baseline  # e.g., 0.20 = severe congestion
 
-    # 4. Bottleneck & Incident severity weights
+    # 4. Commuter corridor classification
+    is_busway = 1 if row.get("is_dedicated_busway") else 0
+    is_transit_arterial = 1 if row.get("is_transit_corridor") else 0
+    # Commuter curb loading friction multiplier
+    commuter_friction = 1.35 if (is_transit_arterial and not is_busway and (is_morning_rush or is_evening_rush)) else 1.0
+
+    # 5. Bottleneck & Incident severity weights
     incident_active = 1 if row.get("incident_id") else 0
     incident_type = row.get("incident_type", "NONE")
-    # Multiplier reflecting clearance physics (stalled heavy bus blocks 2+ lanes on EDSA)
+    # Multiplier reflecting clearance physics (stalled heavy bus, floods affecting commuters)
     severity_weights = {
         "NONE": 0.0,
         "STALLED_VEHICLE": 1.5,
         "ACCIDENT": 2.2,
         "ROADWORK": 3.0,
-        "FLOOD": 4.5  # Flood clearance depends on tidal / drainage pump cycles
+        "FLOOD": 4.5,            # Flood clearance depends on tidal / drainage pump cycles
+        "FLOODED_SIDEWALK": 3.5, # Sidewalk impassable for pedestrians
+        "TRANSIT_DISRUPTION": 4.0 # Busway stall or train breakdown
     }
     incident_friction = severity_weights.get(incident_type, 1.0) * incident_active
 
@@ -74,6 +86,8 @@ def extract_spatiotemporal_features(row: dict) -> dict:
         "is_evening_rush": is_evening_rush,
         "is_payday_friday": is_payday_friday,
         "velocity_ratio": velocity_ratio,
+        "is_busway": is_busway,
+        "commuter_friction": commuter_friction,
         "incident_active": incident_active,
         "incident_friction": incident_friction,
         "current_congestion_pct": round((1.0 - velocity_ratio) * 100.0, 1)
@@ -82,17 +96,17 @@ def extract_spatiotemporal_features(row: dict) -> dict:
 
 ---
 
-## 3. Probabilistic Bounding (Quantile Bounds P10 / P50 / P90)
+## 3. Probabilistic Bounding & Commuter Telemetry Response
 
-Point-in-time predictions (e.g., "Clears at exactly 6:42 PM") give a false sense of certainty in chaotic urban environments. Model inference must output **bounded prediction windows**:
+Point-in-time predictions (e.g., "Clears at exactly 6:42 PM") give a false sense of certainty in chaotic urban environments. Model inference must output **bounded prediction windows** and clear commuter congestion levels:
 
 ```python
 # backend/app/ml/inference.py
 from typing import Dict, Any
 
-def format_relief_prediction(p10: float, p50: float, p90: float, confidence: float) -> Dict[str, Any]:
+def format_relief_prediction(p10: float, p50: float, p90: float, confidence: float, velocity_ratio: float = 0.5) -> Dict[str, Any]:
     """
-    Formats model quantiles into human-transparent telemetry response.
+    Formats model quantiles into human-transparent commuter telemetry response.
     """
     # Clamp non-negative
     min_mins = max(5, int(round(p10)))
@@ -105,6 +119,16 @@ def format_relief_prediction(p10: float, p50: float, p90: float, confidence: flo
     else:
         window_display = f"{min_mins}–{max_mins} mins"
 
+    # Semantic commuter congestion tier
+    if velocity_ratio >= 0.80:
+        congestion_tag = "[LOW CONGESTION]"
+    elif velocity_ratio >= 0.50:
+        congestion_tag = "[MODERATE CONGESTION]"
+    elif velocity_ratio >= 0.25:
+        congestion_tag = "[HEAVY CONGESTION]"
+    else:
+        congestion_tag = "[GRIDLOCK]"
+
     return {
         "is_predicted": True,
         "predicted_relief_minutes": est_mins,
@@ -112,6 +136,7 @@ def format_relief_prediction(p10: float, p50: float, p90: float, confidence: flo
         "p10_optimistic_mins": min_mins,
         "p50_median_mins": est_mins,
         "p90_pessimistic_mins": max_mins,
+        "congestion_tag": congestion_tag,
         "confidence_score": round(confidence, 2),
         "confidence_tier": "HIGH" if confidence >= 0.80 else ("MEDIUM" if confidence >= 0.55 else "LOW"),
         "model_version": "v1.2.0-rf-manila"
@@ -142,6 +167,8 @@ def fallback_heuristic_relief(congestion_pct: float, incident_type: str) -> dict
         "ACCIDENT": 45,
         "STALLED_VEHICLE": 25,
         "FLOOD": 90,
+        "FLOODED_SIDEWALK": 60,
+        "TRANSIT_DISRUPTION": 75,
         "ROADWORK": 120,
         "NONE": 20
     }.get(incident_type, 20)
@@ -163,6 +190,7 @@ def fallback_heuristic_relief(congestion_pct: float, incident_type: str) -> dict
 ## 6. MLOps Quality Checklist
 
 1. [ ] **Non-Negative Output**: Ensure `predicted_relief_minutes >= 0` under all input ranges.
-2. [ ] **Inference Latency**: Batch inference on all route segments must execute in $\le 15\text{ ms}$.
-3. [ ] **Serialization Portability**: Models must serialize with `joblib` or ONNX and load cleanly in headless Python environments without GPU requirements.
-4. [ ] **Zero Fabricated Accuracy**: If confidence is low ($< 0.50$), widen the prediction window (`30–60 mins`) rather than displaying a precise point estimate.
+2. [ ] **Commuter Congestion Tags**: Model output includes standardized tags (`[LOW CONGESTION]`, `[MODERATE CONGESTION]`, `[HEAVY CONGESTION]`, `[GRIDLOCK]`).
+3. [ ] **Inference Latency**: Batch inference on all route segments must execute in $\le 15\text{ ms}$.
+4. [ ] **Serialization Portability**: Models must serialize with `joblib` or ONNX and load cleanly in headless Python environments without GPU requirements.
+5. [ ] **Zero Fabricated Accuracy**: If confidence is low ($< 0.50$), widen the prediction window (`30–60 mins`) rather than displaying a precise point estimate.

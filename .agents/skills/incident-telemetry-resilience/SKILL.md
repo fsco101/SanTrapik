@@ -12,7 +12,7 @@ This skill defines the defense-in-depth architecture, spatiotemporal clustering 
 
 ---
 
-## 1. Threat Model & Defense-in-Depth
+## 1. Threat Model & Commuter Incident Taxonomy
 
 | Threat | Attack Vector | Mitigation in SanTrapik |
 | :--- | :--- | :--- |
@@ -21,6 +21,14 @@ This skill defines the defense-in-depth architecture, spatiotemporal clustering 
 | **PostGIS Spatial DoS** | Client submits complex concave bounding boxes or coordinates outside the country to force unindexed queries. | Hard-coded strict coordinate bounds validation (`METRO_MANILA_STRICT_BBOX`) and query timeout limits (`SET statement_timeout = '2000ms'`). |
 | **XSS / HTML Injection** | Attacker injects `<script>` payloads into the incident `description` field. | Strict Pydantic v2 string sanitization, Bleach HTML stripping, and regex character constraints. |
 
+### Commuter & Pedestrian Incident Categories
+Commuters encounter hazards distinct from car drivers. The ingestion schema must accept and validate:
+- `PEDESTRIAN_OBSTRUCTION`: Sidewalk blocked by illegal parking, vendors, or construction debris.
+- `FLOODED_SIDEWALK`: Gutter-deep ($>0.15\text{m}$) or knee-deep ($>0.30\text{m}$) floodwaters making walking path impassable.
+- `BROKEN_FOOTBRIDGE`: Damaged or closed pedestrian overpass requiring ground crossing.
+- `TERMINAL_OVERCROWDING`: Massive commuter queues spilling into roadways at transit hubs (e.g. EDSA Carousel stations).
+- `TRANSIT_DISRUPTION`: Stalled busway carrier, MRT/LRT track pause, or PUV strike causing sudden commuter corridor gridlock.
+
 ---
 
 ## 2. Spatiotemporal Clustering & Consensus Engine
@@ -28,7 +36,9 @@ This skill defines the defense-in-depth architecture, spatiotemporal clustering 
 Single anonymous reports must NEVER immediately become high-severity confirmed alerts. Instead, reports undergo spatiotemporal clustering (DBSCAN / proximity window) before elevation.
 
 ### Proximity & Time Quorum Rules
-- **Spatial Radius**: $150\text{ meters}$
+- **Spatial Radius**:
+  - Vehicular corridors: $150\text{ meters}$
+  - Pedestrian walking paths / stations: $80\text{ meters}$ (tighter threshold for localized sidewalk hazards)
 - **Temporal Window**: $15\text{ minutes}$
 - **Corroboration Quorum**:
   - `1 Report`: Status = `REPORTED`, Confidence = $0.35$ (Rendered with dashed outline and `[UNVERIFIED]` badge).
@@ -43,6 +53,7 @@ from shapely.geometry import Point
 
 class IncidentConsensusEngine:
     SPATIAL_CLUSTER_METERS = 150.0
+    PEDESTRIAN_CLUSTER_METERS = 80.0
     TEMPORAL_WINDOW_MINUTES = 15.0
 
     @classmethod
@@ -58,9 +69,12 @@ class IncidentConsensusEngine:
         """
         pt_new = Point(new_report["lng"], new_report["lat"])
         now = datetime.now(timezone.utc)
+        is_pedestrian_report = new_report.get("incident_type") in [
+            "PEDESTRIAN_OBSTRUCTION", "FLOODED_SIDEWALK", "BROKEN_FOOTBRIDGE"
+        ]
+        threshold_meters = cls.PEDESTRIAN_CLUSTER_METERS if is_pedestrian_report else cls.SPATIAL_CLUSTER_METERS
 
         for incident in active_incidents:
-            # 1. Type match or obstruction match
             if incident.get("status") == "RESOLVED":
                 continue
 
@@ -70,7 +84,7 @@ class IncidentConsensusEngine:
             d_lng = (pt_new.x - pt_existing.x) * 107500.0
             distance_meters = (d_lat**2 + d_lng**2)**0.5
 
-            if distance_meters <= cls.SPATIAL_CLUSTER_METERS:
+            if distance_meters <= threshold_meters:
                 # Corroborating report detected!
                 incident["report_count"] = incident.get("report_count", 1) + 1
                 incident["last_corroborated_at"] = now.isoformat()
@@ -120,12 +134,12 @@ To prevent an attacker from clearing real active road hazards:
 
 ---
 
-## 5. Viewport-Filtered Real-Time Streaming (SSE / WebSockets)
+## 5. Viewport & Commuter Path Geofenced Streaming (SSE)
 
-Instead of mobile clients polling `GET /api/v1/incidents` every 60 seconds (which wastes battery and misses sudden road blocks), use **Server-Sent Events (SSE)** with viewport geofencing.
+Instead of mobile clients polling `GET /api/v1/incidents` every 60 seconds, use **Server-Sent Events (SSE)** with viewport and route corridor geofencing:
 
 ```python
-# Viewport subscription pattern in FastAPI
+# Viewport and Route Buffer subscription pattern in FastAPI
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse
 import asyncio
@@ -135,17 +149,21 @@ router = APIRouter()
 @router.get("/api/v1/telemetry/stream")
 async def stream_live_telemetry(
     request: Request,
-    min_lng: float, min_lat: float, max_lng: float, max_lat: float
+    min_lng: float, min_lat: float, max_lng: float, max_lat: float,
+    route_id: str | None = None
 ):
-    """Streams live incident deltas and corridor speed shifts intersecting client viewport."""
+    """
+    Streams live incident deltas and corridor speed shifts intersecting
+    client viewport or the commuter's active route corridor buffer.
+    """
     async def event_generator():
         client_bbox = (min_lng, min_lat, max_lng, max_lat)
         while True:
             if await request.is_disconnected():
                 break
             
-            # Fetch events intersecting bbox from Redis pub/sub or in-memory ring buffer
-            deltas = await get_spatial_deltas_for_bbox(client_bbox)
+            # Fetch events intersecting bbox or commuter route buffer
+            deltas = await get_spatial_deltas_for_bbox_or_route(client_bbox, route_id)
             if deltas:
                 yield {
                     "event": "telemetry_delta",
@@ -164,6 +182,7 @@ async def stream_live_telemetry(
 
 1. [ ] **Rate Limiting Active**: Verify IP rate limiter returns HTTP 429 when $> 5$ reports/min are sent from one IP.
 2. [ ] **Input Bounds Check**: Verify coordinates outside `METRO_MANILA_STRICT_BBOX` return HTTP 422 with actionable error.
-3. [ ] **Anti-Griefing Resolution**: Verify anonymous users cannot unilaterally delete high-confidence verified incidents without a token or clearance quorum.
-4. [ ] **Auto-Decay Active**: Verify stale uncorroborated incidents transition to `EXPIRED` within 30 minutes.
-5. [ ] **Zero Emojis in Incident Feeds**: Verify severity tags use semantic text labels (`[SEVERE]`, `[MODERATE]`, `[CLEARING]`) and Google Material Symbols.
+3. [ ] **Commuter Hazard Validation**: Verify incident endpoint accepts and validates pedestrian/commuter types (`PEDESTRIAN_OBSTRUCTION`, `FLOODED_SIDEWALK`, `TERMINAL_OVERCROWDING`).
+4. [ ] **Anti-Griefing Resolution**: Verify anonymous users cannot unilaterally delete high-confidence verified incidents without a token or clearance quorum.
+5. [ ] **Auto-Decay Active**: Verify stale uncorroborated incidents transition to `EXPIRED` within 30 minutes.
+6. [ ] **Zero Emojis in Incident Feeds**: Verify severity tags use semantic text labels (`[SEVERE]`, `[MODERATE]`, `[CLEARING]`) and Google Material Symbols.
