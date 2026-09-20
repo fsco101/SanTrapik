@@ -6,6 +6,7 @@ for Metro Manila arterials based on real-time clock, daylight patterns, and acti
 
 import os
 import json
+import time
 import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
@@ -22,6 +23,9 @@ class RealTimeTelemetryService:
         self._cached_roads: List[Dict[str, Any]] = []
         # Dynamic, real-time verified incident store (no fake synthetic seeds)
         self._live_incidents: List[Dict[str, Any]] = []
+        self._heatmap_cache: Optional[List[Dict[str, Any]]] = None
+        self._heatmap_cache_time: float = 0.0
+        self._HEATMAP_TTL: float = 5.0  # 5 seconds TTL cache
         self._load_roads()
 
     def _load_roads(self):
@@ -136,7 +140,11 @@ class RealTimeTelemetryService:
         }
 
     def get_live_heatmap_features(self) -> List[Dict[str, Any]]:
-        """Generates dynamic GeoJSON heatmap features from real road network."""
+        """Generates dynamic GeoJSON heatmap features from real road network (with TTL caching)."""
+        now_ts = time.time()
+        if self._heatmap_cache is not None and (now_ts - self._heatmap_cache_time) < self._HEATMAP_TTL:
+            return self._heatmap_cache
+
         features = []
         now = self.get_manila_now()
 
@@ -191,6 +199,8 @@ class RealTimeTelemetryService:
                 "geometry": feat["geometry"]
             })
 
+        self._heatmap_cache = features
+        self._heatmap_cache_time = now_ts
         return features
 
     def get_live_velocity_deltas(self) -> List[Dict[str, Any]]:

@@ -60,6 +60,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             category = "clearance_vote"
             max_requests = 20
             window_seconds = 600.0  # 20 votes / 10 mins
+        elif "/telemetry/stream" in path:
+            if "/subscription" in path and method == "POST":
+                # High-frequency viewport renegotiation during map pan/zoom gestures
+                category = "telemetry_subscription"
+                max_requests = 180
+                window_seconds = 60.0  # 180 req / 1 min (3 per sec)
+            elif method == "GET":
+                category = "telemetry_stream"
+                max_requests = 60
+                window_seconds = 60.0
 
         key = (client_ip, category)
         window_start = now - window_seconds

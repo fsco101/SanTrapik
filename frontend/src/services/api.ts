@@ -2,12 +2,51 @@ import type { RouteItem, DashboardStats, IncidentItem, PlaceSuggestion, Transpor
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api/v1";
 
+// In-memory TTL cache to eliminate redundant requests and prevent 429 errors
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+const clientCache = new Map<string, CacheEntry<any>>();
+
+function getFromCache<T>(key: string): T | null {
+  const entry = clientCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    clientCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setToCache<T>(key: string, data: T, ttlMs: number): void {
+  clientCache.set(key, { data, expiresAt: Date.now() + ttlMs });
+}
+
+export function invalidateClientCache(prefix?: string): void {
+  if (!prefix) {
+    clientCache.clear();
+  } else {
+    for (const key of clientCache.keys()) {
+      if (key.startsWith(prefix)) {
+        clientCache.delete(key);
+      }
+    }
+  }
+}
+
 export async function searchPlaces(query: string): Promise<PlaceSuggestion[]> {
   if (!query || query.trim().length === 0) return [];
+  const cacheKey = `places:${query.trim().toLowerCase()}`;
+  const cached = getFromCache<PlaceSuggestion[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const res = await fetch(`${API_BASE}/places/search?q=${encodeURIComponent(query.trim())}&limit=8`);
     if (res.ok) {
-      return await res.json();
+      const data = await res.json();
+      setToCache(cacheKey, data, 300_000); // 5 mins
+      return data;
     }
   } catch (err) {
     console.warn("Backend places search failed, falling back to client-side Nominatim:", err);
@@ -21,7 +60,7 @@ export async function searchPlaces(query: string): Promise<PlaceSuggestion[]> {
     );
     if (directRes.ok) {
       const data = await directRes.json();
-      return data.map((item: any) => {
+      const results = data.map((item: any) => {
         const parts = item.display_name.split(",").map((s: string) => s.trim());
         return {
           name: parts[0] || query,
@@ -31,6 +70,8 @@ export async function searchPlaces(query: string): Promise<PlaceSuggestion[]> {
           lng: parseFloat(item.lon)
         };
       });
+      setToCache(cacheKey, results, 300_000);
+      return results;
     }
   } catch (err) {
     console.error("Direct Nominatim search failed:", err);
@@ -46,6 +87,10 @@ export async function analyzeRoute(
   useExpressway: boolean = true,
   plateEnding?: number | null
 ): Promise<RouteItem[]> {
+  const cacheKey = `route:${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}->${destination.lat.toFixed(4)},${destination.lng.toFixed(4)}:${transportMode}:${useExpressway}:${plateEnding}:${includeAlternatives}`;
+  const cached = getFromCache<RouteItem[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const res = await fetch(`${API_BASE}/route/analyze`, {
       method: "POST",
@@ -61,7 +106,9 @@ export async function analyzeRoute(
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();
-    return json.data.routes;
+    const routes = json.data.routes;
+    setToCache(cacheKey, routes, 45_000); // 45s cache
+    return routes;
   } catch (err) {
     console.warn("Backend API route analyze call failed, querying direct OSRM route:", err);
     try {
@@ -71,7 +118,7 @@ export async function analyzeRoute(
       if (osrmRes.ok) {
         const osrmData = await osrmRes.json();
         if (osrmData.routes && osrmData.routes.length > 0) {
-          return osrmData.routes.map((r: any, idx: number) => {
+          const routes = osrmData.routes.map((r: any, idx: number) => {
             const distKm = Number((r.distance / 1000).toFixed(1));
             const ttMin = Math.round(r.duration / 60);
             return {
@@ -98,6 +145,8 @@ export async function analyzeRoute(
               segments: []
             };
           });
+          setToCache(cacheKey, routes, 45_000);
+          return routes;
         }
       }
     } catch (osrmErr) {
@@ -108,10 +157,15 @@ export async function analyzeRoute(
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
+  const cacheKey = "dashboard:stats";
+  const cached = getFromCache<DashboardStats>(cacheKey);
+  if (cached) return cached;
+
   try {
     const res = await fetch(`${API_BASE}/dashboard/stats`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();
+    setToCache(cacheKey, json.data, 15_000); // 15s cache
     return json.data;
   } catch (err) {
     return {
@@ -130,11 +184,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getIncidents(): Promise<IncidentItem[]> {
+  const cacheKey = "incidents:active";
+  const cached = getFromCache<IncidentItem[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const res = await fetch(`${API_BASE}/incidents?status=ACTIVE`);
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();
-    return json.data || [];
+    const data = json.data || [];
+    setToCache(cacheKey, data, 10_000); // 10s cache
+    return data;
   } catch (err) {
     console.warn("Failed to fetch live incidents from backend:", err);
     // Return empty array - never return synthetic mock incidents to prevent misinformation
@@ -164,6 +224,10 @@ export async function reportLiveIncident(incidentData: {
   }
   const json = await res.json();
   const d = json.data;
+
+  // Invalidate incidents cache
+  invalidateClientCache("incidents");
+  invalidateClientCache("dashboard");
 
   // Store author reporter_token in localStorage if returned
   if (d.reporter_token) {
@@ -205,6 +269,10 @@ export async function resolveLiveIncident(incidentId: string): Promise<boolean> 
       method: "PATCH",
       headers
     });
+    if (res.ok) {
+      invalidateClientCache("incidents");
+      invalidateClientCache("dashboard");
+    }
     return res.ok;
   } catch (err) {
     console.error("Failed to resolve incident:", err);

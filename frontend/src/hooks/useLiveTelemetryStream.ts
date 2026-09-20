@@ -36,18 +36,27 @@ export function useLiveTelemetryStream({
   const clientIdRef = useRef<string | null>(null);
   const isUnmountedRef = useRef<boolean>(false);
 
-  // Keep latest callbacks in refs to avoid re-triggering connection on prop changes
+  // Keep latest callbacks and params in refs to avoid re-triggering connection on prop changes
   const onIncidentUpdateRef = useRef(onIncidentUpdate);
   const onVelocityShiftRef = useRef(onVelocityShift);
   const onRouteAlertRef = useRef(onRouteAlert);
   const onStatsUpdateRef = useRef(onStatsUpdate);
+  const bboxRef = useRef(bbox);
+  const routeIdRef = useRef(routeId);
+  const lastSentSubRef = useRef<{ bbox: ViewportBBox | null; routeId: string | null }>({
+    bbox: null,
+    routeId: null,
+  });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     onIncidentUpdateRef.current = onIncidentUpdate;
     onVelocityShiftRef.current = onVelocityShift;
     onRouteAlertRef.current = onRouteAlert;
     onStatsUpdateRef.current = onStatsUpdate;
-  }, [onIncidentUpdate, onVelocityShift, onRouteAlert, onStatsUpdate]);
+    bboxRef.current = bbox;
+    routeIdRef.current = routeId;
+  }, [onIncidentUpdate, onVelocityShift, onRouteAlert, onStatsUpdate, bbox, routeId]);
 
   const connect = useCallback(() => {
     if (isUnmountedRef.current) return;
@@ -66,14 +75,16 @@ export function useLiveTelemetryStream({
 
     // Construct stream URL with viewport and route parameters
     const params = new URLSearchParams();
-    if (bbox) {
-      params.append("min_lng", bbox.min_lng.toFixed(5));
-      params.append("min_lat", bbox.min_lat.toFixed(5));
-      params.append("max_lng", bbox.max_lng.toFixed(5));
-      params.append("max_lat", bbox.max_lat.toFixed(5));
+    const curBbox = bboxRef.current;
+    const curRouteId = routeIdRef.current;
+    if (curBbox) {
+      params.append("min_lng", curBbox.min_lng.toFixed(5));
+      params.append("min_lat", curBbox.min_lat.toFixed(5));
+      params.append("max_lng", curBbox.max_lng.toFixed(5));
+      params.append("max_lat", curBbox.max_lat.toFixed(5));
     }
-    if (routeId) {
-      params.append("route_id", routeId);
+    if (curRouteId) {
+      params.append("route_id", curRouteId);
     }
     if (clientIdRef.current) {
       params.append("client_id", clientIdRef.current);
@@ -118,8 +129,8 @@ export function useLiveTelemetryStream({
             status: raw.status,
             lat: raw.lat ?? raw.point_lng_lat?.[1],
             lng: raw.lng ?? raw.point_lng_lat?.[0],
-            reported_at: raw.reported_at || new Date().toISOString(),
-            data_source: raw.data_source || "LIVE_TELEMETRY",
+            reported_at: raw.reported_at,
+            data_source: raw.data_source,
             corridor: raw.corridor,
             confidence: raw.confidence,
             report_count: raw.report_count,
@@ -134,13 +145,13 @@ export function useLiveTelemetryStream({
       }
     });
 
-    // 3. Velocity shifts (lightweight delta array)
+    // 3. Velocity shifts
     es.addEventListener("velocity_shift", (e: MessageEvent) => {
       try {
-        const data = JSON.parse(e.data);
+        const deltas = JSON.parse(e.data);
         setLastEventTime(new Date());
-        if (data.deltas && onVelocityShiftRef.current) {
-          onVelocityShiftRef.current(data.deltas);
+        if (onVelocityShiftRef.current) {
+          onVelocityShiftRef.current(deltas);
         }
       } catch (err) {
         console.warn("Failed to parse velocity_shift:", err);
@@ -192,7 +203,7 @@ export function useLiveTelemetryStream({
         connect();
       }, delay);
     };
-  }, [bbox, routeId]);
+  }, []); // Stable: does not close/re-open SSE stream on viewport pan/zoom
 
   // Initial connection and teardown
   useEffect(() => {
@@ -208,6 +219,9 @@ export function useLiveTelemetryStream({
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, [connect]);
 
@@ -215,10 +229,40 @@ export function useLiveTelemetryStream({
   useEffect(() => {
     if (!clientIdRef.current || status !== "connected") return;
 
+    // Check if subscription changed significantly before scheduling a network request
+    const last = lastSentSubRef.current;
+    const routeChanged = last.routeId !== (routeId || null);
+    let bboxChanged = false;
+    if (!last.bbox && bbox) {
+      bboxChanged = true;
+    } else if (last.bbox && !bbox) {
+      bboxChanged = true;
+    } else if (last.bbox && bbox) {
+      const delta =
+        Math.abs(bbox.min_lng - last.bbox.min_lng) +
+        Math.abs(bbox.min_lat - last.bbox.min_lat) +
+        Math.abs(bbox.max_lng - last.bbox.max_lng) +
+        Math.abs(bbox.max_lat - last.bbox.max_lat);
+      if (delta > 0.003) {
+        bboxChanged = true;
+      }
+    }
+
+    if (!routeChanged && !bboxChanged) {
+      return;
+    }
+
     const timer = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       fetch(`${API_BASE}/telemetry/stream/${clientIdRef.current}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           min_lng: bbox?.min_lng,
           min_lat: bbox?.min_lat,
@@ -226,10 +270,20 @@ export function useLiveTelemetryStream({
           max_lat: bbox?.max_lat,
           route_id: routeId || undefined,
         }),
-      }).catch((err) => {
-        console.warn("Failed to dynamically update SSE subscription bounds:", err);
-      });
-    }, 400);
+      })
+        .then((res) => {
+          if (res.ok) {
+            lastSentSubRef.current = { bbox, routeId: routeId || null };
+          } else if (res.status === 429) {
+            console.warn("Telemetry subscription throttled (429), pausing updates");
+          }
+        })
+        .catch((err) => {
+          if (err.name !== "AbortError") {
+            console.warn("Failed to dynamically update SSE subscription bounds:", err);
+          }
+        });
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [bbox, routeId, status]);
