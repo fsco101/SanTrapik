@@ -148,9 +148,10 @@ export function useLiveTelemetryStream({
     // 3. Velocity shifts
     es.addEventListener("velocity_shift", (e: MessageEvent) => {
       try {
-        const deltas = JSON.parse(e.data);
+        const raw = JSON.parse(e.data);
+        const deltas = Array.isArray(raw) ? raw : (raw.deltas || []);
         setLastEventTime(new Date());
-        if (onVelocityShiftRef.current) {
+        if (onVelocityShiftRef.current && Array.isArray(deltas)) {
           onVelocityShiftRef.current(deltas);
         }
       } catch (err) {

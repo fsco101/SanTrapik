@@ -244,7 +244,7 @@ export function App() {
       {/* 2. Main Workspace Layout */}
       <div className="flex-1 min-h-0 flex relative overflow-hidden">
         {/* Desktop Left Telemetry Console */}
-        <aside className="hidden md:flex flex-col w-[420px] shrink-0 border-r border-white/10 bg-surface-bg/95 z-20 h-full min-h-0 overflow-y-auto overscroll-contain p-4 pb-16 space-y-4">
+        <aside className="hidden md:flex flex-col w-[460px] lg:w-[480px] shrink-0 border-r border-white/10 bg-surface-bg/95 z-20 h-full min-h-0 overflow-y-auto overscroll-contain p-4 pb-16 space-y-3.5">
           <QuickCorridors
             activeCorridorName={activeCorridor}
             onSelect={handleSelectCorridor}
@@ -264,6 +264,7 @@ export function App() {
             onUseExpresswayChange={handleUseExpresswayChange}
             plateEnding={plateEnding}
             onPlateEndingChange={handlePlateEndingChange}
+            hasActiveRoutes={routes.length > 0}
           />
 
           {routes.length > 1 && (

@@ -321,7 +321,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   // Dynamic In-Memory Vector Layer Feature-State Updates (60 FPS zero flicker)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoaded || !speedDeltas || speedDeltas.length === 0 || !map.getSource("heatmap-source")) return;
+    if (!map || !mapLoaded || !Array.isArray(speedDeltas) || speedDeltas.length === 0 || !map.getSource("heatmap-source")) return;
     speedDeltas.forEach((delta) => {
       map.setFeatureState(
         { source: "heatmap-source", id: delta.segment_id },
